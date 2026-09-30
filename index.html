@@ -211,19 +211,20 @@ function revealCurrent(){
     fb.innerHTML=`Question passée. Voici les bonnes associations :<div class="expl"><ul style="margin:6px 0 0;padding-left:18px;">${lines.join('')}</ul></div>`;
     return;
   }
-  const opf=state.theme==='opf', frac=state.theme==='frac', sci=state.theme==='sci', tab=state.theme==='tables', dur=state.theme==='durees', comp=state.theme==='comp', clock=state.theme==='clock', pyt=state.theme==='pyth';
-  const expl=pyt?explainPyth(q):opf?explainOps(q):frac?explainFrac(q):sci?explainSci(q):tab?explainTable(q):dur?explainDuree(q):comp?explainComp(q):clock?explainClock(q):explain(state.cat,q);
-  const ansTxt=pyt?pythEq(q):opf?`${opsText(q)} = ${tf(q.rn,q.rd)}`:frac?`${q.a}/${q.b} = ${fracText(q)}`:tab?`${q.a} × ${q.b} = ${q.ans}`:dur?q.full:comp?`${fmt(q.a)} + ${fmt(q.ans)} = ${fmt(q.target)}`:clock?clockLabel(q):sci?(q.dir==='toSci'?`${fmt(q.dec)} = ${sciStr(q.a,q.n)}`:`${sciStr(q.a,q.n)} = ${fmt(q.dec)}`):`${qLeft(q)} = ${fmt(q.ans)} ${q.to.n}`;
+  const opf=state.theme==='opf', frac=state.theme==='frac', sci=state.theme==='sci', tab=state.theme==='tables', dur=state.theme==='durees', comp=state.theme==='comp', clock=state.theme==='clock', pyt=state.theme==='pyth', mld=state.theme==='mld';
+  const expl=mld?explainMld(q):pyt?explainPyth(q):opf?explainOps(q):frac?explainFrac(q):sci?explainSci(q):tab?explainTable(q):dur?explainDuree(q):comp?explainComp(q):clock?explainClock(q):explain(state.cat,q);
+  const ansTxt=mld?mldAns(q):pyt?pythEq(q):opf?`${exprHTML(q)} = ${sfrac(q.an,q.ad)}`:frac?`${fracHTML(q.a,q.b)} = ${q.d===1?q.p:fracHTML(q.p,q.d)}`:tab?`${q.a} × ${q.b} = ${q.ans}`:dur?q.full:comp?`${fmt(q.a)} + ${fmt(q.ans)} = ${fmt(q.target)}`:clock?clockLabel(q):sci?(q.dir==='toSci'?`${fmt(q.dec)} = ${sciStr(q.a,q.n)}`:`${sciStr(q.a,q.n)} = ${fmt(q.dec)}`):`${qLeft(q)} = ${fmt(q.ans)} ${q.to.n}`;
   if(state.mode==='qcm'){
     content.querySelectorAll('.opt-btn').forEach(b=>{
       b.onclick=null;
-      const ok=pyt?b.dataset.k===pythRhs(q):opf?b.dataset.k===opsKey(q):frac?b.dataset.k===fracKey(q):!sci?Number(b.dataset.val)===q.ans:(q.dir==='toSci'?b.dataset.k===`${fmt(q.a)}|${q.n}`:Number(b.dataset.v)===q.dec);
+      const ok=mld?b.dataset.k===String(q.qans):pyt?b.dataset.k===pythRhs(q):opf?b.dataset.k===opsKey(q):frac?b.dataset.k===fracKey(q):!sci?Number(b.dataset.val)===q.ans:(q.dir==='toSci'?b.dataset.k===`${fmt(q.a)}|${q.n}`:Number(b.dataset.v)===q.dec);
       if(ok) b.classList.add('correct');
     });
   }else{
     const set=(id,v)=>{const e=document.getElementById(id); if(e) e.value=v;};
-    if(pyt) set('ans',pythRhs(q));
-    else if(opf){ set('ansN',String(q.rn)); set('ansD',q.rd===1?'':String(q.rd)); }
+    if(mld) set('ans',q.kind==='word'?q.word:String(q.example));
+    else if(pyt) set('ans',pythRhs(q));
+    else if(opf){ set('ansN',String(q.an)); set('ansD',String(q.ad)); }
     else if(frac){ set('ansN',String(q.p)); set('ansD',q.d===1?'':String(q.d)); }
     else if(clock){ set('ansH',padHM(q.h)); set('ansM',padHM(q.m)); }
     else if(dur) set('ans',q.kind==='word'?q.ansWord:String(q.ans));
@@ -428,7 +429,11 @@ function _newQuestion(){
   updateStreakDisplay();
   state.resolved=false; setNewBtn();
   document.getElementById('content').innerHTML='';
-  if(state.theme==='pyth'){
+  if(state.theme==='mld'){
+    if(state.mode==='qcm') renderMldQCM();
+    else if(state.mode==='jeu') renderMldJeu();
+    else renderMldTrou();
+  }else if(state.theme==='pyth'){
     if(state.mode==='qcm') renderPythQCM();
     else if(state.mode==='jeu') renderPythJeu();
     else renderPythTrou();
@@ -1227,20 +1232,20 @@ function fracRound(){
   return shuffle(qs);
 }
 function explainFrac(q){
-  const {a,b,p,d,k}=q, t=`${a}/${b}`;
+  const {a,b,p,d,k}=q, t=fracHTML(a,b), fr=(n,m)=>fracHTML(n,m);
   if(k===1) return `${t} est déjà irréductible : ${a} et ${b} n'ont aucun diviseur commun autre que 1, on ne peut donc plus la simplifier.`;
   const steps=[]; let ca=a, cb=b;
   if(k>10&&k%10===0){
     const m=k/10;
-    steps.push(`on divise par 10 (les deux nombres se terminent par 0) : ${a}/${b} = ${a/10}/${b/10}`);
-    steps.push(`puis par ${m} (les deux nombres sont divisibles par ${m}) : ${a/10}/${b/10} = ${p}/${d}`);
-    return `On simplifie ${t} en deux fois (PGCD = ${k} = 10 × ${m}) : ${steps.join(' ; ')}. `+(d===1?`Le dénominateur vaut 1 : ${t} = ${p}, c'est un nombre entier, on écrit simplement ${p}.`:`Résultat : ${t} = ${p}/${d}, et ${p} et ${d} n'ont plus de diviseur commun.`);
+    steps.push(`on divise par 10 (les deux nombres se terminent par 0) : ${fr(a,b)} = ${fr(a/10,b/10)}`);
+    steps.push(`puis par ${m} (les deux nombres sont divisibles par ${m}) : ${fr(a/10,b/10)} = ${d===1?p:fr(p,d)}`);
+    return `On simplifie ${t} en deux fois (PGCD = ${k} = 10 × ${m}) : ${steps.join(' ; ')}. `+(d===1?`Le dénominateur vaut 1 : ${t} = ${p}, c'est un nombre entier, on écrit simplement ${p}.`:`Résultat : ${t} = ${fr(p,d)}, et ${p} et ${d} n'ont plus de diviseur commun.`);
   }
   primeFactors(k).forEach(f=>{
     const why=f===2?'les deux nombres sont pairs':f===3?'la somme des chiffres de chaque nombre est un multiple de 3':f===5?'les deux nombres se terminent par 0 ou 5':`les deux nombres sont divisibles par ${f}`;
-    steps.push(`on divise par ${f} (${why}) : ${ca}/${cb} = ${ca/f}/${cb/f}`); ca/=f; cb/=f;
+    steps.push(`on divise par ${f} (${why}) : ${fr(ca,cb)} = ${fr(ca/f,cb/f)}`); ca/=f; cb/=f;
   });
-  return `On simplifie ${t} jusqu'à ce que le numérateur et le dénominateur n'aient plus de diviseur commun autre que 1 (on peut aussi diviser directement par leur PGCD, ici ${k}) : ${steps.join(' ; ')}. `+(d===1?`Le dénominateur vaut 1 : ${t} = ${p}, c'est un nombre entier, on écrit simplement ${p} (et non ${p}/1).`:`Résultat : ${t} = ${p}/${d}, et ${p} et ${d} n'ont plus de diviseur commun.`);
+  return `On simplifie ${t} jusqu'à ce que le numérateur et le dénominateur n'aient plus de diviseur commun autre que 1 (on peut aussi diviser directement par leur PGCD, ici ${k}) : ${steps.join(' ; ')}. `+(d===1?`Le dénominateur vaut 1 : ${t} = ${p}, c'est un nombre entier, on écrit simplement ${p} (et non ${fr(p,1)}).`:`Résultat : ${t} = ${fr(p,d)}, et ${p} et ${d} n'ont plus de diviseur commun.`);
 }
 function fracDistractors(q){
   const {a,b,p,d,k}=q, okKey=fracKey(q);
@@ -1323,7 +1328,7 @@ function renderFracTrou(){
         return;
       }
       const equal=!isNaN(n)&&!isNaN(dd)&&dd>0&&n*q.d===dd*q.p;
-      fb.innerHTML=(equal?`Ta fraction est bien égale à ${q.a}/${q.b}, mais elle n'est pas irréductible : on peut encore la simplifier. `:`Pas tout à fait. `)+`<span class="expl">${explainFrac(q)}</span>`;
+      fb.innerHTML=(equal?`Ta fraction est bien égale à ${fracHTML(q.a,q.b)}, mais elle n'est pas irréductible : on peut encore la simplifier. `:`Pas tout à fait. `)+`<span class="expl">${explainFrac(q)}</span>`;
       fb.className='feedback ko';
     }
   };
@@ -1336,8 +1341,9 @@ function tOperand(n,d){ return d===1?String(n):fracHTML(n,d); }
 function sfrac(n,d){ return n<0?`<span class="sf"><span>−</span>${tOperand(-n,d)}</span>`:tOperand(n,d); }
 function exprHTML(q){ return `<span class="sf">${tOperand(q.n1,q.d1)}<span>${q.op}</span>${tOperand(q.n2,q.d2)}</span>`; }
 function opsText(q){ return `${tf(q.n1,q.d1)} ${q.op} ${tf(q.n2,q.d2)}`; }
-function opsKey(q){ return `${q.rn}/${q.rd}`; }
-const OPS_PAIRS_COMMON=[[4,6],[6,9],[6,8],[8,12],[6,10],[9,12],[10,15],[10,14],[12,18],[14,21],[15,20],[8,20],[12,16],[6,15]];
+function opsKey(q){ return `${q.an}/${q.ad}`; }
+function opsVal(q){ return `${q.rn}/${q.rd}`; }
+const OPS_PAIRS_COMMON=[[4,6],[6,9],[6,8],[4,10],[6,10]];
 let opsBag=[], opsKindHist=[];
 function nextOpsKind(){
   if(!opsBag.length){
@@ -1355,30 +1361,25 @@ function nextOpsKind(){
 function genOps(kind){
   const rn=(x,y)=>x+Math.floor(Math.random()*(y-x+1));
   let res=null;
-  for(let t=0;t<200&&!res;t++){
-    const lvl=pick([1,2,2,3]);
+  for(let t=0;t<300&&!res;t++){
     let n1,d1,n2,d2;
     const numFor=(d,mx)=>{ let n,g=0; do{ n=rn(1,mx); g++; }while(n%d===0&&g<30); return n; };
-    if(kind==='mult'){
-      const b=lvl===1?rn(2,6):lvl===2?rn(3,10):rn(6,12);
-      const m=lvl===1?rn(2,3):lvl===2?rn(2,4):rn(3,12);
-      d1=b; d2=b*m;
-      n1=numFor(d1,lvl===3?3*d1:2*d1); n2=numFor(d2,lvl===3?2*d2:d2);
-    }else if(kind==='coprime'){
-      const lo=lvl===1?2:lvl===2?2:5, hi=lvl===1?6:lvl===2?9:12;
-      d1=rn(lo,hi); d2=rn(lo,hi);
-      if(d1===d2||fgcd(d1,d2)!==1) continue;
-      n1=numFor(d1,lvl===3?3*d1:2*d1); n2=numFor(d2,lvl===3?3*d2:2*d2);
-    }else if(kind==='common'){
+    if(kind==='mult'){            // un dénominateur multiple de l'autre (tables de 1 à 10)
+      d1=rn(2,5); const m=rn(2,Math.floor(10/d1)); d2=d1*m;
+      n1=numFor(d1,2*d1); n2=numFor(d2,d2);
+    }else if(kind==='coprime'){   // dénominateurs premiers entre eux, produit raisonnable
+      d1=rn(2,9); d2=rn(2,9);
+      if(d1===d2||fgcd(d1,d2)!==1||d1*d2>30) continue;
+      n1=numFor(d1,2*d1); n2=numFor(d2,2*d2);
+    }else if(kind==='common'){    // multiple commun à chercher (ex. 4 et 6)
       [d1,d2]=pick(OPS_PAIRS_COMMON);
       n1=numFor(d1,2*d1); n2=numFor(d2,2*d2);
-    }else{
-      const D=(lvl===3&&Math.random()<0.3)?pick([15,20,24,44]):rn(2,12);
-      const K=rn(2,12);
-      d1=D; n1=numFor(D,(K+2)*D); n2=K; d2=1;
+    }else{                        // un entier et une fraction
+      const D=rn(2,10), K=rn(2,10);
+      d1=D; n1=numFor(D,2*D); n2=K; d2=1;
     }
     if(Math.random()<0.5){ [n1,d1,n2,d2]=[n2,d2,n1,d1]; }
-    let op=Math.random()<0.5?'+':'−';
+    const op=Math.random()<0.5?'+':'−';
     const L=lcm2(d1,d2);
     const A=n1*(L/d1), B=n2*(L/d2);
     let raw=op==='+'?A+B:A-B;
@@ -1386,10 +1387,9 @@ function genOps(kind){
     if(raw===0) continue;
     const g=fgcd(Math.abs(raw),L), rnum=raw/g, rden=L/g;
     if(rden===1) continue;   // pas de résultat entier
-    if(Math.abs(raw)>3000||L>800) continue;
-    res={n1,d1,n2,d2,op,kind,rn:rnum,rd:rden};
+    res={n1,d1,n2,d2,op,kind,an:raw,ad:L,rn:rnum,rd:rden};
   }
-  if(!res) res={n1:5,d1:18,n2:3,d2:9,op:'+',kind:'mult',rn:11,rd:18};
+  if(!res) res={n1:5,d1:18,n2:3,d2:9,op:'+',kind:'mult',an:11,ad:18,rn:11,rd:18};
   return res;
 }
 function nextOps(){ return withHistory(()=>genOps(nextOpsKind())); }
@@ -1403,46 +1403,42 @@ function explainOps(q){
   else if(fgcd(d1,d2)===1) why=`${d1} et ${d2} n'ont pas de diviseur commun : on prend leur produit ${L} comme dénominateur commun.`;
   else why=`On cherche un multiple commun de ${d1} et ${d2} : le plus petit est ${L}.`;
   const conv=[];
-  if(d1!==L) conv.push(`${tf(n1,d1)} = ${A}/${L}`);
-  if(d2!==L) conv.push(`${tf(n2,d2)} = ${B}/${L}`);
+  if(d1!==L) conv.push(`${sfrac(n1,d1)} = ${fracHTML(A,L)}`);
+  if(d2!==L) conv.push(`${sfrac(n2,d2)} = ${fracHTML(B,L)}`);
   let t=why+(conv.length?` ${conv.join(' et ')}.`:'');
-  t+=` Donc ${opsText(q)} = ${A}/${L} ${op} ${B}/${L} = (${A} ${op} ${B})/${L} = ${tf(raw,L)}`;
+  t+=` Donc ${exprHTML(q)} = ${fracHTML(A,L)} ${op} ${fracHTML(B,L)} = ${fracHTML(`${A} ${op} ${B}`,L)} = ${sfrac(raw,L)}.`;
   const g=fgcd(Math.abs(raw),L);
-  if(g>1) t+=`, qu'on simplifie en divisant par ${g} : ${tf(q.rn,q.rd)}`;
-  t+='.';
+  if(g>1) t+=` (La fraction irréductible correspondante est ${sfrac(q.rn,q.rd)}, en divisant par ${g}.)`;
   if(raw<0) t+=` Le résultat est négatif car on retire plus que ce que l'on avait (${B} > ${A}).`;
   return t;
 }
 function opsDistractors(q){
-  const {n1,d1,n2,d2,op,rn,rd}=q, sg=op==='+'?1:-1;
-  const L=lcm2(d1,d2), A=n1*(L/d1), B=n2*(L/d2), raw=A+sg*B, g=fgcd(Math.abs(raw),L);
-  const okKey=opsKey(q), seen=new Set([okKey]);
-  const red=(n,d)=>{ if(d<0){ n=-n; d=-d; } const gg=fgcd(Math.abs(n),d)||1; return {n:n/gg,d:d/gg}; };
-  const ok=(o)=>o&&o.d>=1&&o.n!==0&&!(o.n*rd===rn*o.d);
-  const uniq=[], unreduced=[];
-  const push=(arr,o)=>{ if(!o||o.d<1||o.n===0) return; const key=o.n+'/'+o.d; if(seen.has(key)) return; seen.add(key); arr.push(o); };
-  if(g>1) push(unreduced,{n:raw,d:L});   // bon calcul mais non simplifié
-  const cands=[];
-  if(d1+sg*d2!==0) cands.push(red(n1+sg*n2,d1+d2));          // on opère sur les numérateurs ET sur les dénominateurs
-  cands.push(red(n1+sg*n2,d1*d2));                            // numérateurs seulement, dénominateur = produit
-  cands.push(red(n1+sg*n2,L));                                // on oublie de transformer les numérateurs
-  cands.push(red(-rn,rd));                                    // erreur de signe
-  cands.push(red(A-sg*B,L));                                  // mauvaise opération
-  cands.push(red(n1*d2+sg*n2*d1,d1*d2+d1));                   // dénominateur faux
-  const others=[]; shuffle(cands).forEach(o=>{ if(ok(o)) push(others,o); });
+  const {n1,d1,n2,d2,op}=q, sg=op==='+'?1:-1;
+  const L=q.ad, A=n1*(L/d1), B=n2*(L/d2), raw=q.an;
+  const vk=(n,d)=>{ const g=fgcd(Math.abs(n),Math.abs(d))||1; return `${n/g}/${d/g}`; };
+  const seen=new Set([vk(q.an,q.ad)]);
+  const norm=(n,d)=>d<0?{n:-n,d:-d}:{n,d};
   const out=[];
-  if(unreduced.length) out.push(unreduced[0]);
-  others.forEach(o=>{ if(out.length<3) out.push(o); });
-  for(let i=1;out.length<3&&i<12;i++){ [red(rn+i,rd),red(rn-i,rd),red(rn,rd+i)].forEach(o=>{ const tmp=[]; if(ok(o)){ push(tmp,o); if(tmp.length&&out.length<3) out.push(tmp[0]); } }); }
+  const push=(n,d)=>{ const o=norm(n,d); if(o.d<1||o.n===0) return false; const k=vk(o.n,o.d); if(seen.has(k)) return false; seen.add(k); out.push(o); return true; };
+  const cands=[
+    [n1+sg*n2,d1+d2],        // on opère sur les numérateurs ET sur les dénominateurs
+    [n1+sg*n2,d1*d2],        // numérateurs seulement, dénominateur = produit
+    [n1+sg*n2,L],            // on oublie de transformer les numérateurs
+    [-raw,L],                // erreur de signe
+    [A-sg*B,L],              // mauvaise opération
+    [raw,d1*d2]              // bon numérateur, mauvais dénominateur
+  ];
+  shuffle(cands).forEach(([n,d])=>{ if(out.length<3) push(n,d); });
+  for(let i=1;out.length<3&&i<15;i++){ [[raw+i,L],[raw-i,L],[raw,L+i]].forEach(([n,d])=>{ if(out.length<3) push(n,d); }); }
   return out.slice(0,3);
 }
 function renderOpsQCM(){
   const q=nextOps(); state.current=q;
   const content=document.getElementById('content');
-  const options=shuffle([{n:q.rn,d:q.rd},...opsDistractors(q)]);
+  const options=shuffle([{n:q.an,d:q.ad},...opsDistractors(q)]);
   content.innerHTML=`
     <div class="question">${exprHTML(q)} = ?</div>
-    <div class="hint">Choisis le résultat sous forme de fraction irréductible</div>
+    <div class="hint">Choisis le résultat</div>
     <div class="options">${options.map(o=>`<button class="opt-btn" data-k="${o.n}/${o.d}">${sfrac(o.n,o.d)}</button>`).join('')}</div>
     <div class="feedback" id="fb"></div>`;
   content.querySelectorAll('.opt-btn').forEach(btn=>{
@@ -1470,21 +1466,21 @@ function opsRound(){
   for(let i=0;i<4;i++){
     const kind=nextOpsKind(); let q, g=0;
     do{ q=genOps(kind); g++; }
-    while(g<60 && (qs.some(x=>opsKey(x)===opsKey(q)||sigOf(x)===sigOf(q)) || (g<40&&h.includes(sigOf(q)))));
+    while(g<60 && (qs.some(x=>opsVal(x)===opsVal(q)||sigOf(x)===sigOf(q)) || (g<40&&h.includes(sigOf(q)))));
     qs.push(q);
   }
   qs.forEach(x=>h.push(sigOf(x))); while(h.length>20) h.shift();
   return qs;
 }
 function renderOpsJeu(){
-  renderMatch(opsRound(), exprHTML, x=>sfrac(x.rn,x.rd), explainOps);
+  renderMatch(opsRound(), exprHTML, x=>sfrac(x.an,x.ad), explainOps);
 }
 function renderOpsTrou(){
   const q=nextOps(); state.current=q;
   const content=document.getElementById('content');
   content.innerHTML=`
     <div class="fill-row" style="align-items:center;">${exprHTML(q)} = <span class="frac frac-in"><input type="text" id="ansN" inputmode="text" placeholder="?" autocomplete="off"><span class="bar"></span><input type="text" id="ansD" inputmode="numeric" placeholder="?" autocomplete="off"></span></div>
-    <div class="hint">Écris le résultat sous forme de fraction irréductible.</div>
+    <div class="hint">Écris le résultat sous forme de fraction (pas besoin de la simplifier).</div>
     <div class="actions"><button class="primary" id="check">Valider</button></div>
     <div class="feedback" id="fb"></div>`;
   document.getElementById('check').onclick=()=>{
@@ -1497,20 +1493,20 @@ function renderOpsTrou(){
     const fb=document.getElementById('fb');
     const rowEl=content.querySelector('.fill-row');
     document.getElementById('check').disabled=true;
-    const good=(q.rd===1)?(n===q.rn&&!hasDen):(n===q.rn&&hasDen&&dd===q.rd);
+    const valid=!isNaN(n)&&!isNaN(dd)&&dd>0;
+    const good=valid&&hasDen&&n*q.rd===dd*q.rn;
     if(good){
       rowEl.classList.add('anim-good');
       bumpStreak(getStreak());
-      fb.textContent='Exact, bravo !'; fb.className='feedback ok';
-      autoNext(450);
+      const isRed=(n===q.rn&&dd===q.rd);
+      if(isRed){ fb.textContent='Exact, bravo !'; fb.className='feedback ok'; autoNext(450); }
+      else{ fb.innerHTML=`Exact, bravo ! Info : la fraction irréductible qui correspond est ${sfrac(q.rn,q.rd)}.`; fb.className='feedback ok'; document.getElementById('check').style.display='none'; content.querySelectorAll('input').forEach(i=>i.disabled=true); }
     }else{
       rowEl.classList.add('anim-bad');
       failStreak();
       document.getElementById('check').style.display='none';
-      const valid=!isNaN(n)&&!isNaN(dd)&&dd>0;
       let pre='Pas tout à fait. ';
-      if(valid&&n*q.rd===dd*q.rn) pre=`Ta fraction est bien égale au résultat, mais elle n'est pas irréductible : il faut encore la simplifier. `;
-      else if(valid&&n*q.rd===-dd*q.rn) pre=`Attention au signe : la valeur absolue est bonne, mais le résultat est ${q.rn<0?'négatif':'positif'}. `;
+      if(valid&&n*q.rd===-dd*q.rn) pre=`Attention au signe : la valeur absolue est bonne, mais le résultat est ${q.rn<0?'négatif':'positif'}. `;
       fb.innerHTML=pre+`<span class="expl">${explainOps(q)}</span>`;
       fb.className='feedback ko';
     }
@@ -1752,23 +1748,197 @@ function renderPythTrou(){
   };
 }
 
+
+/* ===== Multiples et diviseurs (6e) ===== */
+const MLD_N=[12,16,18,20,24,27,28,30,32,36,40,42,45,48,54,56,60,63,64,72,80,81,84,90,96,100];
+function mldDivs(n){ const d=[]; for(let i=1;i<=n;i++) if(n%i===0) d.push(i); return d; }
+function mldRn(x,y){ return x+Math.floor(Math.random()*(y-x+1)); }
+function genMldWord(){
+  let a,b,word,special=null;
+  const r=Math.random();
+  if(r<.08){ a=0; b=mldRn(2,99); word='multiple'; special='zero'; }
+  else if(r<.16){ a=1; b=mldRn(2,99); word='diviseur'; special='un'; }
+  else{
+    const big=Math.random()<.15, small=big?pick([2,5,10]):mldRn(2,12), k=big?mldRn(13,small===10?99:120):mldRn(2,12), n=small*k;   // grands nombres seulement pour 2, 5 et 10 (critères de divisibilité)
+    if(Math.random()<.5){ a=n; b=small; word='multiple'; } else { a=small; b=n; word='diviseur'; }
+  }
+  return {kind:'word',a,b,word,special,pk:`w|${a}|${b}`};
+}
+function genMldRel(rel){
+  rel=rel||pick(['mult','div','divise','cm','dc']);
+  if(rel==='mult'){
+    const a=pick(MLD_N), example=pick(mldDivs(a).filter(x=>x>1&&x<a));
+    return {kind:'rel',rel,a,example,pk:`r|${rel}|${a}`};
+  }
+  if(rel==='div'||rel==='divise'){
+    const a=mldRn(2,12);
+    return {kind:'rel',rel,a,example:a*mldRn(2,12),pk:`r|${rel}|${a}`};
+  }
+  if(rel==='cm'){
+    let a,b,L,g=0;
+    do{ a=mldRn(2,12); b=mldRn(2,12); L=a/fgcd(a,b)*b; g++; }while((a===b||L>60)&&g<200);
+    return {kind:'rel',rel,a,b,L,example:L,pk:`r|cm|${Math.min(a,b)}|${Math.max(a,b)}`};
+  }
+  let a,b,gg,g=0;
+  do{ gg=mldRn(2,12); const p=mldRn(1,10), q=mldRn(1,10); a=gg*p; b=gg*q; g++; }while((a===b||fgcd(a,b)!==gg||Math.max(a,b)>120)&&g<500);
+  return {kind:'rel',rel:'dc',a,b,g:gg,example:gg,pk:`r|dc|${Math.min(a,b)}|${Math.max(a,b)}`};
+}
+function genMld(){ return Math.random()<.35?genMldWord():genMldRel(); }
+const MLD_BLANK='<span style="display:inline-block;min-width:3.4em;height:1.15em;border:2.5px solid var(--accent);border-radius:7px;background:rgba(27,127,121,.10);vertical-align:-.2em;margin:0 .2em;"></span>';
+function mldText(q,blank=MLD_BLANK){
+  if(q.kind==='word') return `${q.a} est un ${blank} de ${q.b}`;
+  if(q.rel==='cm') return `un multiple commun à ${q.a} et ${q.b} est`;
+  if(q.rel==='dc') return `un diviseur commun à ${q.a} et ${q.b} est`;
+  return q.rel==='mult'?`${q.a} est un multiple de`:q.rel==='div'?`${q.a} est un diviseur de`:`${q.a} divise`;
+}
+function mldValid(q,n){
+  if(q.kind!=='rel') return false;
+  if(q.rel==='mult') return n>=1&&q.a%n===0;
+  if(q.rel==='cm') return n>=0&&n%q.a===0&&n%q.b===0;
+  if(q.rel==='dc') return n>=1&&q.a%n===0&&q.b%n===0;
+  return n>=0&&n%q.a===0;
+}
+function mldCrit(d,n){
+  if(d===2) return ` Rappel : un nombre est divisible par 2 quand son chiffre des unités est 0, 2, 4, 6 ou 8${n?` (ici ${n} se termine par ${n%10})`:''}.`;
+  if(d===5) return ` Rappel : un nombre est divisible par 5 quand il se termine par 0 ou 5${n?` (ici ${n} se termine par ${n%10})`:''}.`;
+  if(d===10) return ` Rappel : un nombre est divisible par 10 quand il se termine par 0${n?` (ici ${n} se termine par ${n%10})`:''}.`;
+  return '';
+}
+function mldAns(q){ return q.kind==='word'?q.word:`par exemple ${q.example}`; }
+function explainMld(q){
+  if(q.kind==='word'){
+    if(q.special==='zero') return `0 = ${q.b} × 0, donc 0 est un multiple de ${q.b} : 0 est un multiple de tous les nombres.`;
+    if(q.special==='un') return `1 × ${q.b} = ${q.b}, donc 1 est un diviseur de ${q.b} : 1 divise tous les nombres.`;
+    if(q.word==='multiple') return `${q.a} = ${q.b} × ${q.a/q.b}, donc ${q.a} est un multiple de ${q.b} (et ${q.b} est un diviseur de ${q.a}).`+mldCrit(q.b,q.a);
+    return `${q.b} = ${q.a} × ${q.b/q.a}, donc ${q.a} est un diviseur de ${q.b} (et ${q.b} est un multiple de ${q.a}).`+mldCrit(q.a,q.b);
+  }
+  if(q.rel==='mult'){
+    const d=mldDivs(q.a);
+    return `« ${q.a} est un multiple de b » signifie que b est un diviseur de ${q.a}. Les diviseurs de ${q.a} sont : ${d.join(' ; ')}. Par exemple ${q.example}, car ${q.a} = ${q.example} × ${q.a/q.example}.`;
+  }
+  if(q.rel==='cm'){
+    const big=Math.max(q.a,q.b), small=Math.min(q.a,q.b), k=q.L/big, list=[]; for(let i=1;i<=k;i++) list.push(big*i);
+    return `Il faut un nombre qui est à la fois un multiple de ${q.a} et de ${q.b}. Multiples de ${big} : ${list.join(' ; ')}. Le premier qui est aussi un multiple de ${small} est ${q.L} (${q.L} = ${small} × ${q.L/small} = ${big} × ${q.L/big}). Tout multiple de ${q.L} convient aussi, ainsi que 0.`;
+  }
+  if(q.rel==='dc'){
+    const da=mldDivs(q.a), db=mldDivs(q.b), com=da.filter(x=>db.includes(x));
+    return `Il faut un nombre qui divise ${q.a} et ${q.b}. Diviseurs de ${q.a} : ${da.join(' ; ')}. Diviseurs de ${q.b} : ${db.join(' ; ')}. Ceux qui sont dans les deux listes : ${com.join(' ; ')}. Par exemple ${q.example}, car ${q.a} = ${q.example} × ${q.a/q.example} et ${q.b} = ${q.example} × ${q.b/q.example}.`;
+  }
+  const m=[0,q.a,2*q.a,3*q.a,4*q.a,5*q.a];
+  return `« ${mldText(q)} b » signifie que b est un multiple de ${q.a}. Les multiples de ${q.a} sont : ${m.join(' ; ')}, etc. (les nombres de la table de ${q.a}). Par exemple ${q.example}, car ${q.example} = ${q.a} × ${q.example/q.a}.`+mldCrit(q.a,0);
+}
+function mldOptions(q){
+  if(q.kind==='word'){ q.qans=q.word; return ['multiple','diviseur']; }
+  let correct=q.example, pool=[];
+  if(q.rel==='mult'){
+    for(let x=2;x<=Math.min(q.a,30);x++) pool.push(x);
+    pool.push(correct+1,correct-1,correct+2);
+  }else if(q.rel==='cm'){
+    correct=q.L;
+    for(let k=2;k<=12;k++){ pool.push(q.a*k,q.b*k); }
+    pool.push(q.L+q.a,q.L+q.b,q.L-q.a,q.L-q.b,q.a+q.b,q.L+1,q.L-1);
+  }else if(q.rel==='dc'){
+    pool.push(...mldDivs(q.a),...mldDivs(q.b),correct+1,correct+2,correct-1,correct*2);
+    for(let x=2;x<=12;x++) pool.push(x);
+  }else{
+    for(let k=2;k<=12;k++){ pool.push(q.a*k+1,q.a*k-1,q.a*k+2,q.a*k-2); }
+    pool.push(q.a+1,q.a-1,q.a*2+1);
+  }
+  const bad=[...new Set(pool)].filter(n=>n>1&&n!==correct&&!mldValid(q,n)&&(q.rel!=='div'&&q.rel!=='divise'||n<=q.a*13)&&(q.rel!=='cm'||n<=70));
+  q.qans=String(correct);
+  return shuffle([correct,...shuffle(bad).slice(0,3)]).map(String);
+}
+function renderMldQCM(){
+  const q=withHistory(genMld); state.current=q;
+  const content=document.getElementById('content');
+  const options=mldOptions(q);
+  content.innerHTML=`<div class="question" style="font-size:1.7rem;">${mldText(q)}</div>
+    <div class="options">${options.map(o=>`<button class="opt-btn" data-k="${o}">${o}</button>`).join('')}</div>
+    <div class="feedback" id="fb"></div>`;
+  content.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      content.querySelectorAll('.opt-btn').forEach(b=>b.onclick=null);
+      const fb=document.getElementById('fb');
+      if(btn.dataset.k===q.qans){
+        btn.classList.add('correct','anim-good');
+        bumpStreak(getStreak());
+        fb.textContent="Bravo, c'est correct !"; fb.className='feedback ok';
+        autoNext(450);
+      }else{
+        btn.classList.add('wrong','anim-bad');
+        failStreak();
+        fb.innerHTML=`Ce n'est pas ça. <span class="expl">${explainMld(q)}</span>`;
+        fb.className='feedback ko';
+        content.querySelectorAll('.opt-btn').forEach(b=>{ if(b.dataset.k===q.qans) b.classList.add('correct'); });
+      }
+    };
+  });
+}
+function mldRound(){
+  for(let t=0;t<30000;t++){
+    const qs=[]; let ok=true;
+    for(let i=0;i<4&&ok;i++){ const q=genMldRel(); if(qs.some(x=>x.pk===q.pk)) ok=false; else qs.push(q); }
+    if(!ok) continue;
+    const ans=qs.map(q=>q.example);
+    if(new Set(ans).size<4) continue;
+    if(qs.some((q,i)=>ans.some((x,j)=>i!==j&&mldValid(q,x)))) continue;
+    return qs;
+  }
+  return null;
+}
+function renderMldJeu(){
+  const qs=mldRound()||[{kind:'rel',rel:'mult',a:24,example:8,pk:'f1'},{kind:'rel',rel:'div',a:7,example:35,pk:'f2'},{kind:'rel',rel:'divise',a:11,example:66,pk:'f3'},{kind:'rel',rel:'mult',a:45,example:9,pk:'f4'}];
+  renderMatch(qs, q=>mldText(q), q=>String(q.example), explainMld);
+}
+function renderMldTrou(){
+  const q=withHistory(genMld); state.current=q;
+  const content=document.getElementById('content');
+  const word=q.kind==='word';
+  const inp=`<input type="text" id="ans" placeholder="?" autocomplete="off" autocapitalize="none" spellcheck="false" inputmode="${word?'text':'numeric'}" style="width:${word?150:90}px;">`;
+  const row=word?mldText(q,'\u0000').replace('\u0000',inp):`${mldText(q)} ${inp}`;
+  content.innerHTML=`<div class="fill-row">${row}</div>
+    <div class="actions"><button class="primary" id="check">Valider</button></div>
+    <div class="feedback" id="fb"></div>`;
+  document.getElementById('check').onclick=()=>{
+    const v=document.getElementById('ans').value.trim().toLowerCase();
+    const fb=document.getElementById('fb');
+    const rowEl=content.querySelector('.fill-row');
+    document.getElementById('check').disabled=true;
+    let good;
+    if(word) good=v.replace(/^un\s+/,'')===q.word;
+    else { const t=v.replace(/\s/g,''); const n=/^\d+$/.test(t)?parseInt(t,10):NaN; good=!isNaN(n)&&mldValid(q,n); }
+    if(good){
+      rowEl.classList.add('anim-good');
+      bumpStreak(getStreak());
+      fb.textContent='Exact, bravo !'; fb.className='feedback ok';
+      autoNext(450);
+    }else{
+      rowEl.classList.add('anim-bad');
+      failStreak();
+      document.getElementById('check').style.display='none';
+      fb.innerHTML=`Pas tout à fait. <span class="expl">${explainMld(q)}</span>`;
+      fb.className='feedback ko';
+    }
+  };
+}
 const LEVEL_ITEMS=lv=>[[lv+'/auto','Automatismes','S\u2019entra\u00eener'],[lv+'/cours','Cours','R\u00e9viser les le\u00e7ons']];
 const SCREENS={
   home:{title:'Math\u00e9matiques',sub:'Choisis ton niveau',items:[['6e','Niveau 6e',''],['3e','Niveau 3e','']]},
   '6e':{title:'Niveau 6e',sub:'Que veux-tu faire ?',items:LEVEL_ITEMS('6e')},
   '3e':{title:'Niveau 3e',sub:'Que veux-tu faire ?',items:LEVEL_ITEMS('3e')},
   '3e/auto':{title:'Automatismes 3e',sub:'Choisis un th\u00e8me',items:[
+    ['3e/auto/tables','1. Tables de multiplication','Les tables de 0 \u00e0 12'],
+    ['3e/auto/frac','2. Fractions irr\u00e9ductibles','\u00c9crire la fraction irr\u00e9ductible \u00e9gale \u00e0 une fraction'],
+    ['3e/auto/opfrac','3. Additions et soustractions de fractions','Calculer et donner le r\u00e9sultat sous forme de fraction'],
+    ['3e/auto/pythagore','4. \u00c9galit\u00e9 de Pythagore','\u00c9crire l\u2019\u00e9galit\u00e9 de Pythagore dans un triangle rectangle'],
     ['3e/auto/conversions','Conversions','Longueurs, aires, volumes, dur\u00e9es'],
-    ['3e/auto/sci','\u00c9criture scientifique','Passer de l\u2019\u00e9criture d\u00e9cimale \u00e0 l\u2019\u00e9criture scientifique'],
-    ['3e/auto/tables','Tables de multiplication','Les tables de 0 \u00e0 12'],
-    ['3e/auto/frac','Fractions irr\u00e9ductibles','\u00c9crire la fraction irr\u00e9ductible \u00e9gale \u00e0 une fraction'],
-    ['3e/auto/opfrac','Additions et soustractions de fractions','Calculer et donner le r\u00e9sultat sous forme de fraction irr\u00e9ductible'],
-    ['3e/auto/pythagore','Égalité de Pythagore','Écrire l’égalité de Pythagore dans un triangle rectangle']]},
+    ['3e/auto/sci','\u00c9criture scientifique','Passer de l\u2019\u00e9criture d\u00e9cimale \u00e0 l\u2019\u00e9criture scientifique']]},
   '6e/auto':{title:'Automatismes 6e',sub:'Choisis un th\u00e8me',items:[
-    ['6e/auto/tables','Tables de multiplication','Les tables de 0 \u00e0 12'],
-    ['6e/auto/durees','Unit\u00e9s de dur\u00e9es','Secondes, minutes, heures, jours\u2026'],
-    ['6e/auto/comp','Compl\u00e9ments','Compl\u00e9ments \u00e0 10, 100, 1 000 et compl\u00e9ments d\u00e9cimaux \u00e0 1'],
-    ['6e/auto/clock','Lecture d\u2019heure','Lire l\u2019heure sur une horloge \u00e0 aiguilles']]},
+    ['6e/auto/tables','1. Tables de multiplication','Les tables de 0 \u00e0 12'],
+    ['6e/auto/durees','2. Unit\u00e9s de dur\u00e9es','Secondes, minutes, heures, jours\u2026'],
+    ['6e/auto/comp','3. Compl\u00e9ments','Compl\u00e9ments \u00e0 10, 100, 1 000 et compl\u00e9ments d\u00e9cimaux \u00e0 1'],
+    ['6e/auto/clock','4. Lecture d\u2019heure','Lire l\u2019heure sur une horloge \u00e0 aiguilles'],
+    ['6e/auto/multiples','5. Multiples et diviseurs','Multiple, diviseur, multiples et diviseurs communs']]},
   '3e/cours':{title:'Cours 3e'}
 };
 function go(s){
@@ -1788,7 +1958,8 @@ function go(s){
     '6e/auto/tables':{theme:'tables',title:'Tables de multiplication',sub:'Automatismes 6e'},
     '6e/auto/durees':{theme:'durees',title:'Unit\u00e9s de dur\u00e9es',sub:'Automatismes 6e'},
     '6e/auto/comp':{theme:'comp',title:'Compl\u00e9ments',sub:'Automatismes 6e'},
-    '6e/auto/clock':{theme:'clock',title:'Lecture d\u2019heure',sub:'Automatismes 6e'}
+    '6e/auto/clock':{theme:'clock',title:'Lecture d\u2019heure',sub:'Automatismes 6e'},
+    '6e/auto/multiples':{theme:'mld',title:'Multiples et diviseurs',sub:'Automatismes 6e'}
   };
   const isExo=!!EXO[s];
   exo.hidden=!isExo; menu.hidden=isExo;
