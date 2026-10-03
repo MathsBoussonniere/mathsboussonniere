@@ -106,6 +106,8 @@ button.primary:hover{background:var(--accent-dark);color:#fff;}
 .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.25;font-variant-numeric:tabular-nums;}
 .frac>:first-child{padding:0 7px 3px;border-bottom:2px solid currentColor;text-align:center;}
 .frac>:last-child{padding:3px 7px 0;text-align:center;}
+.frac.nest>:first-child{padding:0 10px 6px;}
+.frac.nest>:last-child{padding:6px 10px 0;}
 .frac.frac-in{align-items:stretch;}
 .frac.frac-in .bar{display:block;height:2px;background:currentColor;margin:5px 0;}
 .fill-row .frac.frac-in input{width:84px;border:none;border-radius:6px;background:var(--bg);padding:6px 4px;margin:0;}
@@ -113,6 +115,29 @@ button.primary:hover{background:var(--accent-dark);color:#fff;}
 .sf{display:inline-flex;align-items:center;gap:7px;vertical-align:middle;}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 @media (prefers-reduced-motion: reduce){ .anim-good,.anim-bad,.anim-milestone{animation:none;} }
+/* Calcul littéral : police « maths » (empattements) pour les expressions seulement. Police composite « MathMix » : chiffres et signes en romain, lettres en italique, avec les mêmes métriques à l'affichage et dans le champ de saisie. */
+@font-face{font-family:MathMix;font-style:normal;font-weight:400;unicode-range:U+0000-0040,U+005B-0060,U+007B-00FF,U+2000-22FF;src:local('Times New Roman'),local('TimesNewRomanPSMT'),local('Liberation Serif'),local('Tinos'),local('Noto Serif'),local('DejaVu Serif');}
+@font-face{font-family:MathMix;font-style:normal;font-weight:400;unicode-range:U+0041-005A,U+0061-007A;src:local('Times New Roman Italic'),local('TimesNewRomanPS-ItalicMT'),local('Liberation Serif Italic'),local('Tinos Italic'),local('Noto Serif Italic'),local('DejaVu Serif Italic');}
+@font-face{font-family:MathMix;font-style:normal;font-weight:700;unicode-range:U+0000-0040,U+005B-0060,U+007B-00FF,U+2000-22FF;src:local('Times New Roman Bold'),local('TimesNewRomanPS-BoldMT'),local('Liberation Serif Bold'),local('Tinos Bold'),local('Noto Serif Bold'),local('DejaVu Serif Bold');}
+@font-face{font-family:MathMix;font-style:normal;font-weight:700;unicode-range:U+0041-005A,U+0061-007A;src:local('Times New Roman Bold Italic'),local('TimesNewRomanPS-BoldItalicMT'),local('Liberation Serif Bold Italic'),local('Tinos Bold Italic'),local('Noto Serif Bold Italic'),local('DejaVu Serif Bold Italic');}
+:root{--mf:MathMix,"Times New Roman",Georgia,"Noto Serif",serif;}
+.mv{font-family:var(--mf);font-style:normal;font-size:1.12em;}
+.mx{font-family:var(--mf);font-size:1.12em;}
+.mn{position:relative;top:.07em;}
+#content.lit :is(.lq,.opt-btn,.match-item,.fill-row,.fill-row input){font-family:var(--mf);}
+#content.lit :is(.lq,.opt-btn,.match-item,.fill-row) :is(.mx,.mv){font-size:1em;}
+#content.lit .lq{font-size:1.9rem!important;}
+#content.lit .opt-btn{font-size:1.35rem!important;}
+#content.lit .match-item{font-size:1.15rem;}
+#content.lit .fill-row{font-size:1.45rem!important;font-weight:600;}
+#content.lit .fill-row input{font-size:1.4rem;font-weight:600;}
+.litnote{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:44px 22px 30px;margin-top:8px;}
+.litnote[hidden]{display:none;}
+.litnote p{margin:0 0 6px;font-size:1.05rem;line-height:1.5;max-width:30em;}
+.litpen{font-size:2rem;line-height:1;}
+.litx{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--muted);font-size:1.1rem;line-height:1;cursor:pointer;padding:6px 8px;border-radius:6px;}
+.litx:hover{color:var(--ink);}
+#exo.intro>:not(#litNote){display:none;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
@@ -123,6 +148,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   <p class="subtitle" id="subtitle">Choisis ton niveau</p>
   <div id="menu"></div>
   <div id="exo" hidden>
+    <div class="litnote" id="litNote" hidden><button type="button" class="litx" id="litNoteClose" aria-label="Fermer le message">✕</button><div class="litpen">✏️</div><p>Tu peux utiliser une feuille de brouillon à côté de toi si tu le souhaites.</p><button type="button" class="primary" id="litNoteStart">Commencer</button></div>
     <div class="tabs" id="tabs"></div>
     <div class="modes" id="modes"></div>
     <div class="card">
@@ -157,9 +183,18 @@ let state={theme:'conversions',cat:'longueur',mode:'qcm',current:null,resolved:f
 let streaks={};
 let pendingTimer=null;
 CATEGORIES.duree={label:"Durées",maxDiff:0,units:[]};
-function genQuestion(cat){ return cat==='duree'?genTimeQuestion():genQuestionBase(cat); }
-function genRound(cat){ return cat==='duree'?genTimeRound():genRoundBase(cat); }
-function explain(cat,q){ return cat==='duree'?q.expl:explainBase(cat,q); }
+/* 'airevol' : aires et volumes fusionnés (une question = aire ou volume ; une série du jeu = tout aire ou tout volume) */
+function genQuestion(cat){
+  if(cat==='duree') return genTimeQuestion();
+  if(cat==='airevol'){ const c=pick(['aire','volume']); const q=genQuestionBase(c); q.cat=c; return q; }
+  return genQuestionBase(cat);
+}
+function genRound(cat){
+  if(cat==='duree') return genTimeRound();
+  if(cat==='airevol'){ const c=pick(['aire','volume']); const qs=genRoundBase(c); qs.forEach(q=>q.cat=c); return qs; }
+  return genRoundBase(cat);
+}
+function explain(cat,q){ return cat==='duree'?q.expl:explainBase(q.cat||cat,q); }
 function qLeft(q){ return q.label || `${fmt(q.val)} ${q.from.n}`; }
 function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
 function genTimeQuestion(){
@@ -211,7 +246,15 @@ function revealCurrent(){
     fb.innerHTML=`Question passée. Voici les bonnes associations :<div class="expl"><ul style="margin:6px 0 0;padding-left:18px;">${lines.join('')}</ul></div>`;
     return;
   }
-  const opf=state.theme==='opf', frac=state.theme==='frac', sci=state.theme==='sci', tab=state.theme==='tables', dur=state.theme==='durees', comp=state.theme==='comp', clock=state.theme==='clock', pyt=state.theme==='pyth', mld=state.theme==='mld';
+  if(state.theme==='lit'){
+    if(state.mode==='qcm') content.querySelectorAll('.opt-btn').forEach(b=>{ b.onclick=null; if(litPlain(b.dataset.k)===litPlain(q.ansStr)) b.classList.add('correct'); });
+    else{ const i=document.getElementById('ans'); if(i){ i.value=litPlain(q.ansStr); i.disabled=true; }
+      const c=document.getElementById('check'); if(c){ c.disabled=true; c.style.display='none'; }
+      content.querySelectorAll('.pykey').forEach(b=>b.disabled=true); }
+    fb.innerHTML=`Question pass\u00e9e. R\u00e9ponse : ${q.ansStr}.<span class="expl">${q.expl}</span>`;
+    return;
+  }
+  const opf=(state.theme==='opf'||state.theme==='mdf'), frac=state.theme==='frac', sci=state.theme==='sci', tab=state.theme==='tables', dur=state.theme==='durees', comp=state.theme==='comp', clock=state.theme==='clock', pyt=state.theme==='pyth', mld=state.theme==='mld';
   const expl=mld?explainMld(q):pyt?explainPyth(q):opf?explainOps(q):frac?explainFrac(q):sci?explainSci(q):tab?explainTable(q):dur?explainDuree(q):comp?explainComp(q):clock?explainClock(q):explain(state.cat,q);
   const ansTxt=mld?mldAns(q):pyt?pythEq(q):opf?`${exprHTML(q)} = ${sfrac(q.an,q.ad)}`:frac?`${fracHTML(q.a,q.b)} = ${q.d===1?q.p:fracHTML(q.p,q.d)}`:tab?`${q.a} × ${q.b} = ${q.ans}`:dur?q.full:comp?`${fmt(q.a)} + ${fmt(q.ans)} = ${fmt(q.target)}`:clock?clockLabel(q):sci?(q.dir==='toSci'?`${fmt(q.dec)} = ${sciStr(q.a,q.n)}`:`${sciStr(q.a,q.n)} = ${fmt(q.dec)}`):`${qLeft(q)} = ${fmt(q.ans)} ${q.to.n}`;
   if(state.mode==='qcm'){
@@ -276,7 +319,26 @@ function randVal(){
   const c=Math.random()<0.2?hard:easy;
   return c[Math.floor(Math.random()*c.length)];
 }
+/* Volumes : répartition des conversions
+   50 % : unité voisine (1 rang d'écart, ex. cm³ → dm³ ou mm³)
+   35 % : m³ ou dm³ ↔ L (1 L = 1 dm³)
+   15 % : on saute une unité (2 rangs d'écart, ex. m³ → cm³ ou hm³) */
+const VOL_MIX={voisine:0.50, litre:0.35, saut:0.15};
+const VOL_LITRE={n:'L',e:-3};
+function pickPairVolume(){
+  const units=CATEGORIES.volume.units;
+  const r=Math.random();
+  if(r>=VOL_MIX.voisine && r<VOL_MIX.voisine+VOL_MIX.litre){
+    const cube=pick(units.filter(u=>u.n==='m³'||u.n==='dm³'));
+    return Math.random()<0.5?[cube,VOL_LITRE]:[VOL_LITRE,cube];
+  }
+  const gap=r<VOL_MIX.voisine?1:2;
+  const pairs=[];
+  units.forEach((u,i)=>units.forEach((v,j)=>{ if(Math.abs(i-j)===gap) pairs.push([u,v]); }));
+  return pick(pairs);
+}
 function pickPair(cat){
+  if(cat==='volume') return pickPairVolume();
   const {units,maxDiff}=CATEGORIES[cat];
   const hard=Math.random()<0.25;
   const eff=hard?99:maxDiff;
@@ -299,23 +361,24 @@ function genRoundBase(cat){
   const baseDigit=Math.floor(Math.random()*9)+1;
   const offsets=shuffle([-1,0,1,2]);
   const vals=offsets.map(o=>baseDigit*Math.pow(10,o));
-  const used=new Set();
+  const used=new Set(), usedAns=new Set();
   const qs=[];
   for(let i=0;i<4;i++){
-    let from,to,tries=0;
-    do{ [from,to]=pickPair(cat); tries++; } while(used.has(from.n+'>'+to.n) && tries<40);
-    used.add(from.n+'>'+to.n);
     const val=vals[i];
+    let from,to,ans,tries=0;
+    do{
+      [from,to]=pickPair(cat); tries++;
+      ans=Number(fmtRaw(convert(val,from.e,to.e)).replace(',','.'));
+    } while((used.has(from.n+'>'+to.n) || usedAns.has(ans+'|'+to.n)) && tries<40);
+    used.add(from.n+'>'+to.n); usedAns.add(ans+'|'+to.n);
     const diff=from.e-to.e;
-    const rawAns=convert(val,from.e,to.e);
-    const ans=Number(fmtRaw(rawAns).replace(',','.'));
     qs.push({from,to,val,ans,diff});
   }
   return qs;
 }
 function explainBase(cat,q){
   const {from,to,val,ans,diff}=q;
-  if(cat==='capacite'){
+  if(cat==='capacite'||from.n==='L'||to.n==='L'){
     if((from.n==='m³'&&to.n==='dm³')||(from.n==='dm³'&&to.n==='m³'))
       return diff>0?`1 m³ = ${fmt(1000)} dm³, donc on multiplie par ${fmt(1000)} : ${fmt(val)} × ${fmt(1000)} = ${fmt(ans)}.`:`1 m³ = ${fmt(1000)} dm³, donc on divise par ${fmt(1000)} : ${fmt(val)} ÷ ${fmt(1000)} = ${fmt(ans)}.`;
     if((from.n==='m³'&&to.n==='L')||(from.n==='L'&&to.n==='m³'))
@@ -367,7 +430,7 @@ function explainSci(q){
   return `${eq} = ${fmt(dec)} : 10<sup>0</sup> = 1, donc le nombre ne change pas.`;
 }
 
-function keyFor(){ return (state.lvl||'')+'|'+state.theme+'|'+(state.theme==='conversions'?state.cat:'sci')+'|'+state.mode; }
+function keyFor(){ return (state.lvl||'')+'|'+state.theme+'|'+((state.theme==='conversions'||state.theme==='lit')?state.cat:'sci')+'|'+state.mode; }
 
 let qHistory={};
 function sigOf(q){
@@ -407,17 +470,38 @@ function bumpStreak(s){ resolve();
 
 function renderTabs(){
   const t=document.getElementById('tabs');
-  if(state.theme!=='conversions'){ t.style.display='none'; t.innerHTML=''; return; }
+  const tabCats=null; /* plus d'onglets : un automatisme par catégorie */
+  if(!tabCats){ t.style.display='none'; t.innerHTML=''; return; }
   t.style.display='flex';
-  t.innerHTML=Object.entries(CATEGORIES).map(([k,v])=>`<button class="tab-btn ${state.cat===k?'active':''}" data-cat="${k}">${v.label}</button>`).join('');
-  t.querySelectorAll('.tab-btn').forEach(b=>b.onclick=()=>{abandon();state.cat=b.dataset.cat;renderTabs();newQuestion();});
+  t.innerHTML=Object.entries(tabCats).map(([k,v])=>`<button class="tab-btn ${state.cat===k?'active':''}" data-cat="${k}">${v.label}</button>`).join('');
+  t.querySelectorAll('.tab-btn').forEach(b=>b.onclick=()=>{ if(b.dataset.cat===state.cat) return; switchView(()=>{state.cat=b.dataset.cat;}); renderTabs(); });
 }
 function renderModes(){
   const m=document.getElementById('modes');
   m.innerHTML=MODES.map(mo=>`<button class="mode-btn ${state.mode===mo.id?'active':''}" data-mode="${mo.id}">${mo.label}</button>`).join('');
-  m.querySelectorAll('.mode-btn').forEach(b=>b.onclick=()=>{abandon();state.mode=b.dataset.mode;renderModes();newQuestion();});
+  m.querySelectorAll('.mode-btn').forEach(b=>b.onclick=()=>{ if(b.dataset.mode===state.mode) return; switchView(()=>{state.mode=b.dataset.mode;}); renderModes(); });
 }
 
+/* Les questions ne changent que si on quitte le thème : en changeant de mode (ou d'onglet), on met la vue de côté
+   et on la retrouve telle quelle (même question, même état) quand on revient. */
+let viewStash={};
+function viewKey(){ return [state.theme,state.lvl,(state.theme==='conversions'||state.theme==='lit')?state.cat:'',state.mode].join('|'); }
+function switchView(change){
+  if(pendingTimer){clearTimeout(pendingTimer);pendingTimer=null;}
+  const content=document.getElementById('content');
+  const frag=document.createDocumentFragment();
+  while(content.firstChild) frag.appendChild(content.firstChild);
+  viewStash[viewKey()]={frag,current:state.current,resolved:state.resolved};
+  change();
+  const v=viewStash[viewKey()];
+  if(v){
+    delete viewStash[viewKey()];
+    content.appendChild(v.frag);
+    state.current=v.current; state.resolved=v.resolved; state.shownAt=Date.now();
+    updateStreakDisplay(); setNewBtn();
+    const inp=content.querySelector('input:not([disabled])'); if(inp) inp.focus({preventScroll:true});
+  }else newQuestion();
+}
 function newQuestion(){
   _newQuestion();
   const inp=document.querySelector('#content input:not([disabled])');
@@ -428,8 +512,13 @@ function _newQuestion(){
   if(pendingTimer){clearTimeout(pendingTimer);pendingTimer=null;}
   updateStreakDisplay();
   state.resolved=false; setNewBtn();
+  document.getElementById('content').classList.toggle('lit',state.theme==='lit');
   document.getElementById('content').innerHTML='';
-  if(state.theme==='mld'){
+  if(state.theme==='lit'){
+    if(state.mode==='qcm') renderLitQCM();
+    else if(state.mode==='jeu') renderLitJeu();
+    else renderLitTrou();
+  }else if(state.theme==='mld'){
     if(state.mode==='qcm') renderMldQCM();
     else if(state.mode==='jeu') renderMldJeu();
     else renderMldTrou();
@@ -437,6 +526,10 @@ function _newQuestion(){
     if(state.mode==='qcm') renderPythQCM();
     else if(state.mode==='jeu') renderPythJeu();
     else renderPythTrou();
+  }else if(state.theme==='mdf'){
+    if(state.mode==='qcm') renderMdfQCM();
+    else if(state.mode==='jeu') renderMdfJeu();
+    else renderMdfTrou();
   }else if(state.theme==='opf'){
     if(state.mode==='qcm') renderOpsQCM();
     else if(state.mode==='jeu') renderOpsJeu();
@@ -487,7 +580,7 @@ function renderQCM(){
   }
   const options=shuffle([...opts]);
   content.innerHTML=`
-    <div class="question">${qLeft(q)} = ? ${q.to.n}</div>
+    <div class="question">${qLeft(q)} = ${MLD_BLANK} ${q.to.n}</div>
     <div class="options">${options.map(o=>`<button class="opt-btn" data-val="${o}">${fmt(o)} ${q.to.n}</button>`).join('')}</div>
     <div class="feedback" id="fb"></div>`;
   content.querySelectorAll('.opt-btn').forEach(btn=>{
@@ -1145,18 +1238,18 @@ function fracOptHTML(o){ return o.d===1?String(o.n):fracHTML(o.n,o.d); }
 function fracText(q){ return q.d===1?String(q.p):`${q.p}/${q.d}`; }
 function fracKey(q){ return `${q.p}/${q.d}`; }
 let fracRecent=[], fracTypes=[];
-/* Fréquences des facteurs de simplification (tirage « sans remise » dans un sac mélangé) :
-   - 1 à 12, 15 et 24 : ~90 % du temps ; les facteurs de 1 à 9 (tables de 1 à 9) sont 25 % plus fréquents (×1,25) que 10, 11, 12, 15 et 24
-   - multiples de 10 (hors 10) : ~10 % du temps, chacun ~0,9 % */
-const FRAC_KS_LOW=[1,2,3,4,5,6,7,8,9];
-const FRAC_KS_MAIN=[10,11,12,15,24];
-const FRAC_KS_TEN=[20,30,40,50,60,70,80,90,100,110,120];
+/* Fréquences visées (réglables avec les constantes ci-dessous) :
+   - fraction déjà irréductible (k = 1) : 1 question sur 10
+   - résultat entier : 1 question sur 10
+   - numérateur ou dénominateur multiple de 11 ou de 12 (quel que soit le facteur de simplification) : environ 1 question sur 4
+   Les facteurs de simplification k sont tirés « sans remise » dans un sac mélangé (poids ci-dessous). */
+const FRAC_P_INT=0.135;    // probabilité, pour une fraction simplifiable, que le résultat soit un entier (≈ 10 % de toutes les questions)
+const FRAC_KEEP_BIG=0.12;  // probabilité de garder une fraction dont a ou b est multiple de 11 ou 12 (hors k = 11, 12, 24, 60, 110, 120)
+const FRAC_K_WEIGHTS={1:39, 2:30,3:30,4:30,5:30,6:30,7:30,8:30,9:30, 10:24,15:24, 11:8,12:8,24:8, 20:4,30:4,40:4,50:4,70:4,80:4,90:4,100:4, 60:1,110:1,120:1};
 let fracBag=[], fracKHist=[];
 function fracNewBag(){
   const b=[];
-  FRAC_KS_LOW.forEach(k=>{ for(let i=0;i<30;i++) b.push(k); });   // ~6,9 % chacun
-  FRAC_KS_MAIN.forEach(k=>{ for(let i=0;i<24;i++) b.push(k); });  // ~5,5 % chacun
-  FRAC_KS_TEN.forEach(k=>{ for(let i=0;i<4;i++) b.push(k); });    // ~0,9 % chacun
+  Object.keys(FRAC_K_WEIGHTS).forEach(k=>{ for(let i=0;i<FRAC_K_WEIGHTS[k];i++) b.push(+k); });
   return shuffle(b);
 }
 function nextFracK(){
@@ -1197,12 +1290,14 @@ function balancedPair(pLo,pHi,dLo,dHi){
 function genFrac(k){
   if(k===undefined) k=nextFracK();
   const rn=(x,y)=>x+Math.floor(Math.random()*(y-x+1));
-  // k = 1 : fraction déjà irréductible ; sinon ~1 fois sur 7 le résultat est un nombre entier
-  let type=k===1?'irr':(Math.random()<0.215?'int':'red');
+  // k = 1 : fraction déjà irréductible ; sinon, une fois sur ~9 le résultat est un nombre entier
+  let type=k===1?'irr':(Math.random()<FRAC_P_INT?'int':'red');
   if(type==='int'&&fracTypes.slice(-2).includes('int')) type='red';
   const cap=Math.floor(720/k);
   const pm=k===24?3:k===15?4:(k>12?9:12);   // a = p×k et b = d×k ; 24 → jusqu'à 72, 15 → jusqu'à 60
   const hi=Math.min(pm,cap);
+  const isM=n=>n%11===0||n%12===0;
+  const kBig=isM(k);   // k = 11, 12, 24, 60, 110, 120 : a et b sont toujours multiples de 11 ou 12 (leur fréquence est réglée dans le sac)
   let res=null;
   for(let t=0;t<200&&!res;t++){
     let p,d;
@@ -1210,6 +1305,7 @@ function genFrac(k){
     else if(type==='int'){ p=rn(2,hi); d=1; }
     else [p,d]=balancedPair(1,hi,2,hi);
     if(fracRecent.includes(p+'/'+d)&&t<150) continue;
+    if(!kBig&&t<150&&(isM(p*k)||isM(d*k))&&Math.random()>FRAC_KEEP_BIG) continue;   // on garde moins souvent les multiples de 11 et 12
     res={a:p*k,b:d*k,p,d,k};
   }
   if(!res) res={a:14,b:18,p:7,d:9,k:2};
@@ -1234,18 +1330,18 @@ function fracRound(){
 function explainFrac(q){
   const {a,b,p,d,k}=q, t=fracHTML(a,b), fr=(n,m)=>fracHTML(n,m);
   if(k===1) return `${t} est déjà irréductible : ${a} et ${b} n'ont aucun diviseur commun autre que 1, on ne peut donc plus la simplifier.`;
+  // On simplifie directement par le plus grand diviseur compris entre 2 et 12 (puis on recommence si besoin)
+  const factors=[]; let rem=k;
+  while(rem>1){ let f=0; for(let c=Math.min(12,rem);c>=2;c--){ if(rem%c===0){ f=c; break; } } if(!f) f=rem; factors.push(f); rem/=f; }
   const steps=[]; let ca=a, cb=b;
-  if(k>10&&k%10===0){
-    const m=k/10;
-    steps.push(`on divise par 10 (les deux nombres se terminent par 0) : ${fr(a,b)} = ${fr(a/10,b/10)}`);
-    steps.push(`puis par ${m} (les deux nombres sont divisibles par ${m}) : ${fr(a/10,b/10)} = ${d===1?p:fr(p,d)}`);
-    return `On simplifie ${t} en deux fois (PGCD = ${k} = 10 × ${m}) : ${steps.join(' ; ')}. `+(d===1?`Le dénominateur vaut 1 : ${t} = ${p}, c'est un nombre entier, on écrit simplement ${p}.`:`Résultat : ${t} = ${fr(p,d)}, et ${p} et ${d} n'ont plus de diviseur commun.`);
-  }
-  primeFactors(k).forEach(f=>{
-    const why=f===2?'les deux nombres sont pairs':f===3?'la somme des chiffres de chaque nombre est un multiple de 3':f===5?'les deux nombres se terminent par 0 ou 5':`les deux nombres sont divisibles par ${f}`;
-    steps.push(`on divise par ${f} (${why}) : ${fr(ca,cb)} = ${fr(ca/f,cb/f)}`); ca/=f; cb/=f;
+  factors.forEach(f=>{
+    const why=f===2?'les deux nombres sont pairs':f===3?'la somme des chiffres de chaque nombre est un multiple de 3':f===5?'les deux nombres se terminent par 0 ou 5':f===10?'les deux nombres se terminent par 0':`ce sont tous les deux des multiples de ${f}`;
+    const res=(ca/f===p&&cb/f===d&&d===1)?p:fr(ca/f,cb/f);
+    steps.push(`on divise par ${f} (${why}) : ${fr(ca,cb)} = ${res}`); ca/=f; cb/=f;
   });
-  return `On simplifie ${t} jusqu'à ce que le numérateur et le dénominateur n'aient plus de diviseur commun autre que 1 (on peut aussi diviser directement par leur PGCD, ici ${k}) : ${steps.join(' ; ')}. `+(d===1?`Le dénominateur vaut 1 : ${t} = ${p}, c'est un nombre entier, on écrit simplement ${p} (et non ${fr(p,1)}).`:`Résultat : ${t} = ${fr(p,d)}, et ${p} et ${d} n'ont plus de diviseur commun.`);
+  const end=(d===1?`Le dénominateur vaut 1 : ${t} = ${p}, c'est un nombre entier, on écrit simplement ${p} (et non ${fr(p,1)}).`:`Résultat : ${t} = ${fr(p,d)}, et ${p} et ${d} n'ont plus de diviseur commun.`);
+  if(factors.length===1) return `On simplifie ${t} : ${steps[0]}. `+end;
+  return `On simplifie ${t} en ${factors.length===2?'deux fois':factors.length+' fois'} (${k} = ${factors.join(' × ')}) : ${steps.join(' ; ')}. `+end;
 }
 function fracDistractors(q){
   const {a,b,p,d,k}=q, okKey=fracKey(q);
@@ -1268,8 +1364,8 @@ function renderFracQCM(){
   const content=document.getElementById('content');
   const options=shuffle([{n:q.p,d:q.d},...fracDistractors(q)]);
   content.innerHTML=`
+    <div class="question" style="font-size:1rem;">Choisis la fraction irréductible égale à cette fraction</div>
     <div class="question">${fracHTML(q.a,q.b)} = ?</div>
-    <div class="hint">Choisis la fraction irréductible égale à cette fraction</div>
     <div class="options">${options.map(o=>`<button class="opt-btn" data-k="${o.n}/${o.d}">${fracOptHTML(o)}</button>`).join('')}</div>
     <div class="feedback" id="fb"></div>`;
   content.querySelectorAll('.opt-btn').forEach(btn=>{
@@ -1299,8 +1395,8 @@ function renderFracTrou(){
   const q=nextFrac(); state.current=q;
   const content=document.getElementById('content');
   content.innerHTML=`
+    <div class="question" style="font-size:1rem;">Écris la fraction irréductible. Si le résultat est un nombre entier, laisse le dénominateur vide.</div>
     <div class="fill-row" style="align-items:center;">${fracHTML(q.a,q.b)} = <span class="frac frac-in"><input type="text" id="ansN" inputmode="numeric" placeholder="?" autocomplete="off"><span class="bar"></span><input type="text" id="ansD" inputmode="numeric" placeholder="?" autocomplete="off"></span></div>
-    <div class="hint">Écris la fraction irréductible. Si le résultat est un nombre entier, laisse le dénominateur vide.</div>
     <div class="actions"><button class="primary" id="check">Valider</button></div>
     <div class="feedback" id="fb"></div>`;
   document.getElementById('check').onclick=()=>{
@@ -1339,7 +1435,7 @@ function lcm2(a,b){ return a/fgcd(a,b)*b; }
 function tf(n,d){ const neg=n<0, m=Math.abs(n); return (neg?'−':'')+(d===1?`${m}`:`${m}/${d}`); }
 function tOperand(n,d){ return d===1?String(n):fracHTML(n,d); }
 function sfrac(n,d){ return n<0?`<span class="sf"><span>−</span>${tOperand(-n,d)}</span>`:tOperand(n,d); }
-function exprHTML(q){ return `<span class="sf">${tOperand(q.n1,q.d1)}<span>${q.op}</span>${tOperand(q.n2,q.d2)}</span>`; }
+function exprHTML(q){ if(q.nested) return `<span class="frac nest"><span>${fracHTML(q.n1,q.d1)}</span><span>${fracHTML(q.n2,q.d2)}</span></span>`; return `<span class="sf">${tOperand(q.n1,q.d1)}<span>${q.op}</span>${tOperand(q.n2,q.d2)}</span>`; }
 function opsText(q){ return `${tf(q.n1,q.d1)} ${q.op} ${tf(q.n2,q.d2)}`; }
 function opsKey(q){ return `${q.an}/${q.ad}`; }
 function opsVal(q){ return `${q.rn}/${q.rd}`; }
@@ -1394,6 +1490,7 @@ function genOps(kind){
 }
 function nextOps(){ return withHistory(()=>genOps(nextOpsKind())); }
 function explainOps(q){
+  if(q.op==='×'||q.op==='÷') return explainMdf(q);
   const {n1,d1,n2,d2,op}=q;
   const L=lcm2(d1,d2), A=n1*(L/d1), B=n2*(L/d2), raw=op==='+'?A+B:A-B;
   let why;
@@ -1438,7 +1535,6 @@ function renderOpsQCM(){
   const options=shuffle([{n:q.an,d:q.ad},...opsDistractors(q)]);
   content.innerHTML=`
     <div class="question">${exprHTML(q)} = ?</div>
-    <div class="hint">Choisis le résultat</div>
     <div class="options">${options.map(o=>`<button class="opt-btn" data-k="${o.n}/${o.d}">${sfrac(o.n,o.d)}</button>`).join('')}</div>
     <div class="feedback" id="fb"></div>`;
   content.querySelectorAll('.opt-btn').forEach(btn=>{
@@ -1479,8 +1575,8 @@ function renderOpsTrou(){
   const q=nextOps(); state.current=q;
   const content=document.getElementById('content');
   content.innerHTML=`
+    <div class="question" style="font-size:1rem;">Écris le résultat sous forme de fraction (réponses non simplifiées acceptées).</div>
     <div class="fill-row" style="align-items:center;">${exprHTML(q)} = <span class="frac frac-in"><input type="text" id="ansN" inputmode="text" placeholder="?" autocomplete="off"><span class="bar"></span><input type="text" id="ansD" inputmode="numeric" placeholder="?" autocomplete="off"></span></div>
-    <div class="hint">Écris le résultat sous forme de fraction (pas besoin de la simplifier).</div>
     <div class="actions"><button class="primary" id="check">Valider</button></div>
     <div class="feedback" id="fb"></div>`;
   document.getElementById('check').onclick=()=>{
@@ -1508,6 +1604,151 @@ function renderOpsTrou(){
       let pre='Pas tout à fait. ';
       if(valid&&n*q.rd===-dd*q.rn) pre=`Attention au signe : la valeur absolue est bonne, mais le résultat est ${q.rn<0?'négatif':'positif'}. `;
       fb.innerHTML=pre+`<span class="expl">${explainOps(q)}</span>`;
+      fb.className='feedback ko';
+    }
+  };
+}
+
+/* ===== Multiplications et divisions de fractions (3e) — résultat NON simplifié ===== */
+let mdfBag=[], mdfKindHist=[];
+function nextMdfKind(){
+  if(!mdfBag.length){
+    [['ffx',5],['ffd',5],['nest',4],['fix',2],['fid',2]].forEach(([k,c])=>{ for(let i=0;i<c;i++) mdfBag.push(k); });
+    shuffle(mdfBag);
+  }
+  let idx=-1;
+  for(let i=mdfBag.length-1;i>=0;i--){ if(mdfBag[i]!==mdfKindHist[mdfKindHist.length-1]){ idx=i; break; } }
+  if(idx<0) idx=mdfBag.length-1;
+  const k=mdfBag.splice(idx,1)[0];
+  mdfKindHist.push(k); while(mdfKindHist.length>3) mdfKindHist.shift();
+  return k;
+}
+function genMdf(kind){
+  const rn=(x,y)=>x+Math.floor(Math.random()*(y-x+1));
+  let res=null;
+  for(let t=0;t<300&&!res;t++){
+    let n1,d1,n2,d2,op;
+    const frac=()=>{ const d=rn(2,12); let n=rn(1,Math.min(12,2*d)); if(n===d) n=d+1; return [n,d]; };
+    if(kind==='ffx'||kind==='ffd'||kind==='nest'){ [n1,d1]=frac(); [n2,d2]=frac(); op=kind==='ffx'?'×':'÷'; }
+    else{ [n1,d1]=frac(); n2=rn(2,9); d2=1; op=kind==='fix'?'×':'÷'; }
+    if(kind==='fix'&&Math.random()<0.3){ [n1,d1,n2,d2]=[n2,d2,n1,d1]; }   // parfois l'entier est en premier (4 × 5/6)
+    const an=op==='×'?n1*n2:n1*d2, ad=op==='×'?d1*d2:d1*n2;
+    const g=fgcd(an,ad), rnum=an/g, rden=ad/g;
+    if(rden===1||ad===1) continue;   // pas de résultat entier
+    res={n1,d1,n2,d2,op,kind,nested:kind==='nest',an,ad,rn:rnum,rd:rden};
+  }
+  if(!res) res={n1:12,d1:21,n2:5,d2:2,op:'×',kind:'ffx',an:60,ad:42,rn:10,rd:7};
+  return res;
+}
+function nextMdf(){ return withHistory(()=>genMdf(nextMdfKind())); }
+function explainMdf(q){
+  const {n1,d1,n2,d2,op,an,ad}=q, fr=fracHTML, t=exprHTML(q);
+  const g=fgcd(an,ad);
+  const lhs=q.nested?`${fr(n1,d1)} ÷ ${fr(n2,d2)}`:t;
+  let txt='';
+  if(q.nested) txt+=`La grande barre de fraction signifie « divisé par » : ${t} = ${lhs}. `;
+  if(d1===1||d2===1){
+    const k=d1===1?n1:n2;
+    txt+=`Un entier s'écrit comme une fraction de dénominateur 1 : ${k} = ${fr(k,1)}. `;
+  }
+  if(op==='×'){
+    txt+=`Pour multiplier deux fractions, on multiplie les numérateurs entre eux et les dénominateurs entre eux : ${t} = ${fr(n1,d1)} × ${fr(n2,d2)} = ${fr(`${n1} × ${n2}`,`${d1} × ${d2}`)} = ${fr(an,ad)}.`;
+  }else{
+    txt+=`Diviser par ${d2===1?`${n2}`:fr(n2,d2)}, c'est multiplier par son inverse (${fr(d2,n2)}) : ${lhs} = ${fr(n1,d1)} × ${fr(d2,n2)} = ${fr(`${n1} × ${d2}`,`${d1} × ${n2}`)} = ${fr(an,ad)}.`;
+  }
+  if(g>1) txt+=` On peut ensuite simplifier : la fraction irréductible est ${fr(q.rn,q.rd)} (en divisant par ${g}).`;
+  return txt;
+}
+function mdfDistractors(q){
+  const {n1,d1,n2,d2,op,an,ad}=q;
+  const vk=(n,d)=>{ const g=fgcd(Math.abs(n),Math.abs(d))||1; return `${n/g}/${d/g}`; };
+  const seen=new Set([vk(an,ad)]); const out=[];
+  const push=(n,d)=>{ if(n<1||d<1) return false; const k=vk(n,d); if(seen.has(k)) return false; seen.add(k); out.push({n,d}); return true; };
+  const cands=op==='×'
+    ? [[n1*d2,d1*n2],[n1*n2,d1],[n1+n2,d1*d2],[n1*n2,d1+d2],[n1*d2,d1*d2]]
+    : [[n1*n2,d1*d2],[d1*n2,n1*d2],[n1*d2,d1+n2],[n1+d2,d1*n2],[n1*n2,d1*n2]];
+  shuffle(cands).forEach(([n,d])=>{ if(out.length<3) push(n,d); });
+  for(let i=1;out.length<3&&i<15;i++){ [[an+i,ad],[an,ad+i],[an+i,ad+i]].forEach(([n,d])=>{ if(out.length<3) push(n,d); }); }
+  return out.slice(0,3);
+}
+function renderMdfQCM(){
+  const q=nextMdf(); state.current=q;
+  const content=document.getElementById('content');
+  const options=shuffle([{n:q.an,d:q.ad},...mdfDistractors(q)]);
+  content.innerHTML=`
+    <div class="question">${exprHTML(q)} = ?</div>
+    <div class="options">${options.map(o=>`<button class="opt-btn" data-k="${o.n}/${o.d}">${sfrac(o.n,o.d)}</button>`).join('')}</div>
+    <div class="feedback" id="fb"></div>`;
+  content.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      content.querySelectorAll('.opt-btn').forEach(b=>b.onclick=null);
+      const fb=document.getElementById('fb');
+      if(btn.dataset.k===opsKey(q)){
+        btn.classList.add('correct','anim-good');
+        bumpStreak(getStreak());
+        fb.textContent="Bravo, c'est correct !"; fb.className='feedback ok';
+        autoNext(450);
+      }else{
+        btn.classList.add('wrong','anim-bad');
+        failStreak();
+        fb.innerHTML=`Ce n'est pas ça. <span class="expl">${explainMdf(q)}</span>`;
+        fb.className='feedback ko';
+        content.querySelectorAll('.opt-btn').forEach(b=>{ if(b.dataset.k===opsKey(q)) b.classList.add('correct'); });
+      }
+    };
+  });
+}
+function mdfRound(){
+  const key=keyFor(), h=qHistory[key]||(qHistory[key]=[]);
+  const qs=[];
+  for(let i=0;i<4;i++){
+    const kind=nextMdfKind(); let q, g=0;
+    do{ q=genMdf(kind); g++; }
+    while(g<60 && (qs.some(x=>opsVal(x)===opsVal(q)||sigOf(x)===sigOf(q)) || (g<40&&h.includes(sigOf(q)))));
+    qs.push(q);
+  }
+  qs.forEach(x=>h.push(sigOf(x))); while(h.length>20) h.shift();
+  return qs;
+}
+function renderMdfJeu(){
+  renderMatch(mdfRound(), exprHTML, x=>sfrac(x.an,x.ad), explainMdf);
+}
+function renderMdfTrou(){
+  const q=nextMdf(); state.current=q;
+  const content=document.getElementById('content');
+  content.innerHTML=`
+    <div class="question" style="font-size:1rem;">Écris le résultat sous forme de fraction (réponses non simplifiées acceptées).</div>
+    <div class="fill-row" style="align-items:center;">${exprHTML(q)} = <span class="frac frac-in"><input type="text" id="ansN" inputmode="numeric" placeholder="?" autocomplete="off"><span class="bar"></span><input type="text" id="ansD" inputmode="numeric" placeholder="?" autocomplete="off"></span></div>
+    <div class="actions"><button class="primary" id="check">Valider</button></div>
+    <div class="feedback" id="fb"></div>`;
+  document.getElementById('check').onclick=()=>{
+    let sn=document.getElementById('ansN').value.trim(), sd=document.getElementById('ansD').value.trim();
+    if(sn.includes('/')&&!sd){ [sn,sd]=sn.split('/').map(x=>x.trim()); }
+    sn=sn.replace(/\s/g,'');
+    const n=/^\d+$/.test(sn)?parseInt(sn,10):NaN;
+    const hasDen=sd!=='';
+    const dd=hasDen?(/^\d+$/.test(sd)?parseInt(sd,10):NaN):NaN;
+    const fb=document.getElementById('fb');
+    const rowEl=content.querySelector('.fill-row');
+    document.getElementById('check').disabled=true;
+    const valid=!isNaN(n)&&!isNaN(dd)&&dd>0;
+    const exact=valid&&((n===q.an&&dd===q.ad)||(n===q.rn&&dd===q.rd));
+    const equiv=valid&&n*q.ad===dd*q.an;
+    if(exact){
+      rowEl.classList.add('anim-good');
+      bumpStreak(getStreak());
+      fb.textContent='Exact, bravo !'; fb.className='feedback ok'; autoNext(450);
+    }else if(equiv){
+      rowEl.classList.add('anim-good');
+      bumpStreak(getStreak());
+      fb.innerHTML=`Exact, bravo ! Info : le résultat non simplifié est ${sfrac(q.an,q.ad)} et la fraction irréductible ${sfrac(q.rn,q.rd)}.`;
+      fb.className='feedback ok';
+      document.getElementById('check').style.display='none'; content.querySelectorAll('input').forEach(i=>i.disabled=true);
+    }else{
+      rowEl.classList.add('anim-bad');
+      failStreak();
+      document.getElementById('check').style.display='none';
+      fb.innerHTML=`Pas tout à fait. <span class="expl">${explainMdf(q)}</span>`;
       fb.className='feedback ko';
     }
   };
@@ -1554,26 +1795,35 @@ const THEMES6E={
     ['index','Index des notations',[43,43]],
     ['histoire','Histoire',[44,44]]]}
 };
-let pdf6eDocPromise=null;
-function getPdf6eDoc(){
-  if(!pdf6eDocPromise){
-    const raw=atob(PDF6E_DATA);
+const THEMES3E={
+  eg:{title:'Espace et G\u00e9om\u00e9trie',chapters:[]},
+  nc:{title:'Nombres et Calcul',chapters:[]}
+};
+const COURS={'6e':THEMES6E,'3e':THEMES3E};
+/* Pour la 3e : d\u00e9finir const PDF3E_DATA="..." (PDF en base64) puis remplir les chapitres [id,titre,[page d\u00e9but,page fin]] */
+const PDF_DATA={'6e':()=>PDF6E_DATA,'3e':()=>(typeof PDF3E_DATA!=='undefined'?PDF3E_DATA:null)};
+const pdfDocPromises={};
+function getPdfDoc(lv){
+  if(!pdfDocPromises[lv]){
+    const data=PDF_DATA[lv]();
+    if(!data) return Promise.reject(new Error('no pdf'));
+    const raw=atob(data);
     const arr=new Uint8Array(raw.length);
     for(let i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
-    pdf6eDocPromise=pdfjsLib.getDocument({data:arr}).promise;
+    pdfDocPromises[lv]=pdfjsLib.getDocument({data:arr}).promise;
   }
-  return pdf6eDocPromise;
+  return pdfDocPromises[lv];
 }
 let pdfToken=0, pdfCur=null;
-function renderPdf6ePages(container,pStart,pEnd){
+function renderPdfPages(lv,container,pStart,pEnd){
   const token=++pdfToken;
   container.innerHTML='<p class="soon">Chargement du cours\u2026</p>';
-  getPdf6eDoc().then(pdf=>{
+  getPdfDoc(lv).then(pdf=>{
     if(token!==pdfToken) return;
     container.innerHTML='';
     const dpr=window.devicePixelRatio||1;
     const width=Math.min(container.clientWidth||760,760);
-    pdfCur={container,pStart,pEnd,key:width+'|'+dpr};
+    pdfCur={lv,container,pStart,pEnd,key:width+'|'+dpr};
     // rendu en très haute résolution (x3 minimum) pour rester net quand on zoome
     const outScale=Math.min(Math.max(dpr,1)*3,2200/width);
     let chain=Promise.resolve();
@@ -1599,7 +1849,7 @@ window.addEventListener('resize',()=>{
   pdfResizeT=setTimeout(()=>{
     if(!pdfCur||!pdfCur.container.isConnected) return;
     const key=Math.min(pdfCur.container.clientWidth||760,760)+'|'+(window.devicePixelRatio||1);
-    if(key!==pdfCur.key) renderPdf6ePages(pdfCur.container,pdfCur.pStart,pdfCur.pEnd);
+    if(key!==pdfCur.key) renderPdfPages(pdfCur.lv,pdfCur.container,pdfCur.pStart,pdfCur.pEnd);
   },350);
 });
 
@@ -1921,6 +2171,257 @@ function renderMldTrou(){
     }
   };
 }
+/* ===== Calcul littéral (3e) ===== */
+const LIT_CATS={signe:{label:'Suppression des parenthèses'},nombre:{label:'Simple distributivité'},double:{label:'Double distributivité'},fact:{label:'Factorisation'}};
+const LIT_ASK={signe:'Supprime les parenthèses et réduis',nombre:'Développe et réduis',double:'Développe et réduis',fact:'Factorise'};
+/* Tous les signes − des expressions utilisent le même moins, légèrement abaissé */
+const LM="<span class='mn'>\u2212</span>"; const MN=LM;
+/* + et = au même niveau que − (les balises déjà présentes ne sont pas retouchées) */
+function litLower(s){ return s.replace(/(<[^>]*>)|([+=])/g,(m,t,o)=>t?t:`<span class='mn'>${o}</span>`); }
+const EQ="<span class='mn'>=</span>";
+const M=s=>`<span class='mx'>${litLower(s)}</span>`;
+function litR(a,b){return a+Math.floor(Math.random()*(b-a+1));}
+function litNZ(a,b){let n;do{n=litR(a,b);}while(n===0);return n;}
+function litGcd(a,b){return b?litGcd(b,a%b):Math.abs(a);}
+function litTrim(p){p=p.slice();while(p.length>1&&p[p.length-1]===0)p.pop();return p;}
+function litAdd(a,b){const r=[];for(let i=0;i<Math.max(a.length,b.length);i++)r.push((a[i]||0)+(b[i]||0));return litTrim(r);}
+function litSc(a,k){return litTrim(a.map(x=>x*k));}
+function litMul(a,b){const r=Array(a.length+b.length-1).fill(0);a.forEach((x,i)=>b.forEach((y,j)=>r[i+j]+=x*y));return litTrim(r);}
+function litEq(a,b){a=litTrim(a);b=litTrim(b);return a.length===b.length&&a.every((x,i)=>x===b[i]);}
+function litNum(n){return (n<0?LM:'')+Math.abs(n);}
+function litK(k){return k===1?'':k===-1?LM:litNum(k);}
+function litW(s){return (s.startsWith(LM)||s.startsWith(MN))?'('+s+')':s;}
+function litPoly(p,v,asc){
+  const ds=[];for(let d=p.length-1;d>=0;d--) if(p[d]) ds.push(d);
+  if(asc) ds.reverse();
+  if(!ds.length) return '0';
+  return ds.map((d,i)=>{const c=p[d],a=Math.abs(c),bare=a===1&&d>0,mn=bare?MN:LM;
+    return (i===0?(c<0?mn:''):(c<0?' '+mn+' ':' + '))+(bare?'':a)+(d>0?v:'')+(d>1?'\u00b2':'');}).join('');
+}
+function litT(c,d,v){const p=Array(d+1).fill(0);p[d]=c;return litPoly(p,v);}
+function litJoin(ts){return ts.map((t,i)=>{ if(i===0) return t; const m=t.startsWith(MN)?MN:t.startsWith(LM)?LM:''; return m?' '+m+' '+t.slice(m.length):' + '+t; }).join('');}
+function litSum(parts,v){
+  let out='',ans=[0];
+  parts.forEach((q,i)=>{
+    if(q.inner){ const m=q.m,a=Math.abs(m), body=(a===1?'':a)+'('+litPoly(q.inner,v)+')';
+      out+=i===0?(m<0?LM:'')+body:(m<0?' '+LM+' ':' + ')+body; ans=litAdd(ans,litSc(q.inner,m));
+    }else{ const neg=q.p[q.p.length-1]<0;
+      out+=i===0?litPoly(q.p,v):(neg?' '+(q.p.length>1&&Math.abs(q.p[q.p.length-1])===1?MN:LM)+' ':' + ')+litPoly(litSc(q.p,neg?-1:1),v); ans=litAdd(ans,q.p); }
+  });
+  return {expr:out,ans};
+}
+function litExpand(parts,v){
+  const ts=[]; parts.forEach(q=>{ if(q.inner) ts.push(litT(q.m*q.inner[1],1,v),litT(q.m*q.inner[0],0,v)); else ts.push(litPoly(q.p,v)); });
+  return litJoin(ts);
+}
+function litWrongSigns(parts,v,ansStr){
+  const w=litPoly(litSum(parts.map(q=>q.inner?{...q,m:Math.abs(q.m)}:q),v).ans,v); return w!==ansStr?[w]:[];
+}
+function genLitSign(v){
+  /* devant une parenthèse : signe − dans 75 % des cas, signe + dans 25 % des cas */
+  const inn=()=>[litNZ(-9,9),litNZ(-6,6)], pl=()=>pick([0,1])?[litNZ(-9,9)]:[0,litNZ(-6,6)], sg=()=>Math.random()<.75?-1:1;
+  for(let n=0;n<80;n++){
+    const t=pick([0,1,1,2,2,3,3,4,5,5]), m0=sg();
+    const parts=[
+      m0<0?[{m:-1,inner:inn()}]:[{p:pl()},{m:1,inner:inn()}],
+      [{p:[litNZ(-9,9)]},{m:sg(),inner:inn()}],
+      [{p:[0,litNZ(-6,6)]},{m:sg(),inner:inn()}],
+      [{p:pl()},{m:sg(),inner:inn()},{p:pl()}],
+      [{m:sg(),inner:inn()},{m:sg(),inner:inn()}],
+      [{m:sg(),inner:inn()},{p:pl()}]][t];
+    const r=litSum(parts,v); if(!(r.ans.length===2&&r.ans[0]&&r.ans[1])) continue;
+    const ansStr=litPoly(r.ans,v);
+    return {type:'dev',v,expr:M(r.expr),ans:r.ans,ansStr:M(ansStr),wr:litWrongSigns(parts,v,ansStr),
+      expl:`On supprime les parenth\u00e8ses : devant un +, rien ne change ; devant un \u2212, tous les signes changent. Puis on regroupe les termes de m\u00eame nature : ${M(r.expr+' = '+litExpand(parts,v)+' = '+ansStr)}.`};
+  }
+}
+function genLitNum(v){
+  const inn=()=>[litNZ(-9,9),litNZ(-6,6)], kk=()=>pick([2,3,4,5,6,7,8,-2,-3,-4,-5,-6,-7,-8]), pl=()=>pick([0,1])?[litNZ(-9,9)]:[0,litNZ(-6,6)];
+  for(let n=0;n<80;n++){
+    const t=pick([0,0,0,1,1,2,3,3,4,4,5,5,6]);
+    let expr,ans,expl,wr=[];
+    if(t<=1){
+      const k=kk(), inner=inn(), asc=t===0&&Math.random()<.3, mm=t===1?litK(k)+v:litNum(k);
+      if(t===1){ expr=`${mm}(${litPoly(inner,v)})`; ans=litSc(litMul([0,1],inner),k); }
+      else{ expr=`${litK(k)}(${litPoly(inner,v,asc)})`; ans=litSc(inner,k);
+        wr=[litPoly([inner[0],k*inner[1]],v),litPoly([-k*inner[0],k*inner[1]],v)]; }
+      const steps=(asc?[0,1]:[1,0]).map(d=>`${litW(mm)} \u00d7 ${litW(litT(inner[d],d,v))}`);
+      expl=`On distribue : ${M(expr+' = '+steps.join(' + ')+' = '+litPoly(ans,v))}.`;
+    }else if(t===6){
+      const k=kk(), inner=inn(), m=litNZ(-8,8);
+      expr=`${litK(k)}${v}(${litPoly(inner,v)}) ${m<0?(Math.abs(m)===1?MN:LM):'+'} ${litPoly([0,Math.abs(m)],v)}`;
+      ans=litAdd(litSc(litMul([0,1],inner),k),[0,m]); if(!ans[1]) continue;
+      expl=`On distribue, puis on regroupe les termes en ${v} : ${M(expr+' = '+litJoin([litT(k*inner[1],2,v),litT(k*inner[0],1,v),litT(m,1,v)])+' = '+litPoly(ans,v))}.`;
+    }else{
+      const k1=kk(), k2=pick([1,-1,2,-2,3,-3,4,-4]);
+      const parts=[[{m:k1,inner:inn()},{p:pl()}],[{p:pl()},{m:k1,inner:inn()}],[{p:pl()},{m:k1,inner:inn()},{p:pl()}],[{m:k1,inner:inn()},{m:k2,inner:inn()}]][t-2];
+      const r=litSum(parts,v); if(!(r.ans.length===2&&r.ans[0]&&r.ans[1])) continue;
+      expr=r.expr; ans=r.ans; wr=litWrongSigns(parts,v,litPoly(ans,v));
+      expl=`On distribue les nombres devant les parenth\u00e8ses, puis on regroupe les termes de m\u00eame nature : ${M(expr+' = '+litExpand(parts,v)+' = '+litPoly(ans,v))}.`;
+    }
+    return {type:'dev',v,expr:M(expr),ans,ansStr:M(litPoly(ans,v)),wr,expl};
+  }
+}
+function genLitDouble(v){
+  for(;;){
+    const P1=[litNZ(-9,9),pick([1,1,1,2,3])], P2=[litNZ(-9,9),pick([1,1,2,3])], ans=litMul(P1,P2);
+    if(ans.length!==3) continue;
+    const [b,a]=P1,[d,c]=P2, expr=`(${litPoly(P1,v)})(${litPoly(P2,v)})`;
+    const ts=[litT(a*c,2,v),litT(a*d,1,v),litT(b*c,1,v),litT(b*d,0,v)];
+    return {type:'dev',v,expr:M(expr),ans,ansStr:M(litPoly(ans,v)),
+      wr:[litPoly([b*d,0,a*c],v),litPoly([-b*d,a*d+b*c,a*c],v),litPoly([b*d,a*d-b*c,a*c],v)],
+      expl:`On multiplie chaque terme de la premi\u00e8re parenth\u00e8se par chaque terme de la seconde : ${M(expr+' = '+litJoin(ts)+' = '+litPoly(ans,v))}.`};
+  }
+}
+function genLitFact(v){
+  const t=pick(['num','num','x','x','bin','bin']);
+  if(t==='bin'){
+    for(;;){
+      const B=[litNZ(-9,9),pick([1,1,2])], s=pick([1,-1]); let P1,P2,expr,Pk;
+      if(Math.random()<.5){ P1=[0,litNZ(2,6)]; P2=[litNZ(2,9)];
+        expr=`${litK(P1[1])}${v}(${litPoly(B,v)}) ${s<0?LM:'+'} ${P2[0]}(${litPoly(B,v)})`;
+      }else{ P1=[litNZ(-9,9),pick([1,2,3])]; P2=[litNZ(-9,9),pick([1,2,3])];
+        expr=`(${litPoly(B,v)})(${litPoly(P1,v)}) ${s<0?LM:'+'} (${litPoly(B,v)})(${litPoly(P2,v)})`; }
+      Pk=litAdd(P1,litSc(P2,s)); if(Pk.length<2||!Pk[0]||!Pk[1]) continue;
+      const Bs=litPoly(B,v), B2=litPoly([-B[0],B[1]],v), ansStr=`(${Bs})(${litPoly(Pk,v)})`;
+      return {type:'fact',ftype:'bin',v,expr:M(expr),poly:litMul(B,Pk),ansStr:M(ansStr),
+        wr:[`(${Bs})(${litPoly(litAdd(P1,litSc(P2,-s)),v)})`,`(${Bs})(${litPoly(P1,v)})`,`(${B2})(${litPoly(Pk,v)})`,`(${Bs})(${litPoly([Pk[0],Pk[1]+1],v)})`],
+        expl:`Le facteur commun est ${M('('+Bs+')')} : on le met en \u00e9vidence et on additionne ce qui reste dans l'autre facteur : ${M(expr+' = '+ansStr)}.`};
+    }
+  }
+  for(;;){
+    const k=t==='num'?litR(2,9):litR(1,6), inner=[litNZ(-9,9),litR(1,5)];
+    if(litGcd(inner[0],inner[1])!==1) continue;
+    const [b,a]=inner, bw=b+(b>0?1:-1);
+    if(t==='num'){
+      const f=[2,3,5,7].find(x=>k%x===0), ansStr=`${k}(${litPoly(inner,v)})`;
+      return {type:'fact',ftype:'mono',v,expr:M(litPoly(litSc(inner,k),v)),poly:litSc(inner,k),ansStr:M(ansStr),
+        wr:[`${k}(${litPoly([k*b,a],v)})`,`${k}(${litPoly([-b,a],v)})`,f<k?`${f}(${litPoly(litSc(inner,k/f),v)})`:`${k}(${litPoly([bw,a],v)})`,`${k}(${litPoly([bw,a],v)})`,`${k}(${litPoly([b,a+2],v)})`],
+        expl:`Le plus grand nombre qui divise les deux termes est ${k}. ${M(litPoly(litSc(inner,k),v)+' = '+k+' \u00d7 '+litT(a,1,v)+' + '+k+' \u00d7 '+litW(litNum(b))+' = '+ansStr)}.`};
+    }
+    const kv=litK(k)+v, ansStr=`${kv}(${litPoly(inner,v)})`, poly=litSc([0,b,a],k);
+    return {type:'fact',ftype:'mono',v,expr:M(litPoly(litMul([0,1],litSc(inner,k)),v)),poly:litMul([0,1],litSc(inner,k)),ansStr:M(ansStr),
+      wr:[k>1?`${k}(${litPoly([0,b,a],v)})`:`${v}(${litPoly([0,b,a],v)})`,`${kv}(${litPoly([-b,a],v)})`,`${v}(${litPoly([k*b,k*a],v)})`,`${kv}(${litPoly([b,a+1],v)})`],
+      expl:`Le facteur commun est ${M(kv)} (le plus grand nombre commun, et ${v} pr\u00e9sent dans les deux termes). ${M(litPoly(litMul([0,1],litSc(inner,k)),v)+' = '+kv+' \u00d7 '+litT(a,1,v)+' + '+kv+' \u00d7 '+litW(litNum(b))+' = '+ansStr)}.`};
+  }
+}
+function genLit(vf){
+  const v=vf||pick(['x','x','x','x','a','y','k']), V=`<i class='mv'>${v}</i>`;
+  const q=state.cat==='double'?genLitDouble(V):state.cat==='fact'?genLitFact(V):state.cat==='signe'?genLitSign(V):genLitNum(V);
+  q.v=v; q.V=V; q.pk=q.expr; return q;
+}
+function litOpts(q){
+  const set=new Set(), add=s=>{ if(s&&litPlain(s)!==litPlain(q.ansStr)) set.add(s); };
+  (q.wr||[]).forEach(add);
+  if(q.type==='dev'){
+    const a=q.ans, pool=[];
+    a.forEach((c,i)=>{ if(c){ [-c,2*c,c+1,c-1].forEach(x=>{ if(x!==c){ const b=a.slice(); b[i]=x; pool.push(litPoly(b,q.V)); } }); } });
+    shuffle(pool).forEach(s=>{ if(set.size<3) add(s); });
+  }
+  return shuffle([q.ansStr,...[...set].slice(0,3).map(litLower)]);
+}
+function litParse(str,v){
+  const s=str.toLowerCase().replace(/\s+/g,'').replace(/[\u2212\u2013\u2014]/g,'-').replace(/[\u00d7\u00b7]/g,'*');
+  let i=0; const fail=()=>{throw 0;}; const fl={one:0,rep:0,ord:0};
+  function expr(){
+    const terms=[]; let sg=1;
+    if(s[i]==='+'||s[i]==='-'){ sg=s[i]==='-'?-1:1; i++; }
+    for(;;){
+      const t=term(); t.p=litSc(t.p,sg); terms.push(t);
+      if(s[i]==='+'||s[i]==='-'){ sg=s[i]==='-'?-1:1; i++; } else break;
+    }
+    return {p:terms.reduce((a,t)=>litAdd(a,t.p),[0]),terms};
+  }
+  function term(){
+    const facs=[]; let p=[1];
+    for(;;){
+      if(s[i]==='*') i++;
+      const f=factor(); facs.push(f); p=litMul(p,f.p);
+      if(i>=s.length||'+-)'.includes(s[i])) break;
+    }
+    if(facs.length>1&&facs.some(f=>f.one)) fl.one=1;
+    if(facs.filter(f=>f.letter).length>1) fl.rep=1;
+    if(facs.some((f,k)=>k>0&&f.num)) fl.ord=1;
+    return {p,facs};
+  }
+  function factor(){
+    let f; const ch=s[i]||'';
+    if(ch==='('){ i++; const e=expr(); if(s[i]!==')') fail(); i++; f={p:e.p,paren:true,nt:e.terms.length}; }
+    else if(/\d/.test(ch)){ const j=i; while(/\d/.test(s[i]||'')) i++; const val=+s.slice(j,i); f={p:[val],nt:1,num:true,one:val===1&&s[i]!=='\u00b2'}; }
+    else if(ch===v){ i++; f={p:[0,1],nt:1,letter:true}; }
+    else fail();
+    if(s[i]==='\u00b2'){ i++; f={...f,p:litMul(f.p,f.p)}; }
+    return f;
+  }
+  try{ const r=expr(); if(i<s.length) return null; r.fl=fl; return r; }catch(e){ return null; }
+}
+function litFactOK(r,q){
+  if(!litEq(r.p,q.poly)||r.terms.length!==1) return false;
+  const big=r.terms[0].facs.filter(x=>x.paren&&x.nt>=2);
+  if(q.ftype==='bin') return big.length>=2;
+  if(big.length!==1) return false;
+  const c=big[0].p; return c.reduce((g,x)=>litGcd(g,x),0)===1&&c[0]!==0;
+}
+function litNotes(q,times,fl){
+  const V=q.V, n=[];
+  if(times) n.push(`les signes \u00d7 sont inutiles (on \u00e9crit ${M('3('+V+' + 4)')} et non ${M('3 \u00d7 ('+V+' + 4)')})`);
+  if(fl.one) n.push(`on n'\u00e9crit jamais le coefficient 1 (${M(V)} et non ${M('1'+V)})`);
+  if(fl.rep) n.push(`un carr\u00e9 s'\u00e9crit ${M(V+'\u00b2')} et non ${M(V+V)}`);
+  if(fl.ord) n.push(`le nombre s'\u00e9crit avant la lettre (${M('2'+V)} et non ${M(V+'2')})`);
+  return `Ta r\u00e9ponse est juste, mais l'\u00e9criture n'est pas correcte : ${n.join(' ; ')}.`;
+}
+function litPlain(s){ return s.replace(/<[^>]*>/g,''); }
+function litFeedbackFail(fb,q,note){ fb.innerHTML=`Pas tout \u00e0 fait.${note?' '+note:''} R\u00e9ponse : ${q.ansStr}.<span class="expl">${q.expl}</span>`; fb.className='feedback ko'; }
+function renderLitQCM(){
+  const q=withHistory(genLit); state.current=q;
+  const content=document.getElementById('content'), opts=litOpts(q);
+  content.innerHTML=`<div class="question" style="font-size:1rem;">${LIT_ASK[state.cat]} :</div>
+    <div class="question lq">${q.expr}</div>
+    <div class="options">${opts.map(o=>`<button class="opt-btn" style="font-size:1.15rem;" data-k="${o}">${o}</button>`).join('')}</div>
+    <div class="feedback" id="fb"></div>`;
+  content.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      content.querySelectorAll('.opt-btn').forEach(b=>b.onclick=null);
+      const fb=document.getElementById('fb');
+      if(litPlain(btn.dataset.k)===litPlain(q.ansStr)){ btn.classList.add('correct','anim-good'); bumpStreak(getStreak()); fb.textContent="Bravo, c'est correct !"; fb.className='feedback ok'; autoNext(450); }
+      else{ btn.classList.add('wrong','anim-bad'); failStreak(); litFeedbackFail(fb,q);
+        content.querySelectorAll('.opt-btn').forEach(b=>{ if(litPlain(b.dataset.k)===litPlain(q.ansStr)) b.classList.add('correct'); }); }
+    };
+  });
+}
+function renderLitJeu(){
+  const qs=[],seen=new Set(), vr=pick(['x','x','x','x','a','y','k']); /* même lettre pour les 4 questions */
+  for(let g=0;qs.length<4&&g<80;g++){ const q=genLit(vr); if(!seen.has(q.ansStr)&&!seen.has(q.expr)){ seen.add(q.ansStr); seen.add(q.expr); qs.push(q); } }
+  renderMatch(qs,q=>q.expr,q=>q.ansStr,q=>q.expl);
+}
+function renderLitTrou(){
+  const q=withHistory(genLit); state.current=q;
+  const content=document.getElementById('content');
+  content.innerHTML=`<div class="question" style="font-size:1rem;">${LIT_ASK[state.cat]} :</div>
+    <div class="fill-row" style="font-size:1.15rem;"><span>${q.expr} ${EQ}</span><input type="text" id="ans" class="lit-in" placeholder="?" autocomplete="off" autocapitalize="off" spellcheck="false" style="width:230px;"></div>
+    <div class="pykeys" style="display:flex;justify-content:center;gap:8px;margin:-4px 0 12px;flex-wrap:wrap;">${(state.cat==='fact'?['(',')','\u00b2','+','\u2212']:['\u00b2','+','\u2212']).map(k=>`<button type="button" class="opt-btn pykey" data-ins="${k}" style="padding:8px 16px;font-size:1.2rem;min-width:48px;">${k}</button>`).join('')}</div>
+    <div class="actions"><button class="primary" id="check">Valider</button></div>
+    <div class="feedback" id="fb"></div>`;
+  const inp=document.getElementById('ans');
+  content.querySelectorAll('.pykey').forEach(b=>{
+    b.addEventListener('mousedown',e=>e.preventDefault());
+    b.onclick=()=>{ if(inp.disabled) return; const a=inp.selectionStart??inp.value.length, z=inp.selectionEnd??a, t=b.dataset.ins;
+      inp.value=inp.value.slice(0,a)+t+inp.value.slice(z); inp.focus({preventScroll:true}); inp.setSelectionRange(a+t.length,a+t.length); };
+  });
+  document.getElementById('check').onclick=()=>{
+    const raw=inp.value, fb=document.getElementById('fb'), r=litParse(raw,q.v), times=/[*\u00d7]/.test(raw);
+    const same=!!r&&litEq(r.p,q.type==='dev'?q.ans:q.poly);
+    const core=!!r&&(q.type==='dev'?(same&&!/[()]/.test(raw)&&r.terms.length===r.p.filter(x=>x).length):litFactOK(r,q));
+    const chk=document.getElementById('check'), rowEl=content.querySelector('.fill-row'); chk.disabled=true;
+    const fl=(r&&r.fl)||{}, flagged=times||fl.one||fl.rep||fl.ord;
+    if(core&&!flagged){ rowEl.classList.add('anim-good'); bumpStreak(getStreak()); fb.textContent='Exact, bravo !'; fb.className='feedback ok'; autoNext(450); return; }
+    const note=!r?(raw.includes('^')?`On n'\u00e9crit pas ^ : pour un carr\u00e9, utilise la touche \u00b2 (${M(q.V+'\u00b2')}).`:'\u00c9criture non reconnue.'):core?litNotes(q,times,fl)
+      :same?(q.type==='dev'?'Ton r\u00e9sultat est \u00e9gal, mais pas compl\u00e8tement d\u00e9velopp\u00e9 et r\u00e9duit.':"Ton expression est \u00e9gale, mais elle n'est pas (compl\u00e8tement) factoris\u00e9e."):'';
+    rowEl.classList.add('anim-bad'); failStreak(); chk.style.display='none'; chk.hidden=true;
+    content.querySelectorAll('.pykey').forEach(b=>b.disabled=true); litFeedbackFail(fb,q,note);
+  };
+}
+/* ===== fin calcul littéral ===== */
 const LEVEL_ITEMS=lv=>[[lv+'/auto','Automatismes','S\u2019entra\u00eener'],[lv+'/cours','Cours','R\u00e9viser les le\u00e7ons']];
 const SCREENS={
   home:{title:'Math\u00e9matiques',sub:'Choisis ton niveau',items:[['6e','Niveau 6e',''],['3e','Niveau 3e','']]},
@@ -1931,30 +2432,46 @@ const SCREENS={
     ['3e/auto/frac','2. Fractions irr\u00e9ductibles','\u00c9crire la fraction irr\u00e9ductible \u00e9gale \u00e0 une fraction'],
     ['3e/auto/opfrac','3. Additions et soustractions de fractions','Calculer et donner le r\u00e9sultat sous forme de fraction'],
     ['3e/auto/pythagore','4. \u00c9galit\u00e9 de Pythagore','\u00c9crire l\u2019\u00e9galit\u00e9 de Pythagore dans un triangle rectangle'],
-    ['3e/auto/conversions','Conversions','Longueurs, aires, volumes, dur\u00e9es'],
-    ['3e/auto/sci','\u00c9criture scientifique','Passer de l\u2019\u00e9criture d\u00e9cimale \u00e0 l\u2019\u00e9criture scientifique']]},
+    ['3e/auto/mdfrac','5. Multiplications et divisions de fractions','Calculer et donner le r\u00e9sultat sous forme de fraction, sans simplifier'],
+    ['3e/auto/lit-signe','7. Suppression des parenth\u00e8ses','Supprimer des parenth\u00e8ses pr\u00e9c\u00e9d\u00e9es de + ou \u2212, puis r\u00e9duire'],
+    ['3e/auto/sci','8. \u00c9criture scientifique','Passer de l\u2019\u00e9criture d\u00e9cimale \u00e0 l\u2019\u00e9criture scientifique'],
+    ['3e/auto/lit-nombre','10. Simple distributivit\u00e9','D\u00e9velopper k(ax + b), puis r\u00e9duire'],
+    ['3e/auto/lit-double','11. Double distributivit\u00e9','D\u00e9velopper et r\u00e9duire : (ax + b)(cx + d)'],
+    ['3e/auto/conv-longueur','31. Conversions de longueurs','km, hm, dam, m, dm, cm, mm'],
+    ['3e/auto/conv-aire','32. Conversions d\u2019aires','km\u00b2, hm\u00b2, dam\u00b2, m\u00b2, dm\u00b2, cm\u00b2, mm\u00b2'],
+    ['3e/auto/conv-volume','33. Conversions de volumes','km\u00b3, hm\u00b3, dam\u00b3, m\u00b3, dm\u00b3, cm\u00b3, mm\u00b3 et litres'],
+    ['3e/auto/conv-duree','* Dur\u00e9es','Heures, minutes, secondes'],
+    ['3e/auto/lit-fact','** Factorisation','Mettre le facteur commun en \u00e9vidence']]},
   '6e/auto':{title:'Automatismes 6e',sub:'Choisis un th\u00e8me',items:[
     ['6e/auto/tables','1. Tables de multiplication','Les tables de 0 \u00e0 12'],
     ['6e/auto/durees','2. Unit\u00e9s de dur\u00e9es','Secondes, minutes, heures, jours\u2026'],
     ['6e/auto/comp','3. Compl\u00e9ments','Compl\u00e9ments \u00e0 10, 100, 1 000 et compl\u00e9ments d\u00e9cimaux \u00e0 1'],
     ['6e/auto/clock','4. Lecture d\u2019heure','Lire l\u2019heure sur une horloge \u00e0 aiguilles'],
-    ['6e/auto/multiples','5. Multiples et diviseurs','Multiple, diviseur, multiples et diviseurs communs']]},
-  '3e/cours':{title:'Cours 3e'}
+    ['6e/auto/multiples','5. Multiples et diviseurs','Multiple, diviseur, multiples et diviseurs communs']]}
 };
 function go(s){
   abandon();
+  viewStash={};
   if(pendingTimer){clearTimeout(pendingTimer);pendingTimer=null;}
   const menu=document.getElementById('menu'), exo=document.getElementById('exo'), back=document.getElementById('back');
   const title=document.getElementById('title'), sub=document.getElementById('subtitle');
   back.hidden=(s==='home');
   back.onclick=()=>go(s.split('/').slice(0,-1).join('/')||'home');
   const EXO={
-    '3e/auto/conversions':{theme:'conversions',title:'Conversions',sub:'Automatismes 3e'},
+    '3e/auto/conv-longueur':{theme:'conversions',cat:'longueur',title:'Conversions de longueurs',sub:'Automatismes 3e'},
+    '3e/auto/conv-aire':{theme:'conversions',cat:'aire',title:'Conversions d\u2019aires',sub:'Automatismes 3e'},
+    '3e/auto/conv-volume':{theme:'conversions',cat:'volume',title:'Conversions de volumes',sub:'Automatismes 3e'},
+    '3e/auto/conv-duree':{theme:'conversions',cat:'duree',title:'Dur\u00e9es',sub:'Automatismes 3e'},
+    '3e/auto/lit-signe':{theme:'lit',cat:'signe',title:'Suppression des parenth\u00e8ses',sub:'Automatismes 3e'},
+    '3e/auto/lit-nombre':{theme:'lit',cat:'nombre',title:'Simple distributivit\u00e9',sub:'Automatismes 3e'},
+    '3e/auto/lit-double':{theme:'lit',cat:'double',title:'Double distributivit\u00e9',sub:'Automatismes 3e'},
+    '3e/auto/lit-fact':{theme:'lit',cat:'fact',title:'Factorisation',sub:'Automatismes 3e'},
     '3e/auto/sci':{theme:'sci',title:'\u00c9criture scientifique',sub:'Automatismes 3e'},
     '3e/auto/tables':{theme:'tables',title:'Tables de multiplication',sub:'Automatismes 3e'},
     '3e/auto/frac':{theme:'frac',title:'Fractions irr\u00e9ductibles',sub:'Automatismes 3e'},
     '3e/auto/opfrac':{theme:'opf',title:'Additions et soustractions de fractions',sub:'Automatismes 3e'},
     '3e/auto/pythagore':{theme:'pyth',title:'Égalité de Pythagore',sub:'Automatismes 3e'},
+    '3e/auto/mdfrac':{theme:'mdf',title:'Multiplications et divisions de fractions',sub:'Automatismes 3e'},
     '6e/auto/tables':{theme:'tables',title:'Tables de multiplication',sub:'Automatismes 6e'},
     '6e/auto/durees':{theme:'durees',title:'Unit\u00e9s de dur\u00e9es',sub:'Automatismes 6e'},
     '6e/auto/comp':{theme:'comp',title:'Compl\u00e9ments',sub:'Automatismes 6e'},
@@ -1965,31 +2482,37 @@ function go(s){
   exo.hidden=!isExo; menu.hidden=isExo;
   if(isExo){
     state.theme=EXO[s].theme; state.lvl=s.slice(0,2);
+    if(state.theme==='lit'){ state.cat=EXO[s].cat; } else if(state.theme==='conversions'){ state.cat=EXO[s].cat; }
     title.textContent=EXO[s].title;
     sub.textContent=EXO[s].sub;
-    renderTabs(); renderModes(); newQuestion();
-    return;
-  }
-  if(s==='6e/cours'){
-    title.textContent='Cours 6e'; sub.textContent='Choisis un th\u00e8me';
-    menu.innerHTML='<div class="menu-list">'+Object.keys(THEMES6E).map(k=>`<button class="menu-btn" data-go="6e/cours/${k}"><strong>${THEMES6E[k].title}</strong></button>`).join('')+'</div>';
-    menu.querySelectorAll('.menu-btn').forEach(b=>b.onclick=()=>go(b.dataset.go));
+    const litIntro=(state.theme==='lit');
+    document.getElementById('litNote').hidden=!litIntro; exo.classList.toggle('intro',litIntro);
+    renderTabs(); renderModes();
+    if(litIntro){ document.getElementById('content').innerHTML=''; state.current=null; } else newQuestion();
     return;
   }
   const cp=s.split('/');
-  if(cp[0]==='6e'&&cp[1]==='cours'&&cp[2]&&THEMES6E[cp[2]]){
-    const theme=THEMES6E[cp[2]];
-    if(!cp[3]){
-      title.textContent=theme.title; sub.textContent='Cours 6e';
-      menu.innerHTML='<div class="menu-list">'+theme.chapters.map(c=>`<button class="menu-btn" data-go="6e/cours/${cp[2]}/${c[0]}"><strong>${c[1]}</strong></button>`).join('')+'</div>';
-      menu.querySelectorAll('.menu-btn').forEach(b=>b.onclick=()=>go(b.dataset.go));
+  if(COURS[cp[0]]&&cp[1]==='cours'){
+    const lv=cp[0], themes=COURS[lv];
+    const list=items=>'<div class="menu-list">'+items.map(i=>`<button class="menu-btn" data-go="${i[0]}"><strong>${i[1]}</strong></button>`).join('')+'</div>';
+    const bind=()=>menu.querySelectorAll('.menu-btn').forEach(b=>b.onclick=()=>go(b.dataset.go));
+    if(!cp[2]){
+      title.textContent='Cours '+lv; sub.textContent='Choisis un th\u00e8me';
+      menu.innerHTML=list(Object.keys(themes).map(k=>[`${lv}/cours/${k}`,themes[k].title])); bind();
       return;
     }
-    const ch=theme.chapters.find(c=>c[0]===cp[3]);
+    const theme=themes[cp[2]];
+    if(theme&&!cp[3]){
+      title.textContent=theme.title; sub.textContent='Cours '+lv;
+      if(theme.chapters.length){ menu.innerHTML=list(theme.chapters.map(c=>[`${lv}/cours/${cp[2]}/${c[0]}`,c[1]])); bind(); }
+      else menu.innerHTML='<p class="soon">Bient\u00f4t disponible.</p>';
+      return;
+    }
+    const ch=theme&&theme.chapters.find(c=>c[0]===cp[3]);
     if(ch){
       title.textContent=ch[1]; sub.textContent=theme.title;
       menu.innerHTML='<div class="pdf-pages" id="pdfPages"></div>';
-      renderPdf6ePages(document.getElementById('pdfPages'),ch[2][0],ch[2][1]);
+      renderPdfPages(lv,document.getElementById('pdfPages'),ch[2][0],ch[2][1]);
       return;
     }
   }
@@ -2004,6 +2527,8 @@ function go(s){
     menu.innerHTML='<p class="soon">Bient\u00f4t disponible.</p>';
   }
 }
+const startLit=()=>{ document.getElementById('litNote').hidden=true; document.getElementById('exo').classList.remove('intro'); resetChrono(); newQuestion(); };
+['litNoteClose','litNoteStart'].forEach(id=>document.getElementById(id).onclick=startLit);
 go('home');
 </script>
 </body>
