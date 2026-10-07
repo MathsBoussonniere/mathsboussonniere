@@ -167,8 +167,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   --grid:rgba(123,63,228,.05); --accent-soft:rgba(123,63,228,.10);
   --rb:linear-gradient(90deg,#FF3B6B,#FF9A1F,#F5D000,#2FBF71,#1E9BFF,#7B3FE4);
 }
-:root[data-theme="rainbow"] body::before{content:"";position:fixed;inset:0 0 auto 0;height:5px;background:var(--rb);z-index:60;}
-:root[data-theme="rainbow"] h1{background:var(--rb);-webkit-background-clip:text;background-clip:text;color:transparent;}
+:root[data-theme="rainbow"] body{background:linear-gradient(160deg,#FF9DB5 0%,#FFC37F 20%,#FFE878 40%,#8FE3AE 60%,#8CCBFF 80%,#BFA3FF 100%) fixed;}
 :root[data-theme="rainbow"] .tab-btn.active{border-image:var(--rb) 1;}
 :root[data-theme="rainbow"] .menu-btn{border-left-width:6px;border-left-color:var(--c,var(--accent));}
 :root[data-theme="rainbow"] .menu-btn:hover{border-color:var(--c,var(--accent));}
@@ -178,6 +177,27 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 :root[data-theme="rainbow"] .menu-btn:nth-child(6n+4){--c:#2FBF71;}
 :root[data-theme="rainbow"] .menu-btn:nth-child(6n+5){--c:#1E9BFF;}
 :root[data-theme="rainbow"] .menu-btn:nth-child(6n+6){--c:#7B3FE4;}
+/* Arc-en-ciel : chaque case de réponse / d'association a son propre dégradé, comme le fond */
+:root[data-theme="rainbow"]{
+  --rb-soft:linear-gradient(135deg,#FFC2D1 0%,#FFDDB5 20%,#FFF0A8 40%,#B9EFCF 60%,#B8E0FF 80%,#D9C9FF 100%);
+  --rb-mid:linear-gradient(135deg,#FF9DB5 0%,#FFC37F 20%,#FFE878 40%,#8FE3AE 60%,#8CCBFF 80%,#BFA3FF 100%);
+  --rb-line:linear-gradient(135deg,#FF3B6B,#FF9A1F,#F5D000,#2FBF71,#1E9BFF,#7B3FE4);
+}
+:root[data-theme="rainbow"] .opt-btn:not(.correct):not(.wrong),
+:root[data-theme="rainbow"] .match-item:not(.matched):not(.error):not(.selected):not(.revealed){
+  border:1.5px solid transparent;
+  background:var(--rb-soft) padding-box,var(--rb-line) border-box;
+}
+:root[data-theme="rainbow"] .opt-btn:not(.correct):not(.wrong):hover,
+:root[data-theme="rainbow"] .match-item:not(.matched):not(.error):not(.selected):not(.revealed):hover{
+  box-shadow:inset 0 0 0 1.5px var(--accent);
+}
+:root[data-theme="rainbow"] .match-item.selected{
+  border:1.5px solid transparent;
+  background:var(--rb-mid) padding-box,var(--rb-line) border-box;
+  box-shadow:inset 0 0 0 2.5px var(--accent);
+}
+:root[data-theme="rainbow"] .match-item.revealed{background:var(--rb-soft);}
 /* Menu des paramètres */
 h1,.subtitle{padding:0 46px;}
 .burger{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:70;width:42px;height:42px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);cursor:pointer;padding:0;}
@@ -196,9 +216,23 @@ h1,.subtitle{padding:0 46px;}
 .sw-dark{background:#17212C;}
 .sw-pink{background:#EE4B97;}
 .sw-jade{background:#00A86B;}
+/* Affichage de la série / du temps */
+:root[data-hide-score] #score{display:none;}
+:root[data-hide-chrono] #chrono{display:none;}
+:root[data-hide-score] #chrono{margin-top:0 !important;}
+.set-label.sp{margin-top:16px;margin-bottom:2px;}
+.opt-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 2px;font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;font-size:.92rem;color:var(--ink);cursor:pointer;}
+.switch{position:relative;flex:none;width:44px;height:26px;}
+.switch input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;z-index:1;}
+.switch i{position:absolute;inset:0;border-radius:13px;background:rgba(120,130,140,.45);transition:background .15s;}
+.switch i::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.35);transition:transform .15s;}
+.switch input:checked + i{background:var(--accent);}
+.switch input:checked + i::after{transform:translateX(18px);}
+.switch input:focus-visible + i{outline:2px solid var(--accent);outline-offset:2px;}
 .sw-rainbow{background:conic-gradient(#FF3B6B,#FF9A1F,#F5D000,#2FBF71,#1E9BFF,#7B3FE4,#FF3B6B);}
 </style>
 <script>try{var __t=localStorage.getItem('mb-theme');if(['light','dark','pink','jade','rainbow'].indexOf(__t)>-1)document.documentElement.setAttribute('data-theme',__t);}catch(e){}</script>
+<script>try{var __r=document.documentElement;if(localStorage.getItem('mb-show-score')==='0')__r.setAttribute('data-hide-score','');if(localStorage.getItem('mb-show-chrono')==='0')__r.setAttribute('data-hide-chrono','');}catch(e){}</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
@@ -213,6 +247,9 @@ h1,.subtitle{padding:0 46px;}
     <button type="button" class="swatch" role="radio" aria-checked="false" data-theme-pick="jade"><i class="sw sw-jade"></i>Jade</button>
     <button type="button" class="swatch" role="radio" aria-checked="false" data-theme-pick="rainbow"><i class="sw sw-rainbow"></i>Arc-en-ciel</button>
   </div>
+  <div class="set-label sp">Affichage</div>
+  <label class="opt-row">Série et record<span class="switch"><input type="checkbox" id="optScore" checked><i></i></span></label>
+  <label class="opt-row">Temps<span class="switch"><input type="checkbox" id="optChrono" checked><i></i></span></label>
 </div>
 <div class="wrap">
   <button class="back" id="back" hidden>← Retour</button>
@@ -238,8 +275,14 @@ const PDF3E_DATA="JVBERi0xLjcKJb/3ov4KMSAwIG9iago8PCAvUGFnZXMgMiAwIFIgL1R5cGUgL0
 
 const THEMES=[{id:'conversions',label:'Conversions'},{id:'sci',label:'Écriture scientifique'}];
 const CATEGORIES={
-  longueur:{ label:"Longueurs", maxDiff:6, units:[
+  longueur:{ label:"Longueurs, capacités et masses", maxDiff:6, units:[
     {n:'km',e:3},{n:'hm',e:2},{n:'dam',e:1},{n:'m',e:0},{n:'dm',e:-1},{n:'cm',e:-2},{n:'mm',e:-3}
+  ],
+  /* familles : une question porte sur une seule famille (longueurs, litres ou grammes) */
+  families:[
+    [{n:'km',e:3},{n:'hm',e:2},{n:'dam',e:1},{n:'m',e:0},{n:'dm',e:-1},{n:'cm',e:-2},{n:'mm',e:-3}],
+    [{n:'kL',e:3},{n:'hL',e:2},{n:'daL',e:1},{n:'L',e:0},{n:'dL',e:-1},{n:'cL',e:-2},{n:'mL',e:-3}],
+    [{n:'kg',e:3},{n:'hg',e:2},{n:'dag',e:1},{n:'g',e:0},{n:'dg',e:-1},{n:'cg',e:-2},{n:'mg',e:-3}]
   ]},
   aire:{ label:"Aires", maxDiff:6, units:[
     {n:'km²',e:6},{n:'hm²',e:4},{n:'dam²',e:2},{n:'m²',e:0},{n:'dm²',e:-2},{n:'cm²',e:-4},{n:'mm²',e:-6}
@@ -416,9 +459,10 @@ function pickPairVolume(){
   units.forEach((u,i)=>units.forEach((v,j)=>{ if(Math.abs(i-j)===gap) pairs.push([u,v]); }));
   return pick(pairs);
 }
-function pickPair(cat){
+function pickPair(cat,fam){
   if(cat==='volume') return pickPairVolume();
-  const {units,maxDiff}=CATEGORIES[cat];
+  const {maxDiff}=CATEGORIES[cat];
+  const units=CATEGORIES[cat].families?(fam||pick(CATEGORIES[cat].families)):CATEGORIES[cat].units;
   const hard=Math.random()<0.25;
   const eff=hard?99:maxDiff;
   const a=Math.floor(Math.random()*units.length);
@@ -442,11 +486,12 @@ function genRoundBase(cat){
   const vals=offsets.map(o=>baseDigit*Math.pow(10,o));
   const used=new Set(), usedAns=new Set();
   const qs=[];
+  const fam=CATEGORIES[cat].families?pick(CATEGORIES[cat].families):undefined;
   for(let i=0;i<4;i++){
     const val=vals[i];
     let from,to,ans,tries=0;
     do{
-      [from,to]=pickPair(cat); tries++;
+      [from,to]=pickPair(cat,fam); tries++;
       ans=Number(fmtRaw(convert(val,from.e,to.e)).replace(',','.'));
     } while((used.has(from.n+'>'+to.n) || usedAns.has(ans+'|'+to.n)) && tries<40);
     used.add(from.n+'>'+to.n); usedAns.add(ans+'|'+to.n);
@@ -457,7 +502,7 @@ function genRoundBase(cat){
 }
 function explainBase(cat,q){
   const {from,to,val,ans,diff}=q;
-  if(cat==='capacite'||from.n==='L'||to.n==='L'){
+  if(cat==='capacite'||(cat!=='longueur'&&(from.n==='L'||to.n==='L'))){
     if((from.n==='m³'&&to.n==='dm³')||(from.n==='dm³'&&to.n==='m³'))
       return diff>0?`1 m³ = ${fmt(1000)} dm³, donc on multiplie par ${fmt(1000)} : ${fmt(val)} × ${fmt(1000)} = ${fmt(ans)}.`:`1 m³ = ${fmt(1000)} dm³, donc on divise par ${fmt(1000)} : ${fmt(val)} ÷ ${fmt(1000)} = ${fmt(ans)}.`;
     if((from.n==='m³'&&to.n==='L')||(from.n==='L'&&to.n==='m³'))
@@ -2722,7 +2767,7 @@ const SCREENS={
     ['3e/auto/sci','8. \u00c9criture scientifique','Passer de l\u2019\u00e9criture d\u00e9cimale \u00e0 l\u2019\u00e9criture scientifique'],
     ['3e/auto/lit-nombre','10. Simple distributivit\u00e9','D\u00e9velopper k(ax + b), puis r\u00e9duire'],
     ['3e/auto/lit-double','11. Double distributivit\u00e9','D\u00e9velopper et r\u00e9duire : (ax + b)(cx + d)'],
-    ['3e/auto/conv-longueur','31. Conversions de longueurs','km, hm, dam, m, dm, cm, mm'],
+    ['3e/auto/conv-longueur','31. Conversions de longueurs, capacités et masses','m, mm… ; L, mL… ; g, mg…'],
     ['3e/auto/conv-aire','32. Conversions d\u2019aires','km\u00b2, hm\u00b2, dam\u00b2, m\u00b2, dm\u00b2, cm\u00b2, mm\u00b2'],
     ['3e/auto/conv-volume','33. Conversions de volumes','km\u00b3, hm\u00b3, dam\u00b3, m\u00b3, dm\u00b3, cm\u00b3, mm\u00b3 et litres'],
     ['3e/auto/conv-duree','* Dur\u00e9es','Heures, minutes, secondes'],
@@ -2744,7 +2789,7 @@ function go(s){
   back.hidden=(s==='home');
   back.onclick=()=>go(s.split('/').slice(0,-1).join('/')||'home');
   const EXO={
-    '3e/auto/conv-longueur':{theme:'conversions',cat:'longueur',title:'Conversions de longueurs',sub:'Automatismes 3e'},
+    '3e/auto/conv-longueur':{theme:'conversions',cat:'longueur',title:'Conversions de longueurs, capacités et masses',sub:'Automatismes 3e'},
     '3e/auto/conv-aire':{theme:'conversions',cat:'aire',title:'Conversions d\u2019aires',sub:'Automatismes 3e'},
     '3e/auto/conv-volume':{theme:'conversions',cat:'volume',title:'Conversions de volumes',sub:'Automatismes 3e'},
     '3e/auto/conv-duree':{theme:'conversions',cat:'duree',title:'Dur\u00e9es',sub:'Automatismes 3e'},
@@ -2827,6 +2872,14 @@ const startLit=()=>{ document.getElementById('litNote').hidden=true; document.ge
   burger.onclick=e=>{ e.stopPropagation(); toggle(panel.hidden); };
   document.addEventListener('click',e=>{ if(!panel.hidden&&!panel.contains(e.target)) toggle(false); });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!panel.hidden){ toggle(false); burger.focus(); } });
+  [['optScore','mb-show-score','data-hide-score'],['optChrono','mb-show-chrono','data-hide-chrono']].forEach(([id,key,attr])=>{
+    const cb=document.getElementById(id);
+    cb.checked=!root.hasAttribute(attr);
+    cb.onchange=()=>{
+      if(cb.checked) root.removeAttribute(attr); else root.setAttribute(attr,'');
+      try{ localStorage.setItem(key,cb.checked?'1':'0'); }catch(e){}
+    };
+  });
   paint();
 })();
 go('home');
