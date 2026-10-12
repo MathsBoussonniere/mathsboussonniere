@@ -10,7 +10,9 @@
 <style>
 :root{
   --bg:#EEF3F7; --card:#FFFFFF; --ink:#16243D; --muted:#5B6B7F; --line:#CBD8E3;
-  --accent:#1B7F79; --accent-dark:#145F5A; --good:#2E7D46; --bad:#B23A2E;
+  --accent:#1B7F79; --accent-dark:#145F5A; --good:#16A34A; --bad:#DC2626;
+  --good-bg:rgba(34,197,94,.22); --bad-bg:rgba(239,68,68,.20); --good-bd:var(--good); --bad-bd:var(--bad);
+  --on-good:#15803D; --on-bad:#C81E1E; --good-txt:#15803D; --bad-txt:#C81E1E; --matched-op:1;
   --grid:rgba(27,127,121,.06); --accent-soft:rgba(27,127,121,.10);
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
@@ -20,14 +22,18 @@ html{scroll-padding-top:env(safe-area-inset-top,0px);}
 @media (prefers-color-scheme: dark){
   :root:not([data-theme]){
     --bg:#0F1720; --card:#17212C; --ink:#EAF1F6; --muted:#8CA0B3; --line:#2A3A48;
-    --accent:#3FBDB2; --accent-dark:#2E948B; --good:#4CAF7D; --bad:#E06655;
+    --accent:#3FBDB2; --accent-dark:#2E948B; --good:#2ECC71; --bad:#FF4D4D;
     --grid:rgba(63,189,178,.07); --accent-soft:rgba(63,189,178,.12);
+    --good-bg:rgba(46,204,113,.18); --bad-bg:rgba(255,77,77,.18); --good-bd:var(--good); --bad-bd:var(--bad);
+    --on-good:var(--good); --on-bad:var(--bad); --good-txt:var(--good); --bad-txt:var(--bad); --matched-op:.85;
   }
 }
 :root[data-theme="dark"]{
   --bg:#0F1720; --card:#17212C; --ink:#EAF1F6; --muted:#8CA0B3; --line:#2A3A48;
-  --accent:#3FBDB2; --accent-dark:#2E948B; --good:#4CAF7D; --bad:#E06655;
+  --accent:#3FBDB2; --accent-dark:#2E948B; --good:#2ECC71; --bad:#FF4D4D;
     --grid:rgba(63,189,178,.07); --accent-soft:rgba(63,189,178,.12);
+    --good-bg:rgba(46,204,113,.18); --bad-bg:rgba(255,77,77,.18); --good-bd:var(--good); --bad-bd:var(--bad);
+    --on-good:var(--good); --on-bad:var(--bad); --good-txt:var(--good); --bad-txt:var(--bad); --matched-op:.85;
 }
 *{box-sizing:border-box;}
 html,body{height:100%;}
@@ -56,8 +62,8 @@ h1{font-family:'Space Grotesk',system-ui,sans-serif;font-weight:700;font-size:1.
 @media(max-width:480px){.options{grid-template-columns:1fr;}}
 .opt-btn{font-family:'Space Grotesk',system-ui,sans-serif;font-variant-numeric:tabular-nums;padding:14px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font-size:1.05rem;cursor:pointer;transition:border-color .15s;}
 .opt-btn:hover{border-color:var(--accent);}
-.opt-btn.correct{background:rgba(46,125,70,.14);border-color:var(--good);color:var(--good);}
-.opt-btn.wrong{background:rgba(178,58,46,.14);border-color:var(--bad);color:var(--bad);}
+.opt-btn.correct{background:var(--good-bg);border-color:var(--good-bd);color:var(--on-good);}
+.opt-btn.wrong{background:var(--bad-bg);border-color:var(--bad-bd);color:var(--on-bad);}
 .fill-row{display:flex;align-items:baseline;justify-content:center;gap:8px;font-size:1.25rem;flex-wrap:wrap;margin-bottom:18px;font-family:'Space Grotesk',system-ui,sans-serif;}
 .fill-row input{font-family:'Space Grotesk',monospace;font-variant-numeric:tabular-nums;width:150px;padding:6px 4px;font-size:1.15rem;border:none;border-bottom:2px solid var(--ink);background:transparent;color:var(--ink);text-align:center;}
 .fill-row input:focus{outline:none;border-bottom-color:var(--accent);}
@@ -70,15 +76,15 @@ sup{font-size:.72em;line-height:0;vertical-align:super;}
 @media(max-width:480px){.match-grid{gap:8px 8px;}.match-item{padding:8px 6px !important;font-size:.9rem !important;}}
 .match-item{font-family:'Space Grotesk',system-ui,sans-serif;font-variant-numeric:tabular-nums;padding:12px;margin:0;display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);text-align:center;cursor:pointer;font-size:.98rem;}
 .match-item.selected{border-color:var(--accent);}
-.match-item.matched{border-color:var(--good);background:rgba(46,125,70,.14);opacity:.75;cursor:default;}
-.match-item.error{border-color:var(--bad);background:rgba(178,58,46,.14);}
+.match-item.matched{border-color:var(--good-bd);background:var(--good-bg);color:var(--on-good);opacity:var(--matched-op);cursor:default;}
+.match-item.error{border-color:var(--bad-bd);background:var(--bad-bg);color:var(--on-bad);}
 .match-item.revealed{border-style:dashed;border-color:var(--accent);cursor:default;}
 .actions{display:flex;justify-content:center;gap:10px;margin-top:20px;}
 button.primary{font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;padding:11px 22px;border-radius:8px;border:none;background:var(--ink);color:var(--bg);cursor:pointer;}
 button.primary:hover{background:var(--accent-dark);color:#fff;}
 .feedback{text-align:center;margin-top:14px;font-weight:600;min-height:1.4em;font-size:.95rem;}
-.feedback.ok{color:var(--good);}
-.feedback.ko{color:var(--bad);}
+.feedback.ok{color:var(--good-txt);}
+.feedback.ko{color:var(--bad-txt);}
 .feedback .expl{display:block;font-weight:400;color:var(--muted);margin-top:6px;font-size:.88rem;text-align:left;line-height:1.4;}
 @keyframes pulseGood{0%{transform:scale(1);}40%{transform:scale(1.05);}100%{transform:scale(1);}}
 @keyframes shakeBad{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
@@ -123,6 +129,11 @@ button.primary:hover{background:var(--accent-dark);color:#fff;}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 @media (prefers-reduced-motion: reduce){ .anim-good,.anim-bad,.anim-milestone{animation:none;} }
 /* Calcul littéral : police « maths » (empattements) pour les expressions seulement. Police composite « MathMix » : chiffres et signes en romain, lettres en italique, avec les mêmes métriques à l'affichage et dans le champ de saisie. */
+/* « g » à crochet arrondi (le haut est celui de Space Grotesk) : uniquement pour les conversions de 3e */
+@font-face{font-family:SGg;font-style:normal;font-weight:500;unicode-range:U+0067;src:url(data:font/woff2;base64,d09GMgABAAAAAAKMAAwAAAAABDQAAAI7AAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmA/U1RBVCoANBEICoMQgmwBNgIkAwgLBgAEIAViByAbNQMAHoVN2XxUwlQd5hUTQ0T+EQ//jX27b2ZWTLJpFFES1I1Ek7pwOiURMqGS2byHhtf9f69z79ccMZGRrikuloRl5lgpzX+zHc8S7ZYGiaX6tEASijBLMKBAuiQIMAkstEA00E2JtxSxKrs2oaT++FNFuqUkAjhQTTwB69AhP1y6fQDgK9woyD8Pd5S3SBcBcZ+OgVFZCLUCnQKD0rOCwloESAIixz+QkNEpC3QqRlEUgZvKdBKAmIvwhTEF1fgEfAEsUaTWVp7ulCALIxD9A8nlf8ShvP/mZBuQ0gSHd/t9AE/ADpH4iCs5gPf78Ui8ZqAwd4TErxzsGdTHB5LkSvAL8H59X1e2ux88iq1GXNSQ3nuex37HE/GzyoMqQwZzeg9bNwF3JksI1X8+/uZgBJElIRH6QHCwb/AeV25MzM3OUs1qYqJ3kmsk2UQauDl4elA8EDfSpzYlgVKfMD8t8OxV18T+8YdldS1dQ4MGQ9kwRXMzzzAdS4sQ7ecxqv63nxi+3SFSgvm/wmP3sgIX98BQO3VRQC7ptjUVohqsFofiUKCGso/t+ISPrTJqH7eweL7TchBN1HkqWLkXOruVQ8RGfGwIOywu2tc7PjqMHRIfCwCBxD/j96cZQtf/rJx/wPdh7QHA/e9jESxU7LNKNkG1BIK/EvKLC+WwIBSkLaenJljg5BQtE+gVS7IodUI13iTNqq2gUSflh426EKBAtDwF6pTKUi1BniIFCtUKkydXkTplqEBl2BwAAA==) format('woff2');}
+@font-face{font-family:SGg;font-style:normal;font-weight:600;unicode-range:U+0067;src:url(data:font/woff2;base64,d09GMgABAAAAAAKAAAwAAAAABAwAAAIuAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmA/U1RBVBwANBEICoMQgmsBNgIkAwgLBgAEIAVKByAbDgMAjtLMsISBmRHzMBgqIioevsb+d+7ufldErIpZMgmR9rVZR6aTaOaNbJLFGlTe/7+/um9ArswEoLkO2kpJjnT8SotQp+9Zy51HLbH2gSQWYvhPZYEGmHiWYOItOQgw9kA0yDNzi7ERhZ8eUNKUVIdJGqPVAXs0E6dEhJ3CAG7fA+A5XNaRP/z/QhmIueyh8TU9BmbKQqgV6ASarlzuHEVAQkanDKCYiaIIXK5UKu9/WYBEP4lf2FNQjQngFuCIIrW2CryWi5rGiKgaJhuaxnFlCKs/Z4SUJeobx7BD/ITjOmZuGpxXhi6Po+HjBT3bFzFzXe/4pB4mr1fj+AswdHJ/bufsIif6VxfxUUMaSrutwmqImi3ddf0N35veD7Kfcl8C9xGqv3r5sn6MeNfkJCOGifoxjCF82nh9e0uzpbko9bmujar1SopJS4Z1cBIqNlLf3LqZ+jA6/ZdzlnWzDv4e/xgMJo+3T5S3rFIZGpJWbA8LK7RdBhSfV1+Ox9vTrZ2w8q+4ZF1/R0JKTl64QLppkEo+P99jKDRWo+OxawY/eu7J3eZM/e9go7jl8eWsNdLNCjI0pSMhuZ++dX15SS5v58Hi1JSK4jzejsMlABBIbJ7krzSI1/7j0PN3+Lxquwb46jkpgVWVGLp3DkW1BILPkfPohrZrICRJUzqVBoVTchCjE1hli2VR6oRqvEuaVb8oaNTpiFwdKrTpMKZXk2G12nTp0GkUHaisWg0AAA==) format('woff2');}
+@font-face{font-family:SGg;font-style:normal;font-weight:700;unicode-range:U+0067;src:url(data:font/woff2;base64,d09GMgABAAAAAAJ8AAwAAAAABCAAAAIpAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmA/U1RBVCoANBEICoMQgmcBNgIkAwgLBgAEIAVQByAbHgNRlMzBAMBHQm6i9U0IS5licxYO2t946H/s2515b1WiaBZNm8Qxk7aQNWQqoZOC5j2EQuUfzenfAJhVq8d5m9gRkyzxhCded6AX//WQWOIRfUEBBpRJlmBgQdiSLNC2FmTZDQmDSaLzTSbUHM4TTeSHPIc9L4kr5sOe6+HTzT18ddfd8uP/H+p+TCEgDvIEY4oQWgUGBYbk27v3XgWkgKj5HSQKBhWBQdUYqipwt/Fvyv+QAIm6074wpqIZn/ANfpoqL+roaDh4adWSPFDEfHVNiosqwVGr06TYII9ZahokAyXBLCbPAJ+rU6fo/UkR4HVn4/llwGdq5AmiBpjPV6e4lwixceBg0DOAFNNxU3VQlyNiLgo4RbyiObMh82HnecfDxNvgffdlALWekwc1kserpfgAmKdGchCCa4NLWxrrnOpaGkszUCOw2iacHvEXQQ/XeE9ZxFmky9PHjexOf3Yk36bmE/YOT3Y6ZQZeXrFZ9j4+6XanbvLOLFnrzjShrY08X3WyImlNYZEJid6fehEdosjt63SLdMsiKIZUa01Hw0tGXq3GZUzM4+PKiq233rjPrlfkSo2mGB6WmRqvlpCRAkJKglp8ZTceCCTvTq40Vfes/Gst5S/8HpkYhIOnyzqmG8vFuwQIzRIEb+LLlwmwmRGCZBev5r5pTMfUROBetayI2iY0gym1amZBp25be0snbblr1VOP3HLWbffddc8rhZgaI+YBAAAA) format('woff2');}
+#exo.cv-g, #exo.cv-g *{font-family:SGg,'Space Grotesk',system-ui,sans-serif;}
 @font-face{font-family:MathMix;font-style:normal;font-weight:400;unicode-range:U+0000-0040,U+005B-0060,U+007B-00FF,U+2000-22FF;src:local('Times New Roman'),local('TimesNewRomanPSMT'),local('Liberation Serif'),local('Tinos'),local('Noto Serif'),local('DejaVu Serif');}
 @font-face{font-family:MathMix;font-style:normal;font-weight:400;unicode-range:U+0041-005A,U+0061-007A;src:local('Times New Roman Italic'),local('TimesNewRomanPS-ItalicMT'),local('Liberation Serif Italic'),local('Tinos Italic'),local('Noto Serif Italic'),local('DejaVu Serif Italic');}
 @font-face{font-family:MathMix;font-style:normal;font-weight:700;unicode-range:U+0000-0040,U+005B-0060,U+007B-00FF,U+2000-22FF;src:local('Times New Roman Bold'),local('TimesNewRomanPS-BoldMT'),local('Liberation Serif Bold'),local('Tinos Bold'),local('Noto Serif Bold'),local('DejaVu Serif Bold');}
@@ -149,12 +160,12 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 /* Thèmes Rose et Arc-en-ciel */
 :root[data-theme="pink"]{
   --bg:#FFCFE3; --card:#FFFFFF; --ink:#4A1632; --muted:#8A3A62; --line:#F08DB9;
-  --accent:#E0116F; --accent-dark:#B00A57; --good:#2E7D46; --bad:#B23A2E;
+  --accent:#E0116F; --accent-dark:#B00A57; --good:#16A34A; --bad:#DC2626;
   --grid:rgba(224,17,111,.12); --accent-soft:rgba(224,17,111,.16);
 }
 :root[data-theme="jade"]{
   --bg:#CFF0DF; --card:#FFFFFF; --ink:#0B3B2A; --muted:#3F7660; --line:#8FD0B0;
-  --accent:#00855A; --accent-dark:#00663F; --good:#1F7A3A; --bad:#B23A2E;
+  --accent:#00855A; --accent-dark:#00663F; --good:#16A34A; --bad:#DC2626;
   --grid:rgba(0,133,90,.11); --accent-soft:rgba(0,133,90,.15);
 }
 :root[data-theme="pink"] .match-item.selected,:root[data-theme="jade"] .match-item.selected{
@@ -163,7 +174,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 }
 :root[data-theme="rainbow"]{
   --bg:#FFFCF5; --card:#FFFFFF; --ink:#241B4B; --muted:#645C8A; --line:#E4DDF7;
-  --accent:#7B3FE4; --accent-dark:#5A25B8; --good:#2E7D46; --bad:#B23A2E;
+  --accent:#7B3FE4; --accent-dark:#5A25B8; --good:#16A34A; --bad:#DC2626;
   --grid:rgba(123,63,228,.05); --accent-soft:rgba(123,63,228,.10);
   --rb:linear-gradient(90deg,#FF3B6B,#FF9A1F,#F5D000,#2FBF71,#1E9BFF,#7B3FE4);
 }
@@ -376,9 +387,9 @@ function revealCurrent(){
     fb.innerHTML=`Question pass\u00e9e. R\u00e9ponse : ${q.ansStr}.<span class="expl">${q.expl}</span>`;
     return;
   }
-  const opf=(state.theme==='opf'||state.theme==='mdf'), frac=state.theme==='frac', sci=state.theme==='sci', tab=state.theme==='tables', dur=state.theme==='durees', comp=state.theme==='comp', clock=state.theme==='clock', pyt=state.theme==='pyth', mld=state.theme==='mld';
-  const expl=mld?explainMld(q):pyt?explainPyth(q):opf?explainOps(q):frac?explainFrac(q):sci?explainSci(q):tab?explainTable(q):dur?explainDuree(q):comp?explainComp(q):clock?explainClock(q):explain(state.cat,q);
-  const ansTxt=mld?mldAns(q):pyt?pythEq(q):opf?`${exprHTML(q)} = ${sfrac(q.an,q.ad)}`:frac?`${fracHTML(q.a,q.b)} = ${q.d===1?q.p:fracHTML(q.p,q.d)}`:tab?`${q.a} × ${q.b} = ${q.ans}`:dur?q.full:comp?`${fmt(q.a)} + ${fmt(q.ans)} = ${fmt(q.target)}`:clock?clockLabel(q):sci?(q.dir==='toSci'?`${fmt(q.dec)} = ${sciStr(q.a,q.n)}`:`${sciStr(q.a,q.n)} = ${fmt(q.dec)}`):`${qLeft(q)} = ${fmt(q.ans)} ${q.to.n}`;
+  const opf=(state.theme==='opf'||state.theme==='mdf'), frac=state.theme==='frac', sci=state.theme==='sci', tab=state.theme==='tables', dur=state.theme==='durees', comp=state.theme==='comp', clock=state.theme==='clock', pyt=state.theme==='pyth', mld=state.theme==='mld', mul=state.theme==='mult10';
+  const expl=mul?explainMul(q):mld?explainMld(q):pyt?explainPyth(q):opf?explainOps(q):frac?explainFrac(q):sci?explainSci(q):tab?explainTable(q):dur?explainDuree(q):comp?explainComp(q):clock?explainClock(q):explain(state.cat,q);
+  const ansTxt=mul?`${mulLabel(q)} = ${fmt(q.ans)}`:mld?mldAns(q):pyt?pythEq(q):opf?`${exprHTML(q)} = ${sfrac(q.an,q.ad)}`:frac?`${fracHTML(q.a,q.b)} = ${q.d===1?q.p:fracHTML(q.p,q.d)}`:tab?`${q.a} × ${q.b} = ${q.ans}`:dur?q.full:comp?`${fmt(q.a)} + ${fmt(q.ans)} = ${fmt(q.target)}`:clock?clockLabel(q):sci?(q.dir==='toSci'?`${fmt(q.dec)} = ${sciStr(q.a,q.n)}`:`${sciStr(q.a,q.n)} = ${fmt(q.dec)}`):`${qLeft(q)} = ${fmt(q.ans)} ${q.to.n}`;
   if(state.mode==='qcm'){
     content.querySelectorAll('.opt-btn').forEach(b=>{
       b.onclick=null;
@@ -670,6 +681,10 @@ function _newQuestion(){
     if(state.mode==='qcm') renderDureeQCM();
     else if(state.mode==='jeu') renderDureeJeu();
     else renderDureeTrou();
+  }else if(state.theme==='mult10'){
+    if(state.mode==='qcm') renderMulQCM();
+    else if(state.mode==='jeu') renderMulJeu();
+    else renderMulTrou();
   }else if(state.theme==='comp'){
     if(state.mode==='qcm') renderCompQCM();
     else if(state.mode==='jeu') renderCompJeu();
@@ -1177,6 +1192,133 @@ function renderCompTrou(){
     }
   };
 }
+/* ===== Multiplications par 10, 100 et 1 000 ===== */
+const MUL_R9=x=>Math.round(x*1e9)/1e9;
+function genMul(){
+  const k=1+Math.floor(Math.random()*3), p=Math.pow(10,k);
+  let aNum,d;
+  const r=Math.random();
+  const lastNZ=n=>{ if(n%10===0) n+=1+Math.floor(Math.random()*9); return n; };
+  if(r<0.06){ d=k; aNum=1; }                                   /* 0,1 × 10 ; 0,01 × 100 ; 0,001 × 1 000 */
+  else if(r<0.26){ d=0; aNum=2+Math.floor(Math.random()*998); } /* entiers : 7 ; 113 ; 54… */
+  else if(r<0.52){ d=1+Math.floor(Math.random()*2); aNum=lastNZ(11+Math.floor(Math.random()*(d===1?989:9989))); } /* 8,5 ; 41,05… */
+  else if(r<0.80){ d=2+Math.floor(Math.random()*3); aNum=lastNZ(1+Math.floor(Math.random()*(Math.pow(10,d)-1))); } /* 0,464 ; 0,045 ; 0,007… */
+  else{ /* zéro au milieu : 7,04 ; 70,09 ; 0,040 2 ; 0,303 03 */
+    const ip=Math.floor(Math.random()*100);
+    d=2+Math.floor(Math.random()*3); if(ip>=10) d=Math.min(d,3);
+    let fr=String(Math.floor(Math.random()*Math.pow(10,d))).padStart(d,'0').split('');
+    fr[Math.floor(Math.random()*(d-1))]='0';
+    if(fr[d-1]==='0') fr[d-1]=String(1+Math.floor(Math.random()*9));
+    aNum=ip*Math.pow(10,d)+Number(fr.join(''));
+  }
+  const a=MUL_R9(aNum/Math.pow(10,d));
+  const ans=MUL_R9(aNum*p/Math.pow(10,d));
+  const rev=Math.random()<0.5;
+  return {pk:`${aNum}|${d}|${k}|${rev?1:0}`,a,p,k,d,rev,ans};
+}
+function mulLabel(q){ return q.rev?`${fmt(q.p)} × ${fmt(q.a)}`:`${fmt(q.a)} × ${fmt(q.p)}`; }
+const MUL_RANGS={5:'centaines de mille',4:'dizaines de mille',3:'milliers',2:'centaines',1:'dizaines',0:'unités','-1':'dixièmes','-2':'centièmes','-3':'millièmes','-4':'dix-millièmes','-5':'cent-millièmes'};
+function explainMul(q){
+  /* La virgule ne bouge jamais : ce sont les chiffres qui changent de rang (valeur ×10, ×100, ×1 000). */
+  const {a,p,k,ans}=q, s=k>1?'s':'';
+  const [ip,dp='']=String(fmtRaw(a)).split(',');
+  let e0,dig;
+  if(ip.replace(/^0+/,'')!==''){ const t=ip.replace(/^0+/,''); e0=t.length-1; dig=t[0]; }
+  else{ const idx=dp.search(/[1-9]/); e0=-(idx+1); dig=dp[idx]; }
+  let t=`${mulLabel(q)} = ${fmt(ans)}. Multiplier par ${fmt(p)}, c'est rendre chaque chiffre ${fmt(p)} fois plus grand : chaque chiffre se décale de ${k} rang${s} vers la gauche.`;
+  if(MUL_RANGS[e0]&&MUL_RANGS[e0+k]) t+=` Ici, le chiffre ${dig} des ${MUL_RANGS[e0]} passe aux ${MUL_RANGS[e0+k]}.`;
+  if(dp.length<k) t+=` Les rangs libres à droite se remplissent avec des zéros.`;
+  return t;
+}
+function mulOptions(q){
+  const {a,p,ans}=q;
+  const cands=[ans*10,ans/10,a/p,a,ans*100,ans/100].map(MUL_R9);
+  const ok=v=>v>0&&v!==ans&&v<1e7&&fmt(v)!=='0'&&String(fmtRaw(v)).length<=12;
+  let wr=shuffle([...new Set(cands.filter(ok))]).slice(0,3);
+  for(let k=1;wr.length<3&&k<50;k++){ const v=MUL_R9(ans+k*(ans>=1?1:Math.pow(10,-q.d))); if(ok(v)&&!wr.includes(v)) wr.push(v); }
+  return shuffle([ans,...wr.slice(0,3)]);
+}
+function renderMulQCM(){
+  const q=withHistory(genMul); state.current=q;
+  const content=document.getElementById('content');
+  content.innerHTML=`
+    <div class="question">${mulLabel(q)} = ?</div>
+    <div class="options">${mulOptions(q).map(o=>`<button class="opt-btn" data-val="${o}">${fmt(o)}</button>`).join('')}</div>
+    <div class="feedback" id="fb"></div>`;
+  content.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      content.querySelectorAll('.opt-btn').forEach(b=>b.onclick=null);
+      const fb=document.getElementById('fb');
+      if(Number(btn.dataset.val)===q.ans){
+        btn.classList.add('correct','anim-good');
+        bumpStreak(getStreak());
+        fb.textContent="Bravo, c'est correct !"; fb.className='feedback ok';
+        autoNext(450);
+      }else{
+        btn.classList.add('wrong','anim-bad');
+        failStreak();
+        fb.innerHTML=`Ce n'est pas ça. <span class="expl">${explainMul(q)}</span>`;
+        fb.className='feedback ko';
+        content.querySelectorAll('.opt-btn').forEach(b=>{if(Number(b.dataset.val)===q.ans)b.classList.add('correct');});
+      }
+    };
+  });
+}
+/* Jeu d'association : les 4 questions partagent la même suite de chiffres (ex. 8,46 × 10 ; 0,846 × 1 000 ; 84,6 × 100 ; 846 × 10),
+   seule la place de la virgule change : il faut vraiment décaler chaque chiffre du bon nombre de rangs. */
+function genMulGroup(){
+  const len=2+Math.floor(Math.random()*3);                       /* 2 à 4 chiffres */
+  let digs=String(1+Math.floor(Math.random()*9));
+  for(let i=1;i<len-1;i++) digs+=String(Math.floor(Math.random()*10));
+  digs+=String(1+Math.floor(Math.random()*9));                   /* dernier chiffre non nul */
+  const D=Number(digs), jmax=Math.min(4,len+1);
+  const pairs={};                                                /* e = k − j : décalage net de la virgule */
+  for(let k=1;k<=3;k++) for(let j=0;j<=jmax;j++) (pairs[k-j]=pairs[k-j]||[]).push([j,k]);
+  const es=shuffle(Object.keys(pairs).map(Number)).slice(0,4);
+  return es.map(e=>{
+    const [j,k]=pick(pairs[e]);
+    const a=MUL_R9(D/Math.pow(10,j)), ans=MUL_R9(D*Math.pow(10,e));
+    return {pk:`${D}|${j}|${k}`,a,p:Math.pow(10,k),k,d:j,rev:Math.random()<0.5,ans};
+  });
+}
+function renderMulJeu(){
+  renderMatch(genMulGroup(), q=>mulLabel(q), q=>fmt(q.ans), explainMul);
+}
+function renderMulTrou(){
+  const q=withHistory(genMul); state.current=q;
+  const content=document.getElementById('content');
+  content.innerHTML=`
+    <div class="fill-row">${mulLabel(q)} = <input type="text" id="ans" inputmode="decimal" placeholder="?" autocomplete="off" style="width:130px;"></div>
+    <div class="actions"><button class="primary" id="check">Valider</button></div>
+    <div class="feedback" id="fb"></div>`;
+  const inp=document.getElementById('ans');
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ const c=document.getElementById('check'); if(c&&!c.disabled) c.click(); } });
+  document.getElementById('check').onclick=()=>{
+    const v=parseNum(inp.value);
+    const fb=document.getElementById('fb');
+    const rowEl=content.querySelector('.fill-row');
+    document.getElementById('check').disabled=true;
+    if(!isNaN(v) && Math.abs(v-q.ans)<1e-9 && !groupOK(inp.value)){
+      rowEl.classList.add('anim-bad'); failStreak();
+      document.getElementById('check').style.display='none';
+      fb.textContent=`Ta valeur est juste, mais elle ne compte pas : écris les nombres par groupes de 3 chiffres (${fmt(q.ans)}).`; fb.className='feedback ko';
+      return;
+    }
+    if(!isNaN(v) && Math.abs(v-q.ans)<1e-9){
+      rowEl.classList.add('anim-good');
+      bumpStreak(getStreak());
+      fb.textContent='Exact, bravo !'; fb.className='feedback ok';
+      autoNext(450);
+    }else{
+      rowEl.classList.add('anim-bad');
+      failStreak();
+      document.getElementById('check').style.display='none';
+      fb.innerHTML=`Pas tout à fait. <span class="expl">${explainMul(q)}</span>`;
+      fb.className='feedback ko';
+    }
+  };
+}
+/* ===== fin multiplications par 10, 100 et 1 000 ===== */
 function padHM(n){ return String(n).padStart(2,'0'); }
 function clockLabel(q){ return `${padHM(q.h)}h${padHM(q.m)}`; }
 function clockSVG(h,m,size){
@@ -2778,7 +2920,8 @@ const SCREENS={
     ['6e/auto/comp','3. Compl\u00e9ments','Compl\u00e9ments \u00e0 10, 100, 1 000 et compl\u00e9ments d\u00e9cimaux \u00e0 1'],
     ['6e/auto/clock','4. Lecture d\u2019heure','Lire l\u2019heure sur une horloge \u00e0 aiguilles'],
     ['6e/auto/multiples','5. Multiples et diviseurs','Multiple, diviseur, multiples et diviseurs communs'],
-    ['6e/auto/hands','6. Placer les aiguilles','Placer les aiguilles pour afficher l’heure demandée']]}
+    ['6e/auto/hands','6. Placer les aiguilles','Placer les aiguilles pour afficher l’heure demandée'],
+    ['6e/auto/mult10','7. Multiplications par 10, 100 et 1 000','Décaler les chiffres de 1, 2 ou 3 rangs : × 10, × 100, × 1 000']]}
 };
 function go(s){
   abandon();
@@ -2808,7 +2951,8 @@ function go(s){
     '6e/auto/comp':{theme:'comp',title:'Compl\u00e9ments',sub:'Automatismes 6e'},
     '6e/auto/hands':{theme:'hands',title:'Placer les aiguilles',sub:'Automatismes 6e'},
     '6e/auto/clock':{theme:'clock',title:'Lecture d\u2019heure',sub:'Automatismes 6e'},
-    '6e/auto/multiples':{theme:'mld',title:'Multiples et diviseurs',sub:'Automatismes 6e'}
+    '6e/auto/multiples':{theme:'mld',title:'Multiples et diviseurs',sub:'Automatismes 6e'},
+    '6e/auto/mult10':{theme:'mult10',title:'Multiplications par 10, 100 et 1 000',sub:'Automatismes 6e'}
   };
   const isExo=!!EXO[s];
   exo.hidden=!isExo; menu.hidden=isExo;
@@ -2818,7 +2962,7 @@ function go(s){
     title.textContent=EXO[s].title;
     sub.textContent=EXO[s].sub;
     const litIntro=(state.theme==='lit');
-    document.getElementById('litNote').hidden=!litIntro; exo.classList.toggle('intro',litIntro);
+    document.getElementById('litNote').hidden=!litIntro; exo.classList.toggle('intro',litIntro); exo.classList.toggle('cv-g',state.theme==='conversions');
     renderTabs(); renderModes();
     if(litIntro){ document.getElementById('content').innerHTML=''; state.current=null; } else newQuestion();
     return;
