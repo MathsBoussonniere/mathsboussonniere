@@ -95,7 +95,7 @@ button.primary:hover{background:var(--accent-dark);color:#fff;}
 .back{background:none;border:none;color:var(--muted);font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;font-size:.9rem;cursor:pointer;padding:6px 0;margin-bottom:2px;}
 .back:hover{color:var(--ink);}
 .menu-list{display:grid;gap:12px;margin-top:8px;}
-.menu-btn{text-align:left;padding:20px 22px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;font-size:.9rem;}
+.menu-btn{text-align:left;padding:20px 22px;border-radius:10px;border:1.5px solid var(--line);border-left-width:6px;border-left-color:var(--c,var(--accent));background:var(--card);color:var(--ink);cursor:pointer;font-size:.9rem;}
 .menu-btn:hover{border-color:var(--accent);}
 .menu-btn strong{display:block;font-family:'Space Grotesk',system-ui,sans-serif;font-size:1.3rem;margin-bottom:3px;}
 .menu-btn span{color:var(--muted);}
@@ -104,8 +104,10 @@ button.primary:hover{background:var(--accent-dark);color:#fff;}
 .menu-btn.small{padding:12px 16px;}
 .menu-btn.small strong{font-size:1.02rem;margin:0;}
 .menu-btn.small span{display:block;margin-top:2px;font-size:.8rem;}
+/* espace entre « Mode entraînement » et la liste des automatismes */
+.menu-btn[data-go$="/auto/entrainement"]{margin-bottom:22px;}
 .menu-btn[disabled]{opacity:.5;cursor:default;}
-.menu-btn[disabled]:hover{border-color:var(--line);}
+.menu-btn[disabled]:hover{border-color:var(--line);border-left-color:var(--c,var(--accent));}
 .clock-svg{color:var(--ink);display:block;margin:0 auto;}
 .clock-wrap{display:flex;justify-content:center;margin-bottom:6px;}
 .options.clocks{grid-template-columns:1fr 1fr;}
@@ -129,6 +131,11 @@ button.primary:hover{background:var(--accent-dark);color:#fff;}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 @media (prefers-reduced-motion: reduce){ .anim-good,.anim-bad,.anim-milestone{animation:none;} }
 /* Calcul littéral : police « maths » (empattements) pour les expressions seulement. Police composite « MathMix » : chiffres et signes en romain, lettres en italique, avec les mêmes métriques à l'affichage et dans le champ de saisie. */
+/* « g » à crochet arrondi (le haut est celui de Space Grotesk) : uniquement pour les conversions de 3e */
+@font-face{font-family:SGg;font-style:normal;font-weight:500;unicode-range:U+0067;src:url(data:font/woff2;base64,d09GMgABAAAAAAKgAAwAAAAABEQAAAJQAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmA/U1RBVCoANBEICoMggnsBNgIkAwgLBgAEIAViByAbRAMAHoNt26lkbl4x2clMJ7zi4YmHj7ny/SR3BSZHAIpoPEFWNlsk144HAkekb+qvlb092N97n9ZExvVlRyJBoSk9pDJwwmk2sCgK2DO88I9u8tsDvi79hliqRx9uoQizBAM6kNYQGQtDC3JbnOBDkBGtpFcjZEnH+FdFUhBXAnNUJlYJhom84aPT5wB4arPp9Hvdb7L90RsBUZM8BLpLhVBfoLVAZ8mOzTMbBEgERBp/QYIUraUCrWW6I5MJbK5U2lW5IADi3PBCMxmqcQY3YBWZpHlztnkkd7T4GlUlvFGTMirLkYbrDODiWMPGBbIBuqK4H6XPRuV3+d3lUXrqJ7t6EKW/hsUPDaOEf2tURp+RX73bW7x3jhWBDGhEaJTl6a+Zb8dZ3fvxjwPZYaNcLdkXueNm2HOjcux10F1Ew3NfnxsW2Ne15W8RJSxxhPxLx509E2Oj6tFN2lPsdUhvqMWWieVzxBwmQ/b7aAeuogOvb8XNn+mq3/1/deNtMNtt23Zxo9zryTea/L56409T64cvvtw83lwBQ2qZP35xOpWtaYho+dUTQbvQeH552rSzKz2Fdtb2Dla3QFq1a2uv73O5++rr7bId/sm2ibJAdiaZWYLmKV0d9Yx5y9rKxa62Rsac5R0AEEh4WX9rZTVj/ylN/8CvSz2Poab24AytJFWlLlRLQPB1/HTXBDW3QFgguZVDSQ5DZWIhck6gKjNcKrIGQjVeJZqq1oLGWpP0x7pbotq0NpOmbVowak23SbOmzdjQaNKEWZsWkYDKJYMB) format('woff2');}
+@font-face{font-family:SGg;font-style:normal;font-weight:600;unicode-range:U+0067;src:url(data:font/woff2;base64,d09GMgABAAAAAAKIAAwAAAAABBwAAAI4AAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmA/U1RBVBwANBEICoMggnoBNgIkAwgLBgAEIAVKByAbHQNRVA2SAB+JsfNoxdCEJhTjhCKlD4S0jeBrP3Tf3QXBAau4RKFGdkn5pzNV7Fi148tGVagaWZZAqlPbP7XWdsHvXsVwi3hj6HrX0IYnmrin19IZKvc736NeQOkPJLEQw44KAwzwXqKzCQ7oQPazAf4ttTk3UdieQCLLuiKVNJA6NZCeyGA9TYkTMyEnP3S3tI63KlV+9/8T5W5MIiC+phuMykJoFugHpDvV2c0AEjL65RxWjKJgG6jqmnbqlwIg9lPXC+sUNOIp3oBDFKm7u10x29k9Np2FhXgOJc5kQMHSSI+BnFQWIUynP8h0TN9B/B6duQX3b9ohvq9mr19D/A6Z/gEQiOdy6EzmEcAOLhSM+WWgg4QWhWgBFrip/IjL6q/QXWEvobWLuQAC0246T9EZ97l+G0Jk+SaFs9numRyEeHaspwEsIxztGujtkfQM9HZVOOzoUARckSAILmIAzB1QP+d4En4LHv/88lWedOf/5Y9AIPpVqhxKWgvTbIrUyS2WGtmNrkCV/DL9coJRGMDyR64PDg36QuWVVgI1OuzSSKnHx2Xl1VClGsLkJEFOxGJELV6vVgvSEmWMUNeac+bQoO9uh/mJUFN9BVLZWBcONddVIhXN9SQgkPh9cnn5tGvxX3PO3+Hja9kKfP37eNd0rcjKbEajBIK/kvOjBLc6IkyQTs1JumfaJDvKQMBcNiWL0iI04m3SqfGPgnb99i2r7Lmscss151137LKrKmduykD92gwA) format('woff2');}
+@font-face{font-family:SGg;font-style:normal;font-weight:700;unicode-range:U+0067;src:url(data:font/woff2;base64,d09GMgABAAAAAAKMAAwAAAAABDAAAAI7AAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmA/U1RBVCoANBEICoMggnYBNgIkAwgLBgAEIAVQByAbLQNRlKzBKsCPw9iNc0LUyDvL/2Ka2halePhvP9p9M7MqUTSbZDdoIt72UD1qIhRoGY97KIk/pJd3rZMXWECjMbUjmIz9rNUmaYKWXSzO+amb5z8B3/91lFjiEY2FYUBx4lmCAW0cywJNp25Tg3oCqaZblweU1Jt21JBepVxsRpU4ZzKUwhpusbKJL667nr///005iREExGnawYAshHqBboEe6fn1G08CkgKUYRIyumXVqmIARRG4XlV4marPApzIR20/zFNQi/f4ht+aIrW3N6vm31LKPI/QF39CycQDKNg9Uk4m7qA3fouQPNcgYTc5nj2I76PELnixkw3xeS13fBrie4hnB0Ag/vSEEg+HALawoWJ19QE5VsNHIeqDReykXNBZ2lXUXsLtRecqdjcITD3qXkWJ4HXtOIRI1w4r//hYRjxBiD/u+XsAe5DhebVV5Zry2qq8DDTgLpGF10f8R9SHr+ycEMWJrj+k93MUu78rv3/4wgGl6llBy2dZLLFZSpstXbFr8Nbe/m1aGcaoVGB+o2VF1lWHRSYkWr8YEa3hWrls+SgpaelYJtdS+jopWkpnH4VPt0RzeRotjxtlpTcw+m2rlkhdU51veFhmajySkJEC0pQEJD4TgZ64xgsAuuzlr4Qa8Uaqz/kf/KL4BKdffjVaqbI1u4RaCQRdE+d3DGqlRDicVOXn04lRnuwpBcHHillZlAahFiySerVS0KzVK7VTh1Zdt+C+O64466qbrrvhiWzYVUwCAA==) format('woff2');}
+#exo.cv-g, #exo.cv-g *{font-family:SGg,'Space Grotesk',system-ui,sans-serif;}
 @font-face{font-family:MathMix;font-style:normal;font-weight:400;unicode-range:U+0000-0040,U+005B-0060,U+007B-00FF,U+2000-22FF;src:local('Times New Roman'),local('TimesNewRomanPSMT'),local('Liberation Serif'),local('Tinos'),local('Noto Serif'),local('DejaVu Serif');}
 @font-face{font-family:MathMix;font-style:normal;font-weight:400;unicode-range:U+0041-005A,U+0061-007A;src:local('Times New Roman Italic'),local('TimesNewRomanPS-ItalicMT'),local('Liberation Serif Italic'),local('Tinos Italic'),local('Noto Serif Italic'),local('DejaVu Serif Italic');}
 @font-face{font-family:MathMix;font-style:normal;font-weight:700;unicode-range:U+0000-0040,U+005B-0060,U+007B-00FF,U+2000-22FF;src:local('Times New Roman Bold'),local('TimesNewRomanPS-BoldMT'),local('Liberation Serif Bold'),local('Tinos Bold'),local('Noto Serif Bold'),local('DejaVu Serif Bold');}
@@ -1534,10 +1541,7 @@ function renderHandsJeu(){
     null,
     q=>clockSVG(q.h,q.m,84));
 }
-function genHandsTrou(){
-  let q; do{ q=genClock(); }while(q.h%12===0 && (q.m<=1||q.m>=59)); /* évite que la position de départ (12 h) soit déjà la bonne */
-  return q;
-}
+function genHandsTrou(){ return genClock(); } /* les 1 440 horaires sont possibles, y compris 0 h 00 et 12 h 00 */
 function renderHandsTrou(){
   const q=withHistory(genHandsTrou); state.current=q;
   const content=document.getElementById('content');
@@ -3024,7 +3028,7 @@ function go(s){
     title.textContent=EXO[s].title;
     sub.textContent=EXO[s].sub;
     const litIntro=(state.theme==='lit');
-    document.getElementById('litNote').hidden=!litIntro; exo.classList.toggle('intro',litIntro);
+    document.getElementById('litNote').hidden=!litIntro; exo.classList.toggle('intro',litIntro); exo.classList.toggle('cv-g',state.theme==='conversions');
     renderTabs(); renderModes();
     if(litIntro){ document.getElementById('content').innerHTML=''; state.current=null; } else newQuestion();
     return;
@@ -3126,8 +3130,8 @@ go('home');
   };
   newQuestion=function(){
     if(training){
-      const ids=training.ids, pool=ids.length>1?ids.filter(i=>i!==training.last):ids;
-      const id=pool[Math.floor(Math.random()*pool.length)]; training.last=id;
+      const ids=training.ids;   /* tirage totalement aléatoire : un même automatisme peut revenir plusieurs fois de suite */
+      const id=ids[Math.floor(Math.random()*ids.length)]; training.last=id;
       const t=TR[id]; state.theme=t.theme; if(t.cat) state.cat=t.cat; state.lvl=training.lv;
       const it=SCREENS[training.lv+'/auto'].items.find(i=>i[0]===id);
       $('subtitle').textContent=it?it[1].replace(/^[*\d.\s]+/,''):'';
@@ -3189,7 +3193,7 @@ go('home');
       }).join('');
       h+=det('Niveau '+lv,
         item(lv,'Accueil '+lv)+
-        det('Automatismes',item(lv+'/auto','Tous les automatismes')+auto,'nv-sub')+
+        det('Automatismes',item(lv+'/auto','Liste des automatismes')+auto,'nv-sub')+
         det('Cours',cours,'nv-sub'),'nv-lv');
     });
     body.innerHTML=h;
