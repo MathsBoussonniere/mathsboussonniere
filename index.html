@@ -10,9 +10,9 @@
 <style>
 :root{
   --bg:#EEF3F7; --card:#FFFFFF; --ink:#16243D; --muted:#5B6B7F; --line:#CBD8E3;
-  --accent:#1B7F79; --accent-dark:#145F5A; --good:#16A34A; --bad:#DC2626;
-  --good-bg:rgba(34,197,94,.22); --bad-bg:rgba(239,68,68,.20); --good-bd:var(--good); --bad-bd:var(--bad);
-  --on-good:#15803D; --on-bad:#C81E1E; --good-txt:#15803D; --bad-txt:#C81E1E; --matched-op:1;
+  --accent:#1B7F79; --accent-dark:#145F5A; --good:#16A34A; --bad:#FF4D4D;
+  --good-bg:rgba(34,197,94,.22); --bad-bg:rgba(255,77,77,.18); --good-bd:var(--good); --bad-bd:var(--bad);
+  --on-good:#15803D; --on-bad:var(--bad); --good-txt:#15803D; --bad-txt:var(--bad); --matched-op:1;
   --grid:rgba(27,127,121,.06); --accent-soft:rgba(27,127,121,.10);
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
@@ -165,12 +165,12 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 /* Thèmes Rose et Arc-en-ciel */
 :root[data-theme="pink"]{
   --bg:#FFCFE3; --card:#FFFFFF; --ink:#4A1632; --muted:#8A3A62; --line:#F08DB9;
-  --accent:#E0116F; --accent-dark:#B00A57; --good:#16A34A; --bad:#DC2626;
+  --accent:#E0116F; --accent-dark:#B00A57; --good:#16A34A; --bad:#FF4D4D;
   --grid:rgba(224,17,111,.12); --accent-soft:rgba(224,17,111,.16);
 }
 :root[data-theme="jade"]{
   --bg:#CFF0DF; --card:#FFFFFF; --ink:#0B3B2A; --muted:#3F7660; --line:#8FD0B0;
-  --accent:#00855A; --accent-dark:#00663F; --good:#16A34A; --bad:#DC2626;
+  --accent:#00855A; --accent-dark:#00663F; --good:#16A34A; --bad:#FF4D4D;
   --grid:rgba(0,133,90,.11); --accent-soft:rgba(0,133,90,.15);
 }
 :root[data-theme="pink"] .match-item.selected,:root[data-theme="jade"] .match-item.selected{
@@ -179,7 +179,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 }
 :root[data-theme="rainbow"]{
   --bg:#FFFCF5; --card:#FFFFFF; --ink:#241B4B; --muted:#645C8A; --line:#E4DDF7;
-  --accent:#7B3FE4; --accent-dark:#5A25B8; --good:#16A34A; --bad:#DC2626;
+  --accent:#7B3FE4; --accent-dark:#5A25B8; --good:#16A34A; --bad:#FF4D4D;
   --grid:rgba(123,63,228,.05); --accent-soft:rgba(123,63,228,.10);
   --rb:linear-gradient(90deg,#FF3B6B,#FF9A1F,#F5D000,#2FBF71,#1E9BFF,#7B3FE4);
 }
@@ -233,6 +233,31 @@ h1,.subtitle{padding:0 46px;}
 .tr-foot button.primary:disabled{opacity:.45;cursor:default;}
 
 .burger.navbtn{right:auto;left:12px;}
+.burger.pvcalc-btn{top:auto;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);}
+.pvcalc{position:fixed;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 64px);z-index:69;width:232px;padding:10px;border:1.5px solid var(--pc-bd);border-radius:12px;background:var(--pc-bg);color:var(--pc-fg);box-shadow:0 8px 28px rgba(0,0,0,.18);font-family:'Space Grotesk',system-ui,sans-serif;
+  --pc-bg:var(--bg);--pc-bd:var(--line);--pc-fg:var(--ink);--pc-scr:var(--card);--pc-scrbd:var(--line);--pc-key:var(--card);--pc-keybd:var(--line);--pc-op:var(--accent-soft);}
+:root[data-theme="dark"] .pvcalc{--pc-bg:var(--card);--pc-bd:var(--line);--pc-fg:var(--ink);--pc-scr:var(--bg);--pc-scrbd:var(--line);--pc-key:var(--bg);--pc-keybd:var(--line);--pc-op:var(--accent-soft);}
+@media (prefers-color-scheme: dark){:root:not([data-theme]) .pvcalc{--pc-bg:var(--card);--pc-bd:var(--line);--pc-fg:var(--ink);--pc-scr:var(--bg);--pc-scrbd:var(--line);--pc-key:var(--bg);--pc-keybd:var(--line);--pc-op:var(--accent-soft);}}
+.pvcalc[hidden]{display:none;}
+.pvscr{border:1.5px solid var(--pc-scrbd);border-radius:8px;background:var(--pc-scr);padding:6px 10px;margin-bottom:8px;text-align:right;overflow:hidden;}
+.pvexp{font-size:.8rem;min-height:1.1em;opacity:.65;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:rtl;}
+.pvcur{font-size:1.5rem;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pvpad{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.pvk{font-family:inherit;font-size:1.2rem;padding:10px 0;border-radius:8px;border:1.5px solid var(--pc-keybd);background:var(--pc-key);color:var(--pc-fg);cursor:pointer;}
+.pvk:hover,.pvk:active{border-color:var(--accent);}
+.pvk.op{background:var(--pc-op);}
+.pvk.eq{background:var(--accent);border-color:var(--accent);color:#fff;}
+.pvk.span2{grid-column:span 2;}
+.pvck{display:inline-flex;flex-direction:column;align-items:center;gap:6px;padding:0 6px;border:none;background:none;color:var(--ink);font-family:inherit;font-size:1.15rem;cursor:pointer;}
+.pvck:disabled{color:var(--ink);opacity:1;cursor:default;}
+.pvbox{display:inline-block;position:relative;width:26px;height:26px;border:2px solid var(--ink);border-radius:5px;box-sizing:border-box;}
+.pvck:hover .pvbox{border-color:var(--accent);}
+.pvck.pvpicked .pvbox{background:var(--accent);border-color:var(--accent);}
+.pvck.pvpicked .pvbox::after{content:'';position:absolute;left:7px;top:2px;width:7px;height:13px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg);}
+.pvck.correct .pvbox{border-color:var(--good);}
+.pvck.pvpicked.correct .pvbox{background:var(--good);}
+.pvck.wrong .pvbox{border-color:var(--bad);background:var(--bad);}
+
 .navback{position:fixed;inset:0;z-index:75;background:rgba(0,0,0,.38);}
 .navback[hidden]{display:none;}
 .sidenav{position:fixed;top:0;bottom:0;left:0;z-index:80;width:min(320px,86vw);background:var(--bg);color:var(--ink);border-right:1px solid var(--line);box-shadow:8px 0 28px rgba(0,0,0,.18);transform:translateX(-102%);visibility:hidden;transition:transform .2s ease,visibility 0s linear .2s;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
@@ -444,6 +469,18 @@ function revealCurrent(){
       const c=document.getElementById('check'); if(c){ c.disabled=true; c.style.display='none'; }
       content.querySelectorAll('.pykey').forEach(b=>b.disabled=true); }
     fb.innerHTML=`Question pass\u00e9e. R\u00e9ponse : ${q.ansStr}.<span class="expl">${q.expl}</span>`;
+    return;
+  }
+  if(state.theme==='pyv'){
+    if(state.mode==='qcm') content.querySelectorAll('.opt-btn').forEach(b=>{ b.onclick=null; if(b.dataset.k===pvKey(q)) b.classList.add('correct'); });
+    else{
+      const ea=document.getElementById('ansA'), eb=document.getElementById('ansB');
+      if(ea) ea.value=fmt(q.sq/100); if(eb) eb.value=fmt(q.sum/100);
+      content.querySelectorAll('input').forEach(i=>i.disabled=true);
+      content.querySelectorAll('#pvConc .pvck').forEach(b=>{ b.onclick=null; b.disabled=true; b.classList.remove('pvsel'); if(b.dataset.k===(q.right?'r':'non')) b.classList.add('correct'); });
+      const c=document.getElementById('check'); if(c){ c.disabled=true; c.style.display='none'; }
+    }
+    fb.innerHTML=`Question passée. Réponse : ${state.mode==='qcm'?pvAns(q):pvEq(q)+' ; '+pvAns(q)}.<span class="expl">${explainPyv(q)}</span>`;
     return;
   }
   const opf=(state.theme==='opf'||state.theme==='mdf'), frac=state.theme==='frac', sci=state.theme==='sci', tab=state.theme==='tables', dur=state.theme==='durees', comp=state.theme==='comp', clock=state.theme==='clock', pyt=state.theme==='pyth', mld=state.theme==='mld', mul=state.theme==='mult10';
@@ -716,6 +753,10 @@ function _newQuestion(){
     if(state.mode==='qcm') renderMldQCM();
     else if(state.mode==='jeu') renderMldJeu();
     else renderMldTrou();
+  }else if(state.theme==='pyv'){
+    if(state.mode==='qcm') renderPvQCM();
+    else if(state.mode==='jeu') renderPvJeu();
+    else renderPvTrou();
   }else if(state.theme==='pyth'){
     if(state.mode==='qcm') renderPythQCM();
     else if(state.mode==='jeu') renderPythJeu();
@@ -2508,6 +2549,200 @@ function renderPythTrou(){
 }
 
 
+/* ===== Vérification de l'égalité de Pythagore (3e) — Automatisme n°6 ===== */
+const PV_BASES=[[3,4,5],[5,12,13],[8,15,17],[7,24,25],[20,21,29],[9,40,41]];
+function pvRn(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
+function pvTenths(t){ return fmt(t/10); }      /* longueur en dixièmes -> texte */
+function pvSq(h){ return fmt(h/100); }         /* carré en centièmes -> texte */
+/* Trois longueurs (en dixièmes, ordre croissant) : triplet pythagoricien, presque-triplet ou triangle quelconque.
+   Carrés et sommes restent < 1 000 (pas de groupement de chiffres à gérer). */
+function pvTriple(right,dec){
+  for(let g=0;g<500;g++){
+    let t;
+    if(right||Math.random()<.7){
+      const f=dec?pvRn(1,29):pick([10,20,30]);
+      if(dec&&f%10===0) continue;
+      t=pick(PV_BASES).map(x=>x*f);
+      if(!right){ t[pvRn(0,2)]+=pick(dec?[1,-1,2,-2,3,-3,10,-10]:[10,-10,20,-20]); }
+    }else{
+      const rs=()=>dec?pvRn(8,200):pvRn(2,20)*10;
+      t=[rs(),rs(),rs()];
+    }
+    t.sort((a,b)=>a-b);
+    const [x,y,z]=t;
+    if(x<=0||y===z||x+y<=z||z>300) continue;
+    const sq=z*z, sum=x*x+y*y;
+    if(sq>=100000||sum>=100000) continue;
+    if((sq===sum)!==right) continue;
+    if(dec!==t.some(v=>v%10!==0)) continue;
+    return t;
+  }
+  return right?[30,40,50]:[70,70,100];
+}
+function genPyv(o){
+  o=o||{};
+  const right=o.right!==undefined?o.right:Math.random()<.5;
+  const dec=o.dec!==undefined?o.dec:Math.random()<.6;
+  const t=pvTriple(right,dec);
+  const L=o.letters||shuffle([...PY_LETTERS]).slice(0,3);
+  const rv=o.rv||pick(L), [P,Q]=L.filter(x=>x!==rv);
+  const sg=(a,b)=>Math.random()<.5?a+b:b+a;
+  const legs=shuffle([t[0],t[1]]);
+  const sides=shuffle([{n:sg(P,Q),v:t[2],big:true},{n:sg(rv,P),v:legs[0]},{n:sg(rv,Q),v:legs[1]}]);
+  const big=sides.find(s=>s.big), others=sides.filter(s=>!s.big);
+  const q={name:[...L].sort().join(''),rv,sides,big,s1:others[0],s2:others[1],right,dec};
+  q.sq=big.v*big.v; q.sq1=q.s1.v*q.s1.v; q.sq2=q.s2.v*q.s2.v; q.sum=q.sq1+q.sq2;
+  q.pk=`pv|${right?1:0}|${t.join('-')}`;
+  return q;
+}
+function pvStmt(q){ const s=q.sides.map(x=>`${x.n} = ${pvTenths(x.v)}`); return `${s[0]} ; ${s[1]} et ${s[2]}`; }
+function pvKey(q){ return q.right?'r'+q.rv:'non'; }
+function pvAns(q){ return q.right?`${q.name} est rectangle en ${q.rv}`:`${q.name} n’est pas rectangle`; }
+function pvEq(q){ return `${q.big.n}² = ${pvSq(q.sq)} et ${q.s1.n}² + ${q.s2.n}² = ${pvSq(q.sum)}`; }
+function explainPyv(q){
+  let s=`Le plus grand côté est [${q.big.n}] : c’est le seul qui puisse être l’hypoténuse. `
+    +`${q.big.n}² = ${pvTenths(q.big.v)}² = ${pvSq(q.sq)}. `
+    +`${q.s1.n}² + ${q.s2.n}² = ${pvTenths(q.s1.v)}² + ${pvTenths(q.s2.v)}² = ${pvSq(q.sq1)} + ${pvSq(q.sq2)} = ${pvSq(q.sum)}. `;
+  s+=q.right
+    ?`Les deux résultats sont égaux : d’après la réciproque du théorème de Pythagore, le triangle ${q.name} est rectangle en ${q.rv}.`
+    :`Les deux résultats sont différents : d’après la contraposée du théorème de Pythagore, le triangle ${q.name} n’est pas rectangle.`;
+  return s;
+}
+function pvHead(q){
+  return `<div class="question" style="font-size:1.05rem;margin-bottom:4px;">Triangle ${q.name} </div>`
+    +`<div class="question" style="font-size:1.6rem;margin-bottom:14px;">${pvStmt(q)}</div>`;
+}
+function renderPvQCM(){
+  const q=withHistory(genPyv); state.current=q;
+  const content=document.getElementById('content');
+  const correct=pvKey(q);
+  const opts=shuffle([...q.name.split('').map(v=>({k:'r'+v,t:`Rectangle en ${v}`})),{k:'non',t:'Pas rectangle'}]);
+  content.innerHTML=`${pvHead(q)}
+    <div class="question" style="font-size:1.35rem;">Ce triangle est-il rectangle ?</div>
+    <div class="options">${opts.map(o=>`<button class="opt-btn" style="font-size:1.15rem;" data-k="${o.k}">${o.t}</button>`).join('')}</div>
+    <div class="feedback" id="fb"></div>`;
+  pvCalcMount(content);
+  content.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      content.querySelectorAll('.opt-btn').forEach(b=>b.onclick=null);
+      const fb=document.getElementById('fb');
+      if(btn.dataset.k===correct){
+        btn.classList.add('correct','anim-good');
+        bumpStreak(getStreak());
+        fb.textContent="Bravo, c'est correct !"; fb.className='feedback ok';
+        autoNext(450);
+      }else{
+        btn.classList.add('wrong','anim-bad');
+        failStreak();
+        fb.innerHTML=`Ce n'est pas ça. <span class="expl">${explainPyv(q)}</span>`;
+        fb.className='feedback ko';
+        content.querySelectorAll('.opt-btn').forEach(b=>{ if(b.dataset.k===correct) b.classList.add('correct'); });
+      }
+    };
+  });
+}
+function pvMatchRight(q){ return q.right?`Rectangle en ${q.rv}`:'Pas rectangle'; }
+/* 4 triangles de mêmes sommets : rectangle en chacun des 3 sommets, et un triangle non rectangle */
+function renderPvJeu(){
+  const L=shuffle([...PY_LETTERS]).slice(0,3);
+  const specs=[{right:true,rv:L[0]},{right:true,rv:L[1]},{right:true,rv:L[2]},{right:false}];
+  let qs, g=0;
+  do{ qs=specs.map(sp=>genPyv({right:sp.right,rv:sp.rv,letters:L})); g++; }
+  while(g<50 && new Set(qs.map(q=>q.pk)).size<4);
+  shuffle(qs);
+  renderMatch(qs, pvStmt, pvMatchRight, explainPyv);
+  document.getElementById('content').insertAdjacentHTML('afterbegin',`<div class="question" style="font-size:1.05rem;margin-bottom:8px;">Triangles de sommets ${[...L].sort().join(', ')}</div>`);
+  pvCalcMount(document.getElementById('content'));
+}
+/* Calculatrice (icône en bas à droite) pour l'automatisme n°6, mode « À compléter » */
+let pvCalcOpen=false;
+function pvCalcMount(host){
+  const K=(l,c)=>`<button type="button" class="pvk${c?' '+c:''}" data-k="${l}">${l}</button>`;
+  host.insertAdjacentHTML('beforeend',
+    `<button type="button" class="burger pvcalc-btn" id="pvCalcBtn" aria-label="Calculatrice" aria-expanded="${pvCalcOpen}" aria-controls="pvCalc"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><rect x="8" y="5.5" width="8" height="3.5" rx=".8"/><path d="M8.5 13h.01M12 13h.01M15.5 13h.01M8.5 16.5h.01M12 16.5h.01M15.5 16.5h.01"/></svg></button>`+
+    `<div class="pvcalc" id="pvCalc" role="dialog" aria-label="Calculatrice"${pvCalcOpen?'':' hidden'}><div class="pvscr"><div class="pvexp" id="pvExp">&nbsp;</div><div class="pvcur" id="pvCur">0</div></div><div class="pvpad">`+
+    ['7','8','9'].map(k=>K(k)).join('')+K('C','op')+['4','5','6'].map(k=>K(k)).join('')+K('+','op')+['1','2','3'].map(k=>K(k)).join('')+K('−','op')+K('0')+K(',')+K('²','op')+K('=','eq')+
+    `</div></div>`);
+  const btn=host.querySelector('#pvCalcBtn'), box=host.querySelector('#pvCalc'), eExp=host.querySelector('#pvExp'), eCur=host.querySelector('#pvCur');
+  btn.onclick=e=>{ e.stopPropagation(); pvCalcOpen=box.hidden; box.hidden=!pvCalcOpen; btn.setAttribute('aria-expanded',pvCalcOpen); };
+  let expr='', result=null;   /* expression tapée ; résultat affiché seulement après « = » */
+  const out=x=>String(Math.round(x*1e6)/1e6).replace('.',',').replace('-','−');
+  const show=()=>{ eExp.textContent=result===null?'\u00a0':expr+' ='; eCur.textContent=result===null?(expr||'0'):result; };
+  const evalExpr=t=>{
+    const terms=t.replace(/−/g,'-').split(/(?=[+-])/);
+    let sum=0;
+    for(const term of terms){
+      const m=/^([+-]?)(\d+(?:,\d+)?)(²?)$/.exec(term); if(!m) return NaN;
+      const v=parseFloat(m[2].replace(',','.')), x=m[3]?v*v:v;
+      sum+=m[1]==='-'?-x:x;
+    }
+    return sum;
+  };
+  function press(k){
+    if(k==='C'){ expr=''; result=null; show(); return; }
+    if(result!==null){   /* après « = » : un chiffre repart de zéro, + − ou ² prolongent le résultat */
+      if(k==='='){ return; }
+      if(k==='²'&&result.startsWith('−')) return;
+      if(k==='+'||k==='−'||k==='²'){ expr=result; } else { expr=''; }
+      result=null;
+    }
+    const last=expr.slice(-1), seg=expr.split(/[+−]/).pop();
+    if(/^\d$/.test(k)){ if(last!=='²') expr+=k; }
+    else if(k===','){ if(last==='²') {} else if(!seg.includes(',')) expr+=(seg===''?'0':'')+','; }
+    else if(k==='²'){ if(/\d/.test(last)) expr+='²'; }
+    else if(k==='+'||k==='−'){ if(/\d|²/.test(last)) expr+=k; }
+    else if(k==='='){
+      if(expr==='') return;
+      const t=expr.replace(/[+−,]$/,'');
+      const v=evalExpr(t); if(isNaN(v)) return;
+      expr=t; result=out(v);
+    }
+    show();
+  }
+  box.querySelectorAll('.pvk').forEach(b=>{
+    b.addEventListener('mousedown',e=>e.preventDefault());
+    b.onclick=()=>press(b.dataset.k);
+  });
+}
+function renderPvTrou(){
+  const q=withHistory(genPyv); state.current=q;
+  const content=document.getElementById('content');
+  content.innerHTML=`${pvHead(q)}
+    <div class="fill-row">Carré du plus grand côté = <input type="text" id="ansA" inputmode="decimal" placeholder="?" autocomplete="off" style="width:110px;"></div>
+    <div class="fill-row">Somme des carrés des deux autres = <input type="text" id="ansB" inputmode="decimal" placeholder="?" autocomplete="off" style="width:110px;"></div>
+    <div id="pvConc" style="display:flex;justify-content:center;align-items:flex-end;gap:16px;flex-wrap:wrap;margin:6px 0 18px;font-family:'Space Grotesk',system-ui,sans-serif;"><span style="font-size:1.15rem;line-height:1.2;">Le triangle est-il rectangle ?</span><button type="button" class="pvck" data-k="r"><span>Oui</span><i class="pvbox"></i></button><button type="button" class="pvck" data-k="non"><span>Non</span><i class="pvbox"></i></button></div>
+    <div class="actions"><button class="primary" id="check">Valider</button></div>
+    <div class="feedback" id="fb"></div>`;
+  pvCalcMount(content);
+  let pick2=null; const cbtns=[...content.querySelectorAll('#pvConc .pvck')];
+  cbtns.forEach(b=>b.onclick=()=>{ pick2=b.dataset.k; cbtns.forEach(x=>{ x.classList.toggle('pvsel',x===b); x.classList.toggle('pvpicked',x===b); }); });
+  const A=document.getElementById('ansA'), B=document.getElementById('ansB');
+  A.addEventListener('keydown',e=>{ if(e.key==='Enter'){ if(!B.value.trim()) B.focus(); else document.getElementById('check').click(); } });
+  B.addEventListener('keydown',e=>{ if(e.key==='Enter'){ const c=document.getElementById('check'); if(c&&!c.disabled) c.click(); } });
+  document.getElementById('check').onclick=()=>{
+    const fb=document.getElementById('fb');
+    if(!A.value.trim()||!B.value.trim()||!pick2){ fb.textContent='Il faut répondre aux trois points demandés : les deux calculs et la question « rectangle ou non ».'; fb.className='feedback ko'; if(!A.value.trim()) A.focus(); else if(!B.value.trim()) B.focus(); return; }
+    const a=parseNum(A.value), b=parseNum(B.value);
+    const rowEls=content.querySelectorAll('.fill-row');
+    document.getElementById('check').disabled=true;
+    const okC=pick2===(q.right?'r':'non');
+    cbtns.forEach(x=>{ x.onclick=null; x.disabled=true; x.classList.remove('pvsel'); if(x.dataset.k===pick2) x.classList.add(okC?'correct':'wrong'); else if(!okC&&x.dataset.k===(q.right?'r':'non')) x.classList.add('correct'); });
+    if(!isNaN(a)&&!isNaN(b)&&Math.abs(a*100-q.sq)<1e-6&&Math.abs(b*100-q.sum)<1e-6&&okC){
+      rowEls.forEach(r=>r.classList.add('anim-good'));
+      bumpStreak(getStreak());
+      fb.textContent=`Exact, bravo ! ${q.right?'Les deux résultats sont égaux':'Les deux résultats sont différents'} : ${pvAns(q)}.`; fb.className='feedback ok';
+      autoNext(1100);
+    }else{
+      rowEls.forEach(r=>r.classList.add('anim-bad'));
+      failStreak();
+      document.getElementById('check').style.display='none';
+      fb.innerHTML=`Pas tout à fait. Réponse : ${pvEq(q)} ; ${pvAns(q)}.<span class="expl">${explainPyv(q)}</span>`;
+      fb.className='feedback ko';
+    }
+  };
+}
+
+
 /* ===== Multiples et diviseurs (6e) ===== */
 const MLD_N=[12,16,18,20,24,27,28,30,32,36,40,42,45,48,54,56,60,63,64,72,80,81,84,90,96,100];
 function mldDivs(n){ const d=[]; for(let i=1;i<=n;i++) if(n%i===0) d.push(i); return d; }
@@ -2971,6 +3206,7 @@ const SCREENS={
     ['3e/auto/opfrac','3. Additions et soustractions de fractions','Calculer et donner le r\u00e9sultat sous forme de fraction'],
     ['3e/auto/pythagore','4. \u00c9galit\u00e9 de Pythagore','\u00c9crire l\u2019\u00e9galit\u00e9 de Pythagore dans un triangle rectangle'],
     ['3e/auto/mdfrac','5. Multiplications et divisions de fractions','Calculer et donner le r\u00e9sultat sous forme de fraction, sans simplifier'],
+    ['3e/auto/pyth-verif','6. Vérification de l\u2019égalité de Pythagore','Calculer les carrés des côtés et dire si le triangle est rectangle'],
     ['3e/auto/lit-signe','7. Suppression des parenth\u00e8ses','Supprimer des parenth\u00e8ses pr\u00e9c\u00e9d\u00e9es de + ou \u2212, puis r\u00e9duire'],
     ['3e/auto/sci','8. \u00c9criture scientifique','Passer de l\u2019\u00e9criture d\u00e9cimale \u00e0 l\u2019\u00e9criture scientifique'],
     ['3e/auto/lit-nombre','10. Simple distributivit\u00e9','D\u00e9velopper k(ax + b), puis r\u00e9duire'],
@@ -3011,6 +3247,7 @@ function go(s){
     '3e/auto/frac':{theme:'frac',title:'Fractions irr\u00e9ductibles',sub:'Automatismes 3e'},
     '3e/auto/opfrac':{theme:'opf',title:'Additions et soustractions de fractions',sub:'Automatismes 3e'},
     '3e/auto/pythagore':{theme:'pyth',title:'Égalité de Pythagore',sub:'Automatismes 3e'},
+    '3e/auto/pyth-verif':{theme:'pyv',title:'Vérification de l’égalité de Pythagore',sub:'Automatismes 3e'},
     '3e/auto/mdfrac':{theme:'mdf',title:'Multiplications et divisions de fractions',sub:'Automatismes 3e'},
     '6e/auto/tables':{theme:'tables',title:'Tables de multiplication',sub:'Automatismes 6e'},
     '6e/auto/durees':{theme:'durees',title:'Unit\u00e9s de dur\u00e9es',sub:'Automatismes 6e'},
@@ -3098,7 +3335,7 @@ go('home');
 /* Mode entraînement : on choisit les automatismes, les questions sont tirées au hasard parmi eux. */
 (function(){
   const TR={
-    '3e/auto/tables':{theme:'tables'},'3e/auto/frac':{theme:'frac'},'3e/auto/opfrac':{theme:'opf'},'3e/auto/pythagore':{theme:'pyth'},
+    '3e/auto/tables':{theme:'tables'},'3e/auto/frac':{theme:'frac'},'3e/auto/opfrac':{theme:'opf'},'3e/auto/pythagore':{theme:'pyth'},'3e/auto/pyth-verif':{theme:'pyv'},
     '3e/auto/mdfrac':{theme:'mdf'},'3e/auto/lit-signe':{theme:'lit',cat:'signe'},'3e/auto/sci':{theme:'sci'},
     '3e/auto/lit-nombre':{theme:'lit',cat:'nombre'},'3e/auto/lit-double':{theme:'lit',cat:'double'},
     '3e/auto/conv-longueur':{theme:'conversions',cat:'longueur'},'3e/auto/conv-aire':{theme:'conversions',cat:'aire'},
