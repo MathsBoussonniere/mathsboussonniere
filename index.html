@@ -10,8 +10,8 @@
 <style>
 :root{
   --bg:#EEF3F7; --card:#FFFFFF; --ink:#16243D; --muted:#5B6B7F; --line:#CBD8E3;
-  --accent:#1B7F79; --accent-dark:#145F5A; --good:#16A34A; --bad:#FF4D4D;
-  --good-bg:rgba(34,197,94,.22); --bad-bg:rgba(255,77,77,.18); --good-bd:var(--good); --bad-bd:var(--bad);
+  --accent:#1B7F79; --accent-dark:#145F5A; --good:#16A34A; --bad:#FF1F1F;
+  --good-bg:rgba(34,197,94,.22); --bad-bg:rgba(255,31,31,.22); --good-bd:var(--good); --bad-bd:var(--bad);
   --on-good:#15803D; --on-bad:var(--bad); --good-txt:#15803D; --bad-txt:var(--bad); --matched-op:1;
   --grid:rgba(27,127,121,.06); --accent-soft:rgba(27,127,121,.10);
   box-sizing:border-box;
@@ -22,17 +22,17 @@ html{scroll-padding-top:env(safe-area-inset-top,0px);}
 @media (prefers-color-scheme: dark){
   :root:not([data-theme]){
     --bg:#0F1720; --card:#17212C; --ink:#EAF1F6; --muted:#8CA0B3; --line:#2A3A48;
-    --accent:#3FBDB2; --accent-dark:#2E948B; --good:#2ECC71; --bad:#FF4D4D;
+    --accent:#3FBDB2; --accent-dark:#2E948B; --good:#2ECC71; --bad:#FF1F1F;
     --grid:rgba(63,189,178,.07); --accent-soft:rgba(63,189,178,.12);
-    --good-bg:rgba(46,204,113,.18); --bad-bg:rgba(255,77,77,.18); --good-bd:var(--good); --bad-bd:var(--bad);
+    --good-bg:rgba(46,204,113,.18); --bad-bg:rgba(255,31,31,.22); --good-bd:var(--good); --bad-bd:var(--bad);
     --on-good:var(--good); --on-bad:var(--bad); --good-txt:var(--good); --bad-txt:var(--bad); --matched-op:.85;
   }
 }
 :root[data-theme="dark"]{
   --bg:#0F1720; --card:#17212C; --ink:#EAF1F6; --muted:#8CA0B3; --line:#2A3A48;
-  --accent:#3FBDB2; --accent-dark:#2E948B; --good:#2ECC71; --bad:#FF4D4D;
+  --accent:#3FBDB2; --accent-dark:#2E948B; --good:#2ECC71; --bad:#FF1F1F;
     --grid:rgba(63,189,178,.07); --accent-soft:rgba(63,189,178,.12);
-    --good-bg:rgba(46,204,113,.18); --bad-bg:rgba(255,77,77,.18); --good-bd:var(--good); --bad-bd:var(--bad);
+    --good-bg:rgba(46,204,113,.18); --bad-bg:rgba(255,31,31,.22); --good-bd:var(--good); --bad-bd:var(--bad);
     --on-good:var(--good); --on-bad:var(--bad); --good-txt:var(--good); --bad-txt:var(--bad); --matched-op:.85;
 }
 *{box-sizing:border-box;}
@@ -56,6 +56,7 @@ h1{font-family:'Space Grotesk',system-ui,sans-serif;font-weight:700;font-size:1.
   repeating-linear-gradient(90deg, var(--grid) 0 1px, transparent 1px 28px);
   pointer-events:none;}
 .card > *{position:relative;z-index:1;}
+.card > #content{z-index:2;}  /* la calculatrice (dans #content) passe devant « Passer la question » */
 .score{text-align:center;margin-bottom:14px;font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums;}
 .question{font-family:'Space Grotesk',system-ui,sans-serif;font-size:1.4rem;font-weight:600;text-align:center;margin-bottom:20px;font-variant-numeric:tabular-nums;}
 .options{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
@@ -165,12 +166,12 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 /* Thèmes Rose et Arc-en-ciel */
 :root[data-theme="pink"]{
   --bg:#FFCFE3; --card:#FFFFFF; --ink:#4A1632; --muted:#8A3A62; --line:#F08DB9;
-  --accent:#E0116F; --accent-dark:#B00A57; --good:#16A34A; --bad:#FF4D4D;
+  --accent:#E0116F; --accent-dark:#B00A57; --good:#16A34A; --bad:#FF1F1F;
   --grid:rgba(224,17,111,.12); --accent-soft:rgba(224,17,111,.16);
 }
 :root[data-theme="jade"]{
   --bg:#CFF0DF; --card:#FFFFFF; --ink:#0B3B2A; --muted:#3F7660; --line:#8FD0B0;
-  --accent:#00855A; --accent-dark:#00663F; --good:#16A34A; --bad:#FF4D4D;
+  --accent:#00855A; --accent-dark:#00663F; --good:#16A34A; --bad:#FF1F1F;
   --grid:rgba(0,133,90,.11); --accent-soft:rgba(0,133,90,.15);
 }
 :root[data-theme="pink"] .match-item.selected,:root[data-theme="jade"] .match-item.selected{
@@ -179,7 +180,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 }
 :root[data-theme="rainbow"]{
   --bg:#FFFCF5; --card:#FFFFFF; --ink:#241B4B; --muted:#645C8A; --line:#E4DDF7;
-  --accent:#7B3FE4; --accent-dark:#5A25B8; --good:#16A34A; --bad:#FF4D4D;
+  --accent:#7B3FE4; --accent-dark:#5A25B8; --good:#16A34A; --bad:#FF1F1F;
   --grid:rgba(123,63,228,.05); --accent-soft:rgba(123,63,228,.10);
   --rb:linear-gradient(90deg,#FF3B6B,#FF9A1F,#F5D000,#2FBF71,#1E9BFF,#7B3FE4);
 }
@@ -2710,7 +2711,7 @@ function renderPvTrou(){
   content.innerHTML=`${pvHead(q)}
     <div class="fill-row">Carré du plus grand côté = <input type="text" id="ansA" inputmode="decimal" placeholder="?" autocomplete="off" style="width:110px;"></div>
     <div class="fill-row">Somme des carrés des deux autres = <input type="text" id="ansB" inputmode="decimal" placeholder="?" autocomplete="off" style="width:110px;"></div>
-    <div id="pvConc" style="display:flex;justify-content:center;align-items:flex-end;gap:16px;flex-wrap:wrap;margin:6px 0 18px;font-family:'Space Grotesk',system-ui,sans-serif;"><span style="font-size:1.15rem;line-height:1.2;">Le triangle est-il rectangle ?</span><button type="button" class="pvck" data-k="r"><span>Oui</span><i class="pvbox"></i></button><button type="button" class="pvck" data-k="non"><span>Non</span><i class="pvbox"></i></button></div>
+    <div id="pvConc" style="display:flex;justify-content:center;align-items:flex-end;gap:16px;flex-wrap:wrap;margin:6px 0 18px;font-family:'Space Grotesk',system-ui,sans-serif;"><span style="font-size:1.15rem;line-height:1.2;">Le triangle est-il rectangle ?</span><span style="display:flex;align-items:flex-end;gap:16px;"><button type="button" class="pvck" data-k="r"><span>Oui</span><i class="pvbox"></i></button><button type="button" class="pvck" data-k="non"><span>Non</span><i class="pvbox"></i></button></span></div>
     <div class="actions"><button class="primary" id="check">Valider</button></div>
     <div class="feedback" id="fb"></div>`;
   pvCalcMount(content);
