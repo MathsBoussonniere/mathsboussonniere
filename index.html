@@ -250,6 +250,13 @@ h1,.subtitle{padding:0 46px;}
 .pvk.op{background:var(--pc-op);}
 .pvk.eq{background:var(--accent);border-color:var(--accent);color:#fff;}
 .pvk.span2{grid-column:span 2;}
+.tbwrap{overflow-x:auto;margin:6px 0 14px;}
+.tbsheet{border-collapse:collapse;margin:0 auto;font-family:'Space Grotesk',system-ui,sans-serif;font-size:.95rem;}
+.tbsheet th{background:var(--line);color:var(--muted);font-weight:500;font-size:.78rem;border:1px solid var(--line);padding:3px 10px;min-width:24px;}
+.tbsheet td{border:1px solid var(--line);background:var(--card);color:var(--ink);text-align:center;padding:5px 12px;min-width:58px;height:30px;}
+.tbsheet td.h{background:rgba(56,160,230,.32);font-weight:600;}
+.tbsheet td.a{background:rgba(45,212,191,.24);white-space:nowrap;}
+.tbsheet td.tg{outline:3px solid var(--accent);outline-offset:-3px;background:var(--accent-soft);color:var(--muted);font-weight:600;}
 .pvck{display:inline-flex;flex-direction:column;align-items:center;gap:6px;padding:0 6px;border:none;background:none;color:var(--ink);font-family:inherit;font-size:1.15rem;cursor:pointer;}
 .pvck:disabled{color:var(--ink);opacity:1;cursor:default;}
 .pvbox{display:inline-block;position:relative;width:26px;height:26px;border:2px solid var(--ink);border-radius:5px;box-sizing:border-box;}
@@ -416,17 +423,17 @@ function genTimeQuestion(){
   if(t==='hs'){
     const [h,m]=pick([[1,0],[1,30],[2,0],[2,30],[3,0]]);
     label=`${h} h`+(m?` ${m} min`:''); to='s'; ans=h*3600+m*60;
-    expl=`1 h = 60 min et 1 min = 60 s, donc 1 h = ${fmt(3600)} s. `+(m?`${label} = ${h} × ${fmt(3600)} + ${m} × 60 = ${fmt(h*3600)} + ${fmt(m*60)} = ${fmt(ans)} s.`:`${label} = ${h} × ${fmt(3600)} = ${fmt(ans)} s.`);
+    expl=`1 h = 60 min et 1 min = 60 s, donc 1 h = 60 × 60 = ${fmt(3600)} s. `+(m?`${label} = ${h} × ${fmt(3600)} + ${m} × 60 = ${fmt(h*3600)} + ${fmt(m*60)} = ${fmt(ans)} s.`:`${label} = ${h} × ${fmt(3600)} = ${fmt(ans)} s.`);
     wrong=[(h*100+m)*60,h*60+m,h*3600+m];
   }else if(t==='hm'){
     const h=1+Math.floor(Math.random()*5), m=pick([0,15,30,45]);
     label=`${h} h`+(m?` ${m} min`:''); to='min'; ans=h*60+m;
-    expl=`1 h = 60 min (et non 100 min). `+(m?`${label} = ${h} × 60 + ${m} = ${h*60} + ${m} = ${fmt(ans)} min.`:`${label} = ${h} × 60 = ${fmt(ans)} min.`);
+    expl=`1 h = 60 min. `+(m?`${label} = ${h} × 60 + ${m} = ${h*60} + ${m} = ${fmt(ans)} min.`:`${label} = ${h} × 60 = ${fmt(ans)} min.`);
     wrong=[h*100+m,h*60,h+m];
   }else{
     const mi=1+Math.floor(Math.random()*9), s=pick([0,15,30,45]);
     label=`${mi} min`+(s?` ${s} s`:''); to='s'; ans=mi*60+s;
-    expl=`1 min = 60 s (et non 100 s). `+(s?`${label} = ${mi} × 60 + ${s} = ${mi*60} + ${s} = ${fmt(ans)} s.`:`${label} = ${mi} × 60 = ${fmt(ans)} s.`);
+    expl=`1 min = 60 s. `+(s?`${label} = ${mi} × 60 + ${s} = ${mi*60} + ${s} = ${fmt(ans)} s.`:`${label} = ${mi} × 60 = ${fmt(ans)} s.`);
     wrong=[mi*100+s,mi*60,mi+s];
   }
   return {label,from:{n:''},to:{n:to},val:0,ans,diff:0,expl,wrong};
@@ -471,6 +478,12 @@ function revealCurrent(){
       const c=document.getElementById('check'); if(c){ c.disabled=true; c.style.display='none'; }
       content.querySelectorAll('.pykey').forEach(b=>b.disabled=true); }
     fb.innerHTML=`Question pass\u00e9e. R\u00e9ponse : ${q.ansStr}.<span class="expl">${q.expl}</span>`;
+    return;
+  }
+  if(state.theme==='tab'){
+    if(state.mode==='qcm') content.querySelectorAll('.opt-btn').forEach(b=>{ b.onclick=null; if(b.dataset.k===q.formula) b.classList.add('correct'); });
+    else{ const inp=document.getElementById('ans'); if(inp){ inp.value=q.formula; inp.disabled=true; } const c=document.getElementById('check'); if(c){ c.disabled=true; c.style.display='none'; } }
+    fb.innerHTML=`Question passée. Formule attendue : ${q.formula}.<span class="expl">${q.expl}</span>`;
     return;
   }
   if(state.theme==='pyv'){
@@ -755,6 +768,10 @@ function _newQuestion(){
     if(state.mode==='qcm') renderMldQCM();
     else if(state.mode==='jeu') renderMldJeu();
     else renderMldTrou();
+  }else if(state.theme==='tab'){
+    if(state.mode==='qcm') renderTabQCM();
+    else if(state.mode==='jeu') renderTabJeu();
+    else renderTabTrou();
   }else if(state.theme==='pyv'){
     if(state.mode==='qcm') renderPvQCM();
     else if(state.mode==='jeu') renderPvJeu();
@@ -1094,7 +1111,7 @@ function levDist(a,b){
   for(let i=1;i<=m;i++) for(let j=1;j<=n;j++) d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
   return d[m][n];
 }
-function wordCheck(input,w){
+function wordCheckLoose(input,w){
   if(wordOK(input,w)) return {ok:true,exact:true};
   const n=normW(input);
   if(!n) return {ok:false,exact:false};
@@ -1102,6 +1119,19 @@ function wordCheck(input,w){
   w.forEach(a=>{ a=normW(a); best=Math.min(best,levDist(n,a),levDist(n,a+'s')); });
   const tol=Math.max(1,Math.round(Math.max(...w.map(a=>normW(a).length))*0.22));
   return {ok:best<=tol, exact:false};
+}
+const ABBR=['h','min','mn','s','sec','j'];
+function wordForms(w,ans){ return w.map(a=>(ABBR.includes(a)||ans<=1||a.endsWith('s'))?a:a+'s'); }
+function cleanIn(x){ return String(x).trim().toLowerCase().replace(/\s+/g,' '); }
+/* ok = réponse comptée juste (accents, pluriel ou petite faute tolérés) ; exact = orthographe parfaite ; canon = bonne orthographe à afficher */
+function wordCheck(input,w,ans){
+  const r=wordCheckLoose(input,w);
+  if(!r.ok) return r;
+  const forms=wordForms(w,ans===undefined?2:ans), inp=cleanIn(input);
+  if(forms.includes(inp)) return {ok:true,exact:true};
+  let best=forms[0], bd=Infinity;
+  forms.forEach(f=>{ const d=levDist(inp,f); if(d<bd){ bd=d; best=f; } });
+  return {ok:true,exact:false,canon:best};
 }
 function canonWord(q){
   const w=q.to.w;
@@ -1117,17 +1147,22 @@ function mkDuree(eq,dir,kind){
 function genDuree(kind){ return mkDuree(pick(DEQ),Math.random()<0.5?'fwd':'rev',kind); }
 const DEXTRA={
   nb:"C'est le cas de la plupart des années (une année bissextile compte 366 jours).",
-  bi:"Une année est bissextile tous les 4 ans environ, par exemple 2024 ou 2028.",
-  ms:"1 min = 60 s (et non 100 s).",
-  hm:"1 h = 60 min (et non 100 min).",
+  bi:"Une année est bissextile tous les 4 ans environ, par exemple 2024 ou 2028."
+};
+/* Équivalences expliquées en une seule phrase (sans répéter l'égalité deux fois) */
+const DFULL={
+  ms:"Une minute compte 60 secondes.",
+  hm:"Une heure compte 60 minutes.",
   hs:"1 h = 60 min et 1 min = 60 s, donc 1 h = 60 × 60 = 3 600 s.",
-  jh:"Un jour compte 24 heures.",
-  sa:"Un siècle, c'est 100 ans.",
-  da:"Une décennie, c'est 10 ans.",
-  ma:"Un millénaire, c'est 1 000 ans."
+  jh:"1 jour, c'est 24 heures.",
+  sa:"1 siècle, c'est 100 ans.",
+  da:"1 décennie, c'est 10 ans.",
+  ma:"1 millénaire, c'est 1 000 ans."
 };
 function explainDuree(q){
-  const e=q.eq, A=dSide(e.a,e.a.v), B=dSide(e.b,e.b.v);
+  const e=q.eq;
+  if(DFULL[e.id]) return DFULL[e.id];
+  const A=dSide(e.a,e.a.v), B=dSide(e.b,e.b.v);
   return `${A} = ${B}${q.dir==='rev'?`, donc ${B} = ${A}`:''}. ${DEXTRA[e.id]||"C'est une équivalence à connaître par cœur."}`;
 }
 function renderDureeQCM(){
@@ -1194,14 +1229,16 @@ function renderDureeTrou(){
     const fb=document.getElementById('fb');
     const rowEl=content.querySelector('.fill-row');
     document.getElementById('check').disabled=true;
-    const res=word?wordCheck(inp.value,q.to.w):{ok:!isNaN(parseNum(inp.value))&&parseNum(inp.value)===q.ans,exact:true};
+    const isY=q.eq&&(q.eq.id==='nb'||q.eq.id==='bi'), yi=q.ans>1?1:0;
+    const ws=isY?[q.to.u[yi],q.to.u[yi]+(q.to.post?q.to.post[yi]:'')]:q.to.w;
+    const res=word?wordCheck(inp.value,ws,q.ans):{ok:!isNaN(parseNum(inp.value))&&parseNum(inp.value)===q.ans,exact:true};
     if(res.ok){
       rowEl.classList.add('anim-good');
       bumpStreak(getStreak());
       if(res.exact){ fb.textContent='Exact, bravo !'; }
-      else{ fb.innerHTML=`Bravo, c'est juste ! <span class="expl">Attention à l'orthographe : on écrit « ${canonWord(q)} ».</span>`; }
+      else{ fb.innerHTML=`Bravo, c'est juste ! <span class="expl">Attention à l'orthographe : on écrit « ${res.canon} ».</span>`; }
       fb.className='feedback ok';
-      autoNext(450);
+      autoNext(res.exact?450:2800);
     }else{
       rowEl.classList.add('anim-bad');
       failStreak();
@@ -2745,6 +2782,309 @@ function renderPvTrou(){
 }
 
 
+/* ===== Tableur (3e) — *** : écrire des formules avec les quatre opérations ===== */
+const TB_E=[
+  {h:'Seconde langue étudiée',c:['4<sup>e</sup>','3<sup>e</sup>'],r:['Espagnol','Allemand','Italien']},
+  {h:'Sport pratiqué',c:['Filles','Garçons'],r:['Football','Basket','Natation']},
+  {h:'Plat choisi',c:['Lundi','Mardi'],r:['Pizza','Poisson','Omelette']},
+  {h:'Atelier choisi',c:['6<sup>e</sup>','5<sup>e</sup>'],r:['Théâtre','Échecs','Dessin']},
+  {h:'Moyen de transport',c:['Matin','Soir'],r:['Bus','Vélo','À pied']},
+  {h:'Animal de compagnie',c:['3<sup>e</sup>A','3<sup>e</sup>B'],r:['Chien','Chat','Poisson']},
+  {h:'Genre de film',c:['Samedi','Dimanche'],r:['Comédie','Action','Animation']},
+  {h:'Livres empruntés',c:['Semaine 1','Semaine 2'],r:['Roman','BD','Documentaire']},
+  {h:'Glaces vendues',c:['Juillet','Août'],r:['Vanille','Chocolat','Fraise']}
+];
+/* tableaux « quantité × prix = total » (3 lignes) */
+const TB_A=[
+  {h:['Article','Quantité','Prix unitaire (€)','Prix total (€)'],rows:['Cahier','Stylo','Classeur','Règle','Trousse','Gomme','Équerre','Compas'],q:[2,12],p:[2,15]},
+  {h:['Fruit','Masse (kg)','Prix au kilo (€)','Prix à payer (€)'],rows:['Pommes','Poires','Cerises','Raisin','Bananes'],q:[2,9],p:[2,12]},
+  {h:['Lieu de sortie','Nombre de billets','Prix du billet (€)','Total (€)'],rows:['Musée','Zoo','Cinéma','Piscine','Théâtre'],q:[10,35],p:[3,15]},
+  {h:['Employé','Heures travaillées','Taux horaire (€)','Salaire (€)'],rows:['Julie','Karim','Léa','Hugo'],q:[5,35],p:[9,20]},
+  {h:['Objet','Longueur (cm)','Largeur (cm)','Aire (cm²)'],rows:['Photo','Affiche','Tableau','Carte'],q:[4,20],p:[3,15]},
+  {h:['Déplacement','Durée (h)','Vitesse (km/h)','Distance (km)'],rows:[{n:'Marche',q:[2,6],p:[3,6]},{n:'Vélo',q:[2,6],p:[12,25]},{n:'Voiture',q:[2,6],p:[60,110]}]}
+];
+/* tableaux d'une seule ligne : D = B + C (sum), D = B − C (diff) ou D = B × C (prod) */
+const TB_R=[
+  {rel:'sum',h:['Classe','Filles','Garçons','Total'],n:'3<sup>e</sup>B',rg:[8,18]},
+  {rel:'sum',h:['Match','Équipe A (points)','Équipe B (points)','Total des points'],n:'Finale',rg:[20,60]},
+  {rel:'sum',h:['Livre','Pages lues','Pages restantes','Nombre de pages'],n:'Roman',rg:[40,200]},
+  {rel:'diff',h:['Mois','Recettes (€)','Dépenses (€)','Bénéfice (€)'],n:'Mai',rg:[100,900]},
+  {rel:'diff',h:['Article','Prix initial (€)','Remise (€)','Prix soldé (€)'],n:'Veste',rg:[10,90]},
+  {rel:'diff',h:['Jour','Température max (°C)','Température min (°C)','Amplitude (°C)'],n:'Lundi',rg:[3,18]},
+  {rel:'prod',h:['Terrain','Longueur (m)','Largeur (m)','Aire (m²)'],n:'Jardin',rg:[3,15]},
+  {rel:'prod',h:['Salle de cinéma','Nombre de rangées','Places par rangée','Nombre de places'],n:'Salle 2',rg:[5,20]}
+];
+const TB_COLS=['A','B','C','D'];
+function tbRn(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
+/* valeurs complètes du tableau (toutes différentes, pour éviter les coïncidences) */
+function tbFullE(ctx){
+  const rg=(ctx&&ctx.rg)||[10,60];
+  for(let g=0;g<300;g++){
+    const v={};
+    for(let r=2;r<=4;r++){ v['B'+r]=tbRn(rg[0],rg[1]); v['C'+r]=tbRn(rg[0],rg[1]); v['D'+r]=v['B'+r]+v['C'+r]; }
+    v.B5=v.B2+v.B3+v.B4; v.C5=v.C2+v.C3+v.C4; v.D5=v.B5+v.C5;
+    if(new Set(Object.values(v)).size===Object.keys(v).length) return v;
+  }
+  return {B2:12,C2:21,D2:33,B3:25,C3:14,D3:39,B4:31,C4:18,D4:49,B5:68,C5:53,D5:121};
+}
+function tbRowsA(ctx){
+  const pool=shuffle([...ctx.rows]).slice(0,3);
+  return pool.map(x=>typeof x==='string'?{n:x}:x);
+}
+function tbFullA(rows,ctx){
+  for(let g=0;g<400;g++){
+    const v={};
+    rows.forEach((row,i)=>{ const r=i+2, q=row.q||ctx.q||[2,12], p=row.p||ctx.p||[2,15];
+      v['B'+r]=tbRn(q[0],q[1]); v['C'+r]=tbRn(p[0],p[1]); v['D'+r]=v['B'+r]*v['C'+r]; });
+    if(new Set(Object.values(v)).size===Object.keys(v).length) return v;
+  }
+  return {B2:3,C2:4,D2:12,B3:5,C3:7,D3:35,B4:6,C4:9,D4:54};
+}
+function tbFullR(ctx){
+  const [lo,hi]=ctx.rg;
+  for(let g=0;g<300;g++){
+    let B,C,D;
+    if(ctx.rel==='sum'){ B=tbRn(lo,hi); C=tbRn(lo,hi); D=B+C; }
+    else if(ctx.rel==='diff'){ C=tbRn(lo,hi); D=tbRn(lo,hi); B=C+D; }
+    else{ B=tbRn(lo,hi); C=tbRn(lo,hi); D=B*C; }
+    if(new Set([B,C,D]).size===3) return {B2:B,C2:C,D2:D};
+  }
+  return ctx.rel==='sum'?{B2:12,C2:7,D2:19}:ctx.rel==='diff'?{B2:19,C2:7,D2:12}:{B2:3,C2:7,D2:21};
+}
+function tbVis(full,hidden){ const o={}; Object.keys(full).forEach(k=>{ if(!hidden.includes(k)) o[k]=full[k]; }); return o; }
+const TB_DATA=['B2','C2','B3','C3','B4','C4'];
+/* Une question : 1 ou 2 sommes, 1 ou 2 différences, 1 produit ou 1 quotient */
+function tbGenE(){
+  const sc=pick(['S1','S2','D1','D2']), ctx=pick(TB_E), full=tbFullE(ctx);
+  const rows=[2,3,4], r=pick(rows), col=pick(['B','C']), oth=col==='B'?'C':'B';
+  let target,formula,expl,show;
+  if(sc==='S1'){
+    target='D'+r; formula=`=B${r}+C${r}`; show=[...TB_DATA];
+    expl=`On additionne les deux effectifs de la ligne ${r} : ${formula}.`;
+  }else if(sc==='S2'){
+    if(Math.random()<.65){ target=col+'5'; formula=`=${col}2+${col}3+${col}4`; show=[...TB_DATA,'D5'];
+      expl=`On additionne les trois cellules de la colonne ${col} : ${formula}.`; }
+    else{ target='D5'; formula='=D2+D3+D4'; show=[...TB_DATA,'D2','D3','D4'];
+      expl=`On additionne les trois totaux des lignes : ${formula}.`; }
+  }else if(sc==='D1'){
+    target=col+r; formula=`=D${r}-${oth}${r}`; show=[...TB_DATA.filter(k=>k!==target),'D2','D3','D4'];
+    expl=`La partie manquante est égale au total moins la partie connue : ${formula}.`;
+  }else{
+    target=col+r; const o=rows.filter(x=>x!==r);
+    formula=`=${col}5-${col}${o[0]}-${col}${o[1]}`; show=[...TB_DATA.filter(k=>k!==target),col+'5'];
+    expl=`Le total de la colonne ${col} est connu : on lui soustrait les deux autres cellules de la colonne : ${formula}.`;
+  }
+  return {sc,full,head:[ctx.h,...ctx.c,'Total'],names:[...ctx.r,'Total'],nr:5,target,formula,expl,show};
+}
+function tbGenA(){
+  const sc=pick(['P','Q']), ctx=pick(TB_A), rows=tbRowsA(ctx), full=tbFullA(rows,ctx), r=pick([2,3,4]);
+  let target,formula,expl;
+  if(sc==='P'){ target='D'+r; formula=`=B${r}*C${r}`; expl=`Le résultat est le produit des deux valeurs de la ligne. En tableur, on écrit * pour × : ${formula}.`; }
+  else if(Math.random()<.5){ target='C'+r; formula=`=D${r}/B${r}`; expl=`On divise le résultat par l’autre valeur de la ligne. En tableur, on écrit / pour ÷ : ${formula}.`; }
+  else{ target='B'+r; formula=`=D${r}/C${r}`; expl=`On divise le résultat par l’autre valeur de la ligne. En tableur, on écrit / pour ÷ : ${formula}.`; }
+  return {sc,full,head:ctx.h,names:rows.map(x=>x.n),nr:4,target,formula,expl,show:Object.keys(full).filter(k=>k!==target)};
+}
+const TB_RF={
+  sum:{D:['=B2+C2','Le total est la somme des deux autres cellules de la ligne'],B:['=D2-C2','Une partie est égale au total moins l’autre partie'],C:['=D2-B2','Une partie est égale au total moins l’autre partie']},
+  diff:{D:['=B2-C2','Le résultat est la différence des deux valeurs : la première moins la seconde'],C:['=B2-D2','La valeur retirée est égale à la première valeur moins le résultat'],B:['=C2+D2','La première valeur est égale à la somme des deux autres']},
+  prod:{D:['=B2*C2','Le résultat est le produit des deux valeurs. En tableur, on écrit * pour ×'],B:['=D2/C2','On divise le résultat par l’autre valeur. En tableur, on écrit / pour ÷'],C:['=D2/B2','On divise le résultat par l’autre valeur. En tableur, on écrit / pour ÷']}
+};
+function tbGenR(){
+  const ctx=pick(TB_R), full=tbFullR(ctx), t=pick(['D','D','B','C']), [formula,why]=TB_RF[ctx.rel][t], target=t+'2';
+  return {sc:'R-'+ctx.rel+'-'+t,full,head:ctx.h,names:[ctx.n],nr:2,target,formula,expl:`${why} : ${formula}.`,show:Object.keys(full).filter(k=>k!==target)};
+}
+function tbGenRaw(){
+  const k=Math.random(), kind=k<.40?'E':k<.65?'A':'R';
+  const o=kind==='E'?tbGenE():kind==='A'?tbGenA():tbGenR();
+  const vis=tbVis(o.full,Object.keys(o.full).filter(x=>!o.show.includes(x)));
+  return {sc:o.sc,kind,full:o.full,vis,head:o.head,names:o.names,nr:o.nr,targets:[o.target],target:o.target,tv:o.full[o.target],
+          formula:o.formula,expl:o.expl,pk:`tab|${kind}|${o.sc}|${o.target}|${Object.values(o.full).join('-')}`};
+}
+/* l'opération (+, −, ×, ÷) est tirée d'abord, à égalité, pour que chacune apparaisse aussi souvent */
+function tbGen(){
+  const op=pick(['+','-','*','/']);
+  let q;
+  for(let g=0;g<400;g++){ q=tbGenRaw(); if(q.formula.replace(/[A-D]\d+/g,'')[1]===op) return q; }
+  return q;
+}
+function tbHTML(q){
+  let h=`<div class="tbwrap"><table class="tbsheet"><tr><th></th>${TB_COLS.map(c=>`<th>${c}</th>`).join('')}</tr>`;
+  h+=`<tr><th>1</th>${q.head.map(x=>`<td class="h">${x}</td>`).join('')}</tr>`;
+  for(let r=2;r<=q.nr;r++){
+    h+=`<tr><th>${r}</th><td class="a">${q.names[r-2]}</td>`;
+    for(const c of ['B','C','D']){
+      const k=c+r;
+      if(q.targets.includes(k)) h+='<td class="tg">?</td>';
+      else if(q.vis[k]!==undefined) h+=`<td>${fmt(q.vis[k])}</td>`;
+      else h+='<td></td>';
+    }
+    h+='</tr>';
+  }
+  return h+'</table></div>';
+}
+function tbHead(q){
+  return tbHTML(q)+`<div class="question" style="font-size:1.25rem;margin-bottom:10px;">Quelle formule peut-on utiliser pour compléter la cellule <b>${q.target}</b> ?</div>`;
+}
+/* Évaluation d'une formule saisie, avec uniquement les cellules visibles (sans eval) */
+function tbEval(f,vis){
+  let s=String(f).replace(/\s+/g,'').toUpperCase().replace(/×/g,'*').replace(/÷/g,'/').replace(/[−–]/g,'-');
+  if(!s.startsWith('=')) return {err:'noeq'};
+  s=s.slice(1);
+  let usedFn=false;
+  s=s.replace(/(?:SOMME|SUM)\(([A-D])(\d+):([A-D])(\d+)\)/g,(m,c1,r1,c2,r2)=>{
+    usedFn=true; r1=+r1; r2=+r2; const cells=[];
+    if(c1===c2){ for(let r=Math.min(r1,r2);r<=Math.max(r1,r2);r++) cells.push(c1+r); }
+    else if(r1===r2){ const a=Math.min(c1.charCodeAt(0),c2.charCodeAt(0)), b=Math.max(c1.charCodeAt(0),c2.charCodeAt(0)); for(let c=a;c<=b;c++) cells.push(String.fromCharCode(c)+r1); }
+    else return m;
+    return '('+cells.join('+')+')';
+  });
+  const toks=[]; let i=0;
+  while(i<s.length){
+    const m=/^([A-D][1-9]\d*|[+\-*/()])/.exec(s.slice(i));
+    if(!m) return {err:'syntax'};
+    toks.push(m[1]); i+=m[1].length;
+  }
+  let p=0, blank=null;
+  const expr=()=>{ let v=term(); while(toks[p]==='+'||toks[p]==='-'){ const o=toks[p++], w=term(); v=o==='+'?v+w:v-w; } return v; };
+  const term=()=>{ let v=factor(); while(toks[p]==='*'||toks[p]==='/'){ const o=toks[p++], w=factor(); v=o==='*'?v*w:v/w; } return v; };
+  const factor=()=>{
+    const t=toks[p++];
+    if(t==='('){ const v=expr(); if(toks[p++]!==')') throw 0; return v; }
+    if(t&&/^[A-D]\d+$/.test(t)){ if(vis[t]===undefined){ blank=blank||t; return NaN; } return vis[t]; }
+    throw 0;
+  };
+  try{
+    const v=expr();
+    if(p!==toks.length) return {err:'syntax'};
+    if(blank) return {err:'blank',cell:blank};
+    if(!isFinite(v)) return {err:'div'};
+    return {val:v,usedFn};
+  }catch(e){ return {err:'syntax'}; }
+}
+function tbCheck(q,input){
+  const r=tbEval(input,q.vis);
+  if(r.err) return {ok:false,err:r.err,cell:r.cell};
+  if(Math.abs(r.val-q.tv)>1e-9) return {ok:false,err:'value'};
+  return {ok:true,fn:r.usedFn};
+}
+function tbParse(f){ const s=f.slice(1); return {refs:s.match(/[A-D]\d+/g),ops:s.match(/[+\-*/]/g)||[]}; }
+function tbBuild(refs,ops){ let s='='+refs[0]; for(let i=1;i<refs.length;i++) s+=ops[i-1]+refs[i]; return s; }
+function tbDistractors(q){
+  const {refs,ops}=tbParse(q.formula), set=new Set();
+  const add=f=>{ if(f&&f!==q.formula) set.add(f); };
+  ['+','-','*','/'].forEach(o=>add(tbBuild(refs,ops.map(()=>o))));                 /* autre opération */
+  if(refs.length>2) ops.forEach((o,i)=>{ const x=[...ops]; x[i]=o==='+'?'-':o==='-'?'+':o; add(tbBuild(refs,x)); });
+  if(refs.length===2) add(tbBuild([refs[1],refs[0]],ops));                          /* ordre inversé */
+  if(refs.length>2&&ops[0]==='-') add(tbBuild([refs[1],refs[2],refs[0]],ops));
+  if(refs.length>2) add(tbBuild(refs.slice(0,-1),ops.slice(0,-1)));                  /* terme oublié */
+  const visK=Object.keys(q.vis), others=visK.filter(k=>!refs.includes(k));
+  refs.forEach((r,i)=>{                                                              /* mauvaise cellule */
+    const pool=others.filter(k=>k[0]===r[0]||k.slice(1)===r.slice(1));
+    shuffle(pool).slice(0,2).forEach(k=>{ const rr=[...refs]; rr[i]=k; add(tbBuild(rr,ops)); });
+  });
+  if(others.length&&refs.length<4) add(tbBuild([...refs,pick(others)],[...ops,ops[0]])); /* terme en trop */
+  const okWrong=f=>{ const r=tbEval(f,q.full); return !(r.val!==undefined&&Math.abs(r.val-q.tv)<1e-9); };
+  let pool=shuffle([...set].filter(okWrong)), g=0;
+  while(pool.length<3&&g++<50){ const a=pick(visK), b=pick(visK), o=pick(['+','-','*','/']); const f=`=${a}${o}${b}`; if(a!==b&&f!==q.formula&&okWrong(f)&&!pool.includes(f)) pool.push(f); }
+  return pool.slice(0,3);
+}
+const TB_MONO="font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;";
+function renderTabQCM(){
+  const q=withHistory(tbGen); state.current=q;
+  const content=document.getElementById('content');
+  const opts=shuffle([q.formula,...tbDistractors(q)]);
+  content.innerHTML=`${tbHead(q)}
+    <div class="options">${opts.map(f=>`<button class="opt-btn" style="${TB_MONO}font-size:1.15rem;" data-k="${f}">${f}</button>`).join('')}</div>
+    <div class="feedback" id="fb"></div>`;
+  content.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      content.querySelectorAll('.opt-btn').forEach(b=>b.onclick=null);
+      const fb=document.getElementById('fb');
+      if(btn.dataset.k===q.formula){
+        btn.classList.add('correct','anim-good');
+        bumpStreak(getStreak());
+        fb.textContent="Bravo, c'est correct !"; fb.className='feedback ok';
+        autoNext(450);
+      }else{
+        btn.classList.add('wrong','anim-bad');
+        failStreak();
+        fb.innerHTML=`Ce n'est pas ça. <span class="expl">${q.expl}</span>`;
+        fb.className='feedback ko';
+        content.querySelectorAll('.opt-btn').forEach(b=>{ if(b.dataset.k===q.formula) b.classList.add('correct'); });
+      }
+    };
+  });
+}
+function renderTabTrou(){
+  const q=withHistory(tbGen); state.current=q;
+  const content=document.getElementById('content');
+  content.innerHTML=`${tbHead(q)}
+    <div class="fill-row"><input type="text" id="ans" autocapitalize="off" spellcheck="false" autocomplete="off" style="${TB_MONO}width:min(300px,100%);font-size:1.15rem;"></div>
+    <div class="actions"><button class="primary" id="check">Valider</button></div>
+    <div class="feedback" id="fb"></div>`;
+  const inp=document.getElementById('ans');
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ const c=document.getElementById('check'); if(c&&!c.disabled) c.click(); } });
+  document.getElementById('check').onclick=()=>{
+    const fb=document.getElementById('fb'), row=content.querySelector('.fill-row');
+    if(!inp.value.trim()){ fb.textContent='!'; fb.className='feedback ko'; inp.focus(); return; }
+    const res=tbCheck(q,inp.value);
+    document.getElementById('check').disabled=true; inp.disabled=true;
+    if(res.ok){
+      row.classList.add('anim-good');
+      bumpStreak(getStreak());
+      if(res.fn){ fb.innerHTML=`Bravo, c'est juste ! <span class="expl">Ici, on attendait ${q.formula} (avec les opérations).</span>`; }
+      else fb.textContent='Exact, bravo !';
+      fb.className='feedback ok';
+      autoNext(res.fn?2800:450);
+    }else{
+      row.classList.add('anim-bad');
+      failStreak();
+      document.getElementById('check').style.display='none';
+      const typed=inp.value.replace(/\s+/g,'').replace(/^=/,'').replace(',','.');
+      const isVal=/^\d+(\.\d+)?$/.test(typed)&&Math.abs(parseFloat(typed)-q.tv)<1e-9;
+      const why=isVal?`${fmt(q.tv)} est bien la valeur de la cellule ${q.target}, mais ici on attend une formule, écrite avec les cellules du tableau. `
+        :res.err==='noeq'?'Une formule commence toujours par =. ':res.err==='blank'?`La cellule ${res.cell} est vide : on ne peut pas s'en servir. `:'';
+      fb.innerHTML=`Pas tout à fait. ${why}Formule attendue : ${q.formula}.<span class="expl">${q.expl}</span>`;
+      fb.className='feedback ko';
+    }
+  };
+}
+/* Jeu : un seul tableau, plusieurs cellules à compléter, à relier à leur formule */
+function genTabRound(){
+  if(Math.random()<.5){
+    const ctx=pick(TB_E), full=tbFullE(ctx);
+    const rs=shuffle([2,3,4]), a=rs[0], c=rs[1], e=rs[2];
+    const X=pick(['B','C']), Y=X==='B'?'C':'B';
+    const sum1={cell:'D'+a, formula:`=B${a}+C${a}`, expl:`On additionne les deux effectifs de la ligne ${a}.`};
+    const dif=(r)=>({cell:X+r, formula:`=D${r}-${Y}${r}`, expl:`La partie manquante est égale au total moins la partie connue.`});
+    let T, show;
+    if(Math.random()<.5){   /* 2 sommes + 1 différence */
+      T=[sum1,{cell:Y+'5', formula:`=${Y}2+${Y}3+${Y}4`, expl:`On additionne les trois cellules de la colonne ${Y}.`},dif(c)];
+      show=[...TB_DATA.filter(k=>k!==X+c),'D'+c];
+    }else{                  /* 1 somme + 2 différences */
+      T=[sum1,dif(c),dif(e)];
+      show=[...TB_DATA.filter(k=>k!==X+c&&k!==X+e),'D'+c,'D'+e];
+    }
+    return {tbl:{head:[ctx.h,...ctx.c,'Total'],names:[...ctx.r,'Total'],nr:5,vis:tbVis(full,Object.keys(full).filter(k=>!show.includes(k))),targets:T.map(t=>t.cell)},qs:T};
+  }
+  const ctx=pick(TB_A), rows=tbRowsA(ctx), full=tbFullA(rows,ctx);
+  const q2=()=>pick(['Q1','Q2']);
+  const roles=shuffle(Math.random()<.5?['P','P',q2()]:['P','Q1','Q2']);   /* 2 produits + 1 quotient, ou 1 produit + 2 quotients */
+  const T=roles.map((role,i)=>{
+    const r=i+2;
+    if(role==='P') return {cell:'D'+r, formula:`=B${r}*C${r}`, expl:`Le résultat est le produit des deux valeurs de la ligne. En tableur, on écrit * pour ×.`};
+    if(role==='Q1') return {cell:'C'+r, formula:`=D${r}/B${r}`, expl:`On divise le résultat par l’autre valeur de la ligne. En tableur, on écrit / pour ÷.`};
+    return {cell:'B'+r, formula:`=D${r}/C${r}`, expl:`On divise le résultat par l’autre valeur de la ligne. En tableur, on écrit / pour ÷.`};
+  });
+  const targets=T.map(t=>t.cell);
+  return {tbl:{head:ctx.h,names:rows.map(x=>x.n),nr:4,vis:tbVis(full,targets),targets},qs:T};
+}
+function renderTabJeu(){
+  const R=genTabRound();
+  renderMatch(R.qs, q=>`Cellule ${q.cell}`, q=>q.formula, q=>q.expl);
+  document.getElementById('content').insertAdjacentHTML('afterbegin',tbHTML(R.tbl));
+}
+
 /* ===== Multiples et diviseurs (6e) ===== */
 const MLD_N=[12,16,18,20,24,27,28,30,32,36,40,42,45,48,54,56,60,63,64,72,80,81,84,90,96,100];
 function mldDivs(n){ const d=[]; for(let i=1;i<=n;i++) if(n%i===0) d.push(i); return d; }
@@ -3217,7 +3557,8 @@ const SCREENS={
     ['3e/auto/conv-aire','32. Conversions d\u2019aires','km\u00b2, hm\u00b2, dam\u00b2, m\u00b2, dm\u00b2, cm\u00b2, mm\u00b2'],
     ['3e/auto/conv-volume','33. Conversions de volumes','km\u00b3, hm\u00b3, dam\u00b3, m\u00b3, dm\u00b3, cm\u00b3, mm\u00b3 et litres'],
     ['3e/auto/conv-duree','* Dur\u00e9es','Heures, minutes, secondes'],
-    ['3e/auto/lit-fact','** Factorisation','Mettre le facteur commun en \u00e9vidence']]},
+    ['3e/auto/lit-fact','** Factorisation','Mettre le facteur commun en \u00e9vidence'],
+    ['3e/auto/tableur','*** Tableur','Écrire une formule avec les quatre opérations']]},
   '6e/auto':{title:'Automatismes 6e',sub:'Choisis un th\u00e8me',items:[
     ['6e/auto/tables','1. Tables de multiplication','Les tables de 0 \u00e0 12'],
     ['6e/auto/durees','2. Unit\u00e9s de dur\u00e9es','Secondes, minutes, heures, jours\u2026'],
@@ -3244,6 +3585,7 @@ function go(s){
     '3e/auto/lit-nombre':{theme:'lit',cat:'nombre',title:'Simple distributivit\u00e9',sub:'Automatismes 3e'},
     '3e/auto/lit-double':{theme:'lit',cat:'double',title:'Double distributivit\u00e9',sub:'Automatismes 3e'},
     '3e/auto/lit-fact':{theme:'lit',cat:'fact',title:'Factorisation',sub:'Automatismes 3e'},
+    '3e/auto/tableur':{theme:'tab',title:'Tableur',sub:'Automatismes 3e'},
     '3e/auto/sci':{theme:'sci',title:'\u00c9criture scientifique',sub:'Automatismes 3e'},
     '3e/auto/tables':{theme:'tables',title:'Tables de multiplication',sub:'Automatismes 3e'},
     '3e/auto/frac':{theme:'frac',title:'Fractions irr\u00e9ductibles',sub:'Automatismes 3e'},
@@ -3342,7 +3684,7 @@ go('home');
     '3e/auto/lit-nombre':{theme:'lit',cat:'nombre'},'3e/auto/lit-double':{theme:'lit',cat:'double'},
     '3e/auto/conv-longueur':{theme:'conversions',cat:'longueur'},'3e/auto/conv-aire':{theme:'conversions',cat:'aire'},
     '3e/auto/conv-volume':{theme:'conversions',cat:'volume'},'3e/auto/conv-duree':{theme:'conversions',cat:'duree'},
-    '3e/auto/lit-fact':{theme:'lit',cat:'fact'},
+    '3e/auto/lit-fact':{theme:'lit',cat:'fact'},'3e/auto/tableur':{theme:'tab'},
     '6e/auto/tables':{theme:'tables'},'6e/auto/durees':{theme:'durees'},'6e/auto/comp':{theme:'comp'},'6e/auto/clock':{theme:'clock'},
     '6e/auto/multiples':{theme:'mld'},'6e/auto/hands':{theme:'hands'},'6e/auto/mult10':{theme:'mult10'}
   };
