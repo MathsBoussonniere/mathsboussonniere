@@ -3,6 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1B7F79">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Maths.Boussonnière">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function (reg) {
+      // Vérifie les mises à jour à chaque retour sur l'application
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') reg.update();
+      });
+    }).catch(function (err) { console.warn('Service Worker non enregistré :', err); });
+    // Recharge une seule fois quand une nouvelle version du SW prend le contrôle
+    var refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (refreshing || !navigator.serviceWorker.controller) return;
+      refreshing = true; location.reload();
+    });
+  });
+}
+</script>
 <title>Maths.Boussonnière</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -75,7 +102,7 @@ sup{font-size:.72em;line-height:0;vertical-align:super;}
 .match-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px;align-items:stretch;}
 .match-grid h3{text-align:center;font-size:.8rem;font-weight:600;color:var(--muted);margin:0 0 2px;}
 @media(max-width:480px){.match-grid{gap:8px 8px;}.match-item{padding:8px 6px !important;font-size:.9rem !important;}}
-.match-item{font-family:'Space Grotesk',system-ui,sans-serif;font-variant-numeric:tabular-nums;padding:12px;margin:0;display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);text-align:center;cursor:pointer;font-size:.98rem;}
+.match-item{text-align:center;font-family:'Space Grotesk',system-ui,sans-serif;font-variant-numeric:tabular-nums;padding:12px;margin:0;display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);text-align:center;cursor:pointer;font-size:.98rem;}
 .match-item.selected{border-color:var(--accent);}
 .match-item.matched{border-color:var(--good-bd);background:var(--good-bg);color:var(--on-good);opacity:var(--matched-op);cursor:default;}
 .match-item.error{border-color:var(--bad-bd);background:var(--bad-bg);color:var(--on-bad);}
@@ -100,18 +127,58 @@ button.primary:hover{background:var(--accent-dark);color:#fff;}
 .menu-btn:hover{border-color:var(--accent);}
 .menu-btn strong{display:block;font-family:'Space Grotesk',system-ui,sans-serif;font-size:1.3rem;margin-bottom:3px;}
 .menu-btn span{color:var(--muted);}
+/* expressions littérales (police « maths » des automatismes) : une expression ne se coupe pas en fin de ligne */
+.cqm{white-space:nowrap;}
+.ms{font-family:'Cambria Math','STIX Two Math','STIXGeneral','Latin Modern Math','Noto Sans Math','Segoe UI Symbol','Apple Symbols','DejaVu Math TeX Gyre',serif;font-style:normal;font-weight:400;}
+.mx sub{font-size:.72em;line-height:0;vertical-align:sub;}
 .soon{text-align:center;color:var(--muted);padding:44px 0;}
 .grp{font-family:'Space Grotesk',system-ui,sans-serif;font-size:1rem;color:var(--muted);margin:22px 0 8px;}
 .menu-btn.small{padding:12px 16px;}
 .menu-btn.small strong{font-size:1.02rem;margin:0;}
 .menu-btn.small span{display:block;margin-top:2px;font-size:.8rem;}
-/* espace entre « Mode entraînement » et la liste des automatismes */
-.menu-btn[data-go$="/auto/entrainement"]{margin-bottom:22px;}
+/* espace entre « Entraînement personnalisé » et la liste des automatismes */
+.menu-btn[data-go$="/auto/entrainement"],.menu-btn[data-go$="/qcours/revision"]{margin-bottom:22px;}
 .menu-btn[disabled]{opacity:.5;cursor:default;}
 .menu-btn[disabled]:hover{border-color:var(--line);border-left-color:var(--c,var(--accent));}
 .clock-svg{color:var(--ink);display:block;margin:0 auto;}
 .clock-wrap{display:flex;justify-content:center;margin-bottom:6px;}
 .options.clocks{grid-template-columns:1fr 1fr;}
+/* Questions de cours */
+.question.cq-q{font-size:1.2rem;line-height:1.4;}
+.cq-def{border:1.5px solid var(--line);border-left:6px solid var(--accent);border-radius:10px;background:var(--card);padding:16px 18px;margin-bottom:18px;font-size:1.05rem;line-height:1.5;text-align:left;}
+.cq-formula{font-family:'Space Grotesk',system-ui,sans-serif;font-size:1.6rem;font-weight:600;text-align:center;margin:6px 0 6px;}
+/* Symboles d'opérations dessinés en CSS : même épaisseur que la barre de fraction (bordure de 2px, arrondie
+   comme elle au pixel d'écran) et centrés sur elle (vertical-align:middle, comme .frac) */
+.cq-x,.cq-plus,.cq-minus,.cq-eq,.cq-div,.cq-lt,.cq-gt{display:inline-block;position:relative;width:.62em;height:.62em;vertical-align:middle;margin:0 .32em;}
+.cq-x::before,.cq-x::after,.cq-lt::before,.cq-lt::after,.cq-gt::before,.cq-gt::after{content:"";position:absolute;height:0;border-top:2px solid currentColor;margin-top:-1px;}
+.cq-x::before,.cq-x::after{left:0;top:50%;width:100%;transform:rotate(45deg);}
+.cq-x::after{transform:rotate(-45deg);}
+.cq-lt::before,.cq-lt::after{left:.06em;top:50%;width:.5em;transform-origin:0 50%;transform:rotate(-36deg);}
+.cq-lt::after{transform:rotate(36deg);}
+.cq-gt::before,.cq-gt::after{right:.06em;top:50%;width:.5em;transform-origin:100% 50%;transform:rotate(36deg);}
+.cq-gt::after{transform:rotate(-36deg);}
+.cq-x,.cq-plus,.cq-minus,.cq-eq,.cq-div,.cq-lt,.cq-gt,.fneg,.cq-neg{box-sizing:content-box;}
+.cq-minus{height:0;}
+.cq-minus{border-top:2px solid currentColor;}
+.cq-eq{height:.22em;border-top:2px solid currentColor;border-bottom:2px solid currentColor;}
+.cq-plus::before,.cq-plus::after,.cq-div::before{content:"";position:absolute;}
+.cq-plus::before,.cq-div::before{left:0;right:0;top:50%;height:0;border-top:2px solid currentColor;margin-top:-1px;}
+.cq-plus::after{top:0;bottom:0;left:50%;width:0;border-left:2px solid currentColor;margin-left:-1px;}
+.cq-div::after{content:"";position:absolute;left:50%;top:50%;width:3px;height:3px;margin:-1.5px 0 0 -1.5px;border-radius:50%;background:currentColor;box-shadow:0 -.26em 0 currentColor,0 .26em 0 currentColor;}
+.fneg,.cq-neg{display:inline-block;width:.6em;height:0;border-top:2px solid currentColor;vertical-align:middle;margin-right:.3em;}
+.cq-neg{width:.5em;margin-right:.12em;}
+.cq-q sup,.cq-formula sup,.cq-opts sup,.opt-btn sup,.expl sup{font-size:.72em;line-height:0;}
+sup .cq-neg{width:.45em;margin-right:.08em;}
+/* lettres (a, n, k…) : « mode maths » = le style de la ligne rouge « Réponse » (police du système, italique, graisse 600), partout dans la zone de question.
+   Seules les <i> sans classe sont concernées (d'autres <i> servent d'éléments graphiques). */
+#content i:not([class]){font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:600;}
+#content .cq-def i:not([class]){font-weight:inherit;}
+/* signes < > ≤ ≥ ≠ : le dessin habituel de la police du système (celui de la ligne « Réponse »), pas celui de Space Grotesk */
+.rel{font-family:system-ui,-apple-system,"Segoe UI","Segoe UI Symbol","Cambria Math",sans-serif;font-style:normal;}   /* dans les définitions (texte à 400) : même graisse que le texte */
+.cq-formula sub,.opt-btn sub,.feedback sub{font-size:.72em;line-height:0;vertical-align:sub;}
+.options.cq-opts{grid-auto-rows:1fr;}   /* les 4 cases ont la hauteur de la plus grande */
+.options.cq-long{grid-template-columns:1fr;}
+.options.cq-long .opt-btn{text-align:left;font-size:.98rem;line-height:1.45;padding:14px 16px;}
 .opt-btn .clock-svg{width:100%;max-width:130px;height:auto;}
 .hands-svg{width:100%;max-width:280px;height:auto;touch-action:none;cursor:default;user-select:none;-webkit-user-select:none;}
 .hands-svg #hHourTip,.hands-svg #hMinTip{cursor:pointer;}
@@ -119,9 +186,9 @@ button.primary:hover{background:var(--accent-dark);color:#fff;}
 .fill-row.hm-row input{width:64px;}
 .pdf-pages{display:flex;flex-direction:column;align-items:center;gap:18px;}
 .pdf-page{max-width:100%;height:auto;border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,.15);background:#fff;}
-.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.25;font-variant-numeric:tabular-nums;}
-.frac>:first-child{padding:0 7px 3px;border-bottom:2px solid currentColor;text-align:center;}
-.frac>:last-child{padding:3px 7px 0;text-align:center;}
+.frac{display:inline-flex;flex-direction:column;align-items:stretch;vertical-align:middle;line-height:1.25;font-variant-numeric:tabular-nums;}
+.frac>:first-child{padding:0 6px 3px;border-bottom:2px solid currentColor;text-align:center;}
+.frac>:last-child{padding:3px 6px 0;text-align:center;}
 .frac.nest>:first-child{padding:0 10px 6px;}
 .frac.nest>:last-child{padding:6px 10px 0;}
 .frac.frac-in{align-items:stretch;}
@@ -141,6 +208,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 @font-face{font-family:MathMix;font-style:normal;font-weight:400;unicode-range:U+0041-005A,U+0061-007A;src:local('Times New Roman Italic'),local('TimesNewRomanPS-ItalicMT'),local('Liberation Serif Italic'),local('Tinos Italic'),local('Noto Serif Italic'),local('DejaVu Serif Italic');}
 @font-face{font-family:MathMix;font-style:normal;font-weight:700;unicode-range:U+0000-0040,U+005B-0060,U+007B-00FF,U+2000-22FF;src:local('Times New Roman Bold'),local('TimesNewRomanPS-BoldMT'),local('Liberation Serif Bold'),local('Tinos Bold'),local('Noto Serif Bold'),local('DejaVu Serif Bold');}
 @font-face{font-family:MathMix;font-style:normal;font-weight:700;unicode-range:U+0041-005A,U+0061-007A;src:local('Times New Roman Bold Italic'),local('TimesNewRomanPS-BoldItalicMT'),local('Liberation Serif Bold Italic'),local('Tinos Bold Italic'),local('Noto Serif Bold Italic'),local('DejaVu Serif Bold Italic');}
+@font-face{font-family:MathMix;font-style:normal;font-weight:400;unicode-range:U+03B1-03C9;src:local('Times New Roman Italic'),local('TimesNewRomanPS-ItalicMT'),local('Liberation Serif Italic'),local('Tinos Italic'),local('Noto Serif Italic'),local('DejaVu Serif Italic');}
+@font-face{font-family:MathMix;font-style:normal;font-weight:700;unicode-range:U+03B1-03C9;src:local('Times New Roman Bold Italic'),local('TimesNewRomanPS-BoldItalicMT'),local('Liberation Serif Bold Italic'),local('Tinos Bold Italic'),local('Noto Serif Bold Italic'),local('DejaVu Serif Bold Italic');}
 :root{--mf:MathMix,"Times New Roman",Georgia,"Noto Serif",serif;}
 .mv{font-family:var(--mf);font-style:normal;font-size:1.12em;}
 .mx{font-family:var(--mf);font-size:1.12em;}
@@ -229,9 +298,43 @@ h1,.subtitle{padding:0 46px;}
 .tr-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 16px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;font-size:.95rem;line-height:1.3;}
 .tr-row:hover{border-color:var(--accent);}
 .tr-row.on{border-color:var(--accent);}
+.tr-h{margin:16px 2px 2px;font-family:'Space Grotesk',system-ui,sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);}
+.tr-h:first-child{margin-top:4px;}
 .tr-foot{text-align:center;margin-top:18px;}
 .tr-count{color:var(--muted);font-size:.85rem;margin-bottom:10px;}
 .tr-foot button.primary:disabled{opacity:.45;cursor:default;}
+.rv-th{border:1.5px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden;transition:border-color .15s,box-shadow .2s;}
+.rv-th.on{border-color:var(--accent);}
+.rv-th.open{box-shadow:0 6px 18px rgba(22,36,61,.10);}
+.rv-head{display:flex;align-items:center;gap:12px;padding:6px 16px 6px 12px;}
+.rv-exp{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:8px 0;background:none;border:none;color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;text-align:left;cursor:pointer;}
+.rv-ttl{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.rv-ttl b{font-size:1rem;font-weight:600;line-height:1.25;}
+.rv-ttl small{font-size:.78rem;font-weight:500;color:var(--muted);}
+.rv-chev{flex:none;position:relative;width:32px;height:32px;border-radius:50%;background:var(--accent-soft);}
+.rv-chev::after{content:"";position:absolute;left:12px;top:10px;width:8px;height:8px;border:solid var(--accent);border-width:0 2.5px 2.5px 0;transform:rotate(45deg);transition:transform .2s,top .2s;}
+.rv-th.open .rv-chev::after{top:14px;transform:rotate(225deg);}
+.rv-exp:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px;}
+.rv-body{display:grid;grid-template-rows:0fr;visibility:hidden;transition:grid-template-rows .22s ease,visibility 0s .22s;}
+.rv-th.open .rv-body{grid-template-rows:1fr;visibility:visible;transition-delay:0s;}
+.rv-inner{overflow:hidden;min-height:0;}
+.rv-list{display:grid;gap:8px;padding:4px 12px 12px;}
+.rv-g{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:11px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;font-size:.92rem;line-height:1.3;transition:border-color .15s,background .15s;}
+.rv-g:hover{border-color:var(--accent);}
+.rv-g.on{border-color:var(--accent);background:var(--accent-soft);}
+.eqn{white-space:nowrap;}   /* une égalité (ou inégalité) reste sur une seule ligne : si elle ne tient pas, elle passe tout entière à la ligne */
+/* accolade sous des nombres, avec son étiquette (« n facteurs », « n zéros »), comme dans le cours */
+.ubr{display:inline-flex;flex-direction:column;align-items:stretch;text-align:center;}
+.ubr-top{white-space:nowrap;padding:0 .08em;}
+.ubr-br{display:flex;align-items:flex-start;height:.55em;margin-top:.1em;}
+.ubr-l{flex:1;min-width:.2em;border-top:1.3px solid currentColor;margin-top:.28em;}
+.ubr-c{flex:none;width:.34em;height:.34em;overflow:visible;}
+.ubr-m{flex:none;width:.8em;height:.55em;overflow:visible;}
+.ubr svg path{fill:none;stroke:currentColor;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round;}
+.ubr-lab{font-size:.64em;font-style:italic;font-weight:400;line-height:1.15;white-space:nowrap;margin-top:.12em;}
+.switch.part i{background:var(--accent);opacity:.55;}
+.switch.part i::after{transform:translateX(9px);}
+.rv-g .switch{margin-left:auto;}
 
 .burger.navbtn{right:auto;left:12px;}
 .burger.pvcalc-btn{top:auto;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);}
@@ -456,6 +559,11 @@ function revealCurrent(){
   const content=document.getElementById('content'), fb=document.getElementById('fb'), q=state.current;
   if(!q||!fb) return;
   fb.className='feedback ko';
+  if(state.theme==='cq'){
+    content.querySelectorAll('.opt-btn').forEach(b=>{ b.onclick=null; if(Number(b.dataset.k)===q.okIdx) b.classList.add('correct'); });
+    fb.innerHTML=`Question passée.<br>Réponse : ${q.ansHTML}${q.expl?`<span class="expl">${q.expl}</span>`:''}`;
+    return;
+  }
   if(state.mode==='jeu'){
     q.locked=true;
     const lines=[];
@@ -463,13 +571,23 @@ function revealCurrent(){
       const qe=content.querySelector(`[data-q="${i}"]`), ae=content.querySelector(`[data-a="${i}"]`);
       if(!qe.classList.contains('matched')){ qe.classList.add('revealed'); ae.classList.add('revealed'); lines.push(`<li>« ${q.leftFn(x)} » = ${q.rightFn(x)} : ${q.explainFn(x)}</li>`); }
     });
-    fb.innerHTML=`Question passée. Voici les bonnes associations :<div class="expl"><ul style="margin:6px 0 0;padding-left:18px;">${lines.join('')}</ul></div>`;
+    fb.innerHTML=`Question passée.<br>Voici les bonnes associations :<div class="expl"><ul style="margin:6px 0 0;padding-left:18px;">${lines.join('')}</ul></div>`;
+    return;
+  }
+  if(state.theme==='fh'){
+    if(state.mode==='qcm') content.querySelectorAll('.opt-btn').forEach(b=>{ b.onclick=null; if(b.dataset.k===fhKey(q)) b.classList.add('correct'); });
+    else{
+      const set=(id,v)=>{ const el=document.getElementById(id); if(el){ el.value=v; el.disabled=true; } };
+      if(q.to==='min') set('ans',String(q.e.m)); else if(q.to==='word') set('ans',q.e.w); else{ set('ansN',String(q.e.n)); set('ansD',String(q.e.d)); }
+      const c=document.getElementById('check'); if(c){ c.disabled=true; c.style.display='none'; }
+    }
+    fb.innerHTML=`Question passée.<br>Réponse : ${q.full}.<span class="expl">${explainFh(q)}</span>`;
     return;
   }
   if(state.theme==='hands'){
     if(state.mode==='qcm') content.querySelectorAll('.opt-btn').forEach(b=>{ b.onclick=null; if(Number(b.dataset.val)===q.ans) b.classList.add('correct'); });
     else if(q.reveal) q.reveal();
-    fb.innerHTML=`Question passée. Réponse : ${clockLabel(q)}.<span class="expl">${explainHands(q)}</span>`;
+    fb.innerHTML=`Question passée.<br>Réponse : ${clockLabel(q)}.<span class="expl">${explainHands(q)}</span>`;
     return;
   }
   if(state.theme==='lit'){
@@ -477,13 +595,13 @@ function revealCurrent(){
     else{ const i=document.getElementById('ans'); if(i){ i.value=litPlain(q.ansStr); i.disabled=true; }
       const c=document.getElementById('check'); if(c){ c.disabled=true; c.style.display='none'; }
       content.querySelectorAll('.pykey').forEach(b=>b.disabled=true); }
-    fb.innerHTML=`Question pass\u00e9e. R\u00e9ponse : ${q.ansStr}.<span class="expl">${q.expl}</span>`;
+    fb.innerHTML=`Question pass\u00e9e.<br>R\u00e9ponse : ${q.ansStr}.<span class="expl">${q.expl}</span>`;
     return;
   }
   if(state.theme==='tab'){
     if(state.mode==='qcm') content.querySelectorAll('.opt-btn').forEach(b=>{ b.onclick=null; if(b.dataset.k===q.formula) b.classList.add('correct'); });
     else{ const inp=document.getElementById('ans'); if(inp){ inp.value=q.formula; inp.disabled=true; } const c=document.getElementById('check'); if(c){ c.disabled=true; c.style.display='none'; } }
-    fb.innerHTML=`Question passée. Formule attendue : ${q.formula}.<span class="expl">${q.expl}</span>`;
+    fb.innerHTML=`Question passée.<br>Formule attendue : ${q.formula}.<span class="expl">${q.expl}</span>`;
     return;
   }
   if(state.theme==='pyv'){
@@ -495,7 +613,7 @@ function revealCurrent(){
       content.querySelectorAll('#pvConc .pvck').forEach(b=>{ b.onclick=null; b.disabled=true; b.classList.remove('pvsel'); if(b.dataset.k===(q.right?'r':'non')) b.classList.add('correct'); });
       const c=document.getElementById('check'); if(c){ c.disabled=true; c.style.display='none'; }
     }
-    fb.innerHTML=`Question passée. Réponse : ${state.mode==='qcm'?pvAns(q):pvEq(q)+' ; '+pvAns(q)}.<span class="expl">${explainPyv(q)}</span>`;
+    fb.innerHTML=`Question passée.<br>Réponse : ${state.mode==='qcm'?pvAns(q):pvEq(q)+' ; '+pvAns(q)}.<span class="expl">${explainPyv(q)}</span>`;
     return;
   }
   const opf=(state.theme==='opf'||state.theme==='mdf'), frac=state.theme==='frac', sci=state.theme==='sci', tab=state.theme==='tables', dur=state.theme==='durees', comp=state.theme==='comp', clock=state.theme==='clock', pyt=state.theme==='pyth', mld=state.theme==='mld', mul=state.theme==='mult10';
@@ -521,7 +639,7 @@ function revealCurrent(){
     content.querySelectorAll('input').forEach(i=>i.disabled=true);
     const chk=document.getElementById('check'); if(chk){ chk.disabled=true; chk.style.display='none'; }
   }
-  fb.innerHTML=`Question passée. Réponse : ${ansTxt}.<span class="expl">${expl}</span>`;
+  fb.innerHTML=`Question passée.<br>Réponse : ${ansTxt}.<span class="expl">${expl}</span>`;
 }
 function autoNext(ms){ if(pendingTimer) clearTimeout(pendingTimer); pendingTimer=setTimeout(()=>{pendingTimer=null;newQuestion();},ms); }
 function onNewBtn(){
@@ -676,7 +794,7 @@ function explainSci(q){
   return `${eq} = ${fmt(dec)} : 10<sup>0</sup> = 1, donc le nombre ne change pas.`;
 }
 
-function keyFor(){ return (state.lvl||'')+'|'+state.theme+'|'+((state.theme==='conversions'||state.theme==='lit')?state.cat:'sci')+'|'+state.mode; }
+function keyFor(){ return (state.lvl||'')+'|'+state.theme+'|'+((state.theme==='conversions'||state.theme==='lit'||state.theme==='cq')?state.cat:'sci')+'|'+(state.theme==='cq'?'qcm':state.mode); }
 
 let qHistory={};
 function sigOf(q){
@@ -724,6 +842,8 @@ function renderTabs(){
 }
 function renderModes(){
   const m=document.getElementById('modes');
+  if(state.theme==='cq'){ m.style.display='none'; m.innerHTML=''; return; }   /* questions de cours : pas de choix de mode pour l'instant */
+  m.style.display='';
   m.innerHTML=MODES.map(mo=>`<button class="mode-btn ${state.mode===mo.id?'active':''}" data-mode="${mo.id}">${mo.label}</button>`).join('');
   m.querySelectorAll('.mode-btn').forEach(b=>b.onclick=()=>{ if(b.dataset.mode===state.mode) return; switchView(()=>{state.mode=b.dataset.mode;}); renderModes(); });
 }
@@ -760,7 +880,9 @@ function _newQuestion(){
   state.resolved=false; setNewBtn();
   document.getElementById('content').classList.toggle('lit',state.theme==='lit');
   document.getElementById('content').innerHTML='';
-  if(state.theme==='lit'){
+  if(state.theme==='cq'){
+    renderCqQCM();   /* questions de cours : QCM uniquement pour l'instant */
+  }else if(state.theme==='lit'){
     if(state.mode==='qcm') renderLitQCM();
     else if(state.mode==='jeu') renderLitJeu();
     else renderLitTrou();
@@ -800,6 +922,10 @@ function _newQuestion(){
     if(state.mode==='qcm') renderDureeQCM();
     else if(state.mode==='jeu') renderDureeJeu();
     else renderDureeTrou();
+  }else if(state.theme==='fh'){
+    if(state.mode==='qcm') renderFhQCM();
+    else if(state.mode==='jeu') renderFhJeu();
+    else renderFhTrou();
   }else if(state.theme==='mult10'){
     if(state.mode==='qcm') renderMulQCM();
     else if(state.mode==='jeu') renderMulJeu();
@@ -872,7 +998,7 @@ function renderMatch(qs,leftFn,rightFn,explainFn,cellFn,rightCellFn){
   const content=document.getElementById('content');
   content.innerHTML=`
     <div class="question" style="font-size:1rem;">Relie chaque question à sa bonne réponse</div>
-    <div class="match-grid" style="grid-template-rows:auto repeat(${qs.length},1fr)"><h3>Questions</h3><h3>Réponses</h3>${qs.map((q,i)=>`<div class="match-item" data-q="${i}">${(cellFn||leftFn)(q)}</div><div class="match-item" data-a="${answers[i].idx}">${answers[i].text}</div>`).join('')}</div>
+    <div class="match-grid" style="grid-template-rows:auto repeat(${qs.length},1fr)"><h3>Questions</h3><h3>Réponses</h3>${qs.map((q,i)=>`<div class="match-item" data-q="${i}"><span>${(cellFn||leftFn)(q)}</span></div><div class="match-item" data-a="${answers[i].idx}"><span>${answers[i].text}</span></div>`).join('')}</div>
     <div class="feedback" id="fb"></div>`;
   content.querySelectorAll('[data-q]').forEach(el=>el.onclick=()=>{ if(el.classList.contains('matched')||state.current.locked)return;
     content.querySelectorAll('[data-q]').forEach(e=>e.classList.remove('selected'));
@@ -1244,6 +1370,116 @@ function renderDureeTrou(){
       failStreak();
       document.getElementById('check').style.display='none';
       fb.innerHTML=`Pas tout à fait. Réponse : ${q.full}.<span class="expl">${explainDuree(q)}</span>`;
+      fb.className='feedback ko';
+    }
+  };
+}
+/* ===== Fractions d'heure (6e) – Automatisme n°8 ===== */
+const FH=[
+  {m:15,n:1,d:4,w:'un quart d’heure'},
+  {m:30,n:1,d:2,w:'une demi-heure'},
+  {m:45,n:3,d:4,w:'trois quarts d’heure'}
+];
+const FH_DIRS=[['frac','min'],['word','min'],['min','frac'],['min','word']];
+function fhFrac(n,d){ return `${fracHTML(n,d)}<span style="margin-left:.22em;">h</span>`; }
+function fhShow(e,form){ return form==='frac'?fhFrac(e.n,e.d):form==='word'?e.w:`${e.m} min`; }
+function mkFh(e,from,to){ return {e,from,to,pk:`fh|${e.m}|${from}>${to}`,left:fhShow(e,from),right:fhShow(e,to),full:`${fhShow(e,from)} = ${fhShow(e,to)}`}; }
+function genFh(){ const [f,t]=pick(FH_DIRS); return mkFh(pick(FH),f,t); }
+function explainFh(q){
+  const e=q.e, rev=q.from==='min';
+  if(e.m===15) return rev?`4 × 15 min = 60 min = 1 h : il faut 4 quarts d’heure pour faire 1 h, donc 15 min = ${fhFrac(1,4)} (un quart d’heure).`
+                          :`1 h = 60 min, donc un quart d’heure = 60 min ÷ 4 = 15 min : ${fhFrac(1,4)} = 15 min.`;
+  if(e.m===30) return rev?`2 × 30 min = 60 min = 1 h : il faut 2 demi-heures pour faire 1 h, donc 30 min = ${fhFrac(1,2)} (une demi-heure).`
+                          :`1 h = 60 min, donc une demi-heure = 60 min ÷ 2 = 30 min : ${fhFrac(1,2)} = 30 min.`;
+  return rev?`45 min = 3 × 15 min = 3 quarts d’heure, donc 45 min = ${fhFrac(3,4)} (trois quarts d’heure).`
+            :`1 h = 60 min et un quart d’heure = 15 min, donc trois quarts d’heure = 3 × 15 min = 45 min : ${fhFrac(3,4)} = 45 min.`;
+}
+const FH_FRACS=[[1,4],[1,2],[3,4],[1,3],[2,3],[1,5],[1,10],[1,6],[2,5],[3,5],[3,10]];
+const FH_WORDS=['un quart d’heure','une demi-heure','trois quarts d’heure','un tiers d’heure','deux tiers d’heure','un cinquième d’heure','un dixième d’heure'];
+function fhOptions(q){
+  const e=q.e;
+  if(q.to==='min'){
+    const pool=[...new Set([e.m+10,e.m-10,e.m+15,e.m-15,60-e.m,25,50,75,20,10,40,35,5,90,12,4].filter(v=>v>0&&v!==e.m))];
+    return shuffle([{k:String(e.m),h:`${e.m} min`},...shuffle(pool).slice(0,3).map(v=>({k:String(v),h:`${v} min`}))]);
+  }
+  if(q.to==='frac'){
+    const pool=FH_FRACS.filter(([n,d])=>!(n===e.n&&d===e.d));
+    return shuffle([{k:`${e.n}/${e.d}`,h:fhFrac(e.n,e.d)},...shuffle(pool).slice(0,3).map(([n,d])=>({k:`${n}/${d}`,h:fhFrac(n,d)}))]);
+  }
+  const pool=FH_WORDS.filter(w=>w!==e.w);
+  return shuffle([{k:e.w,h:e.w},...shuffle(pool).slice(0,3).map(w=>({k:w,h:w}))]);
+}
+function fhKey(q){ return q.to==='min'?String(q.e.m):q.to==='frac'?`${q.e.n}/${q.e.d}`:q.e.w; }
+function renderFhQCM(){
+  const q=withHistory(genFh); state.current=q;
+  const content=document.getElementById('content'), opts=fhOptions(q);
+  content.innerHTML=`
+    <div class="question">${q.left} = ?</div>
+    <div class="options">${opts.map(o=>`<button class="opt-btn" data-k="${o.k}">${o.h}</button>`).join('')}</div>
+    <div class="feedback" id="fb"></div>`;
+  content.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      content.querySelectorAll('.opt-btn').forEach(b=>b.onclick=null);
+      const fb=document.getElementById('fb');
+      if(btn.dataset.k===fhKey(q)){
+        btn.classList.add('correct','anim-good');
+        bumpStreak(getStreak());
+        fb.textContent="Bravo, c'est correct !"; fb.className='feedback ok';
+        autoNext(450);
+      }else{
+        btn.classList.add('wrong','anim-bad');
+        failStreak();
+        fb.innerHTML=`Ce n'est pas ça. <span class="expl">${explainFh(q)}</span>`;
+        fb.className='feedback ko';
+        content.querySelectorAll('.opt-btn').forEach(b=>{ if(b.dataset.k===fhKey(q)) b.classList.add('correct'); });
+      }
+    };
+  });
+}
+function renderFhJeu(){
+  /* 3 paires, une par durée (15, 30, 45 min) : pas deux réponses équivalentes dans la colonne de droite */
+  const qs=shuffle([...FH]).map(e=>{ const [f,t]=pick(FH_DIRS); return mkFh(e,f,t); });
+  renderMatch(qs, x=>x.left, x=>x.right, explainFh);
+}
+function renderFhTrou(){
+  const q=withHistory(genFh); state.current=q;
+  const content=document.getElementById('content'), e=q.e;
+  const field=q.to==='min'
+    ?`<input type="text" id="ans" inputmode="numeric" placeholder="?" autocomplete="off" style="width:110px;"> min`
+    :q.to==='frac'
+    ?`<span class="frac frac-in"><input type="text" id="ansN" inputmode="numeric" placeholder="?" autocomplete="off"><span class="bar"></span><input type="text" id="ansD" inputmode="numeric" placeholder="?" autocomplete="off"></span><span style="margin-left:.22em;">h</span>`
+    :`<input type="text" id="ans" autocapitalize="off" spellcheck="false" placeholder="en lettres" autocomplete="off" style="width:230px;">`;
+  content.innerHTML=`
+    <div class="fill-row" style="align-items:center;">${q.left} = ${field}</div>
+    <div class="actions"><button class="primary" id="check">Valider</button></div>
+    <div class="feedback" id="fb"></div>`;
+  const rowEl=content.querySelector('.fill-row');
+  document.getElementById('check').onclick=()=>{
+    const fb=document.getElementById('fb'); let ok=false, note='', exact=true;
+    if(q.to==='min'){ const v=parseNum(document.getElementById('ans').value); ok=!isNaN(v)&&v===e.m; }
+    else if(q.to==='frac'){
+      let sn=document.getElementById('ansN').value.trim(), sd=document.getElementById('ansD').value.trim();
+      if(sn.includes('/')&&!sd){ [sn,sd]=sn.split('/').map(x=>x.trim()); }
+      const n=/^\d+$/.test(sn)?parseInt(sn,10):NaN, d=/^\d+$/.test(sd)?parseInt(sd,10):NaN;
+      ok=!isNaN(n)&&!isNaN(d)&&d>0&&n*e.d===d*e.n;
+      if(ok&&!(n===e.n&&d===e.d)) note=`Bravo ! Cette fraction est égale à ${fhFrac(e.n,e.d)}, qu’on peut aussi écrire « ${e.w} ».`;
+    }else{
+      const res=wordCheck(document.getElementById('ans').value,[e.w,e.w.replace(/^(un|une) /,'')],1);
+      ok=res.ok; exact=res.exact||[e.w,e.w.replace(/^(un|une) /,'')].some(a=>normW(a)===normW(document.getElementById('ans').value));   /* tiret ou apostrophe oubliés : pas une faute */
+      if(ok&&!exact) note=`Bravo, c'est juste ! Attention à l'orthographe : on écrit « ${e.w} ».`;
+    }
+    document.getElementById('check').disabled=true;
+    if(ok){
+      rowEl.classList.add('anim-good');
+      bumpStreak(getStreak());
+      if(note) fb.innerHTML=note; else fb.textContent='Exact, bravo !';
+      fb.className='feedback ok';
+      autoNext(note?2800:450);
+    }else{
+      rowEl.classList.add('anim-bad');
+      failStreak();
+      document.getElementById('check').style.display='none';
+      fb.innerHTML=`Pas tout à fait. Réponse : ${q.full}.<span class="expl">${explainFh(q)}</span>`;
       fb.className='feedback ko';
     }
   };
@@ -2444,6 +2680,8 @@ window.addEventListener('resize',()=>{
 
 /* ===== Égalité de Pythagore (3e) ===== */
 const PY_LETTERS='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+/* « mode maths » pour une expression de géométrie (points, droites, segments, égalités) */
+const gm=s=>`<span class="mx cqm">${s}</span>`;
 function genPyth(L0,rv0){
   const L=L0||shuffle([...PY_LETTERS]).slice(0,3);
   const rv=rv0||pick(L), [P,Q]=L.filter(x=>x!==rv);
@@ -2458,10 +2696,10 @@ function genPyth(L0,rv0){
 }
 function pythLeft(q){ return q.kind==='hyp'?q.H:q.T; }
 function pythRhs(q){ return q.kind==='hyp'?`${q.L1}² + ${q.L2}²`:`${q.H}² − ${q.O}²`; }
-function pythEq(q){ return `${pythLeft(q)}² = ${pythRhs(q)}`; }
+function pythEq(q){ return gm(`${pythLeft(q)}² = ${pythRhs(q)}`); }
 function explainPyth(q){
-  let s=`Dans le triangle ${q.name} rectangle en ${q.rv}, l’hypoténuse est le côté opposé à l’angle droit : [${q.H}]. Le carré de l’hypoténuse est égal à la somme des carrés des deux autres côtés : ${q.H}² = ${q.L1}² + ${q.L2}².`;
-  if(q.kind==='leg') s+=` Pour isoler ${q.T}², on retranche ${q.O}² de chaque côté : ${q.T}² = ${q.H}² − ${q.O}².`;
+  let s=`Dans le triangle ${gm(q.name)} rectangle en ${gm(q.rv)}, l’hypoténuse est le côté opposé à l’angle droit : ${gm('['+q.H+']')}. Le carré de l’hypoténuse est égal à la somme des carrés des deux autres côtés : ${gm(`${q.H}² = ${q.L1}² + ${q.L2}²`)}.`;
+  if(q.kind==='leg') s+=` Pour isoler ${gm(q.T+'²')}, on retranche ${gm(q.O+'²')} de chaque côté : ${gm(`${q.T}² = ${q.H}² − ${q.O}²`)}.`;
   return s;
 }
 function pythWrong(q){
@@ -2470,8 +2708,8 @@ function pythWrong(q){
   const O=q.O,H=q.H;
   return [`${H}² + ${O}²`,`${O}² − ${H}²`,`${H} − ${O}`,`(${H} − ${O})²`];
 }
-function pythStatement(q){ return `<div class="question">${q.name} rectangle en ${q.rv}</div>`; }
-function pythHead(q){ return Math.random()<.5?pythFigure(q):`<div class="question" style="font-size:2rem;margin-bottom:12px;">${q.name} rectangle en ${q.rv}</div>`; }
+function pythStatement(q){ return `<div class="question">${gm(q.name)} rectangle en ${gm(q.rv)}</div>`; }
+function pythHead(q){ return Math.random()<.5?pythFigure(q):`<div class="question" style="font-size:2rem;margin-bottom:12px;">${gm(q.name)} rectangle en ${gm(q.rv)}</div>`; }
 function pythFigure(q,maxW=340,mb=12){
   const R=q.rv, [P,Q]=q.name.split('').filter(x=>x!==R);
   const a=90+Math.random()*70, b=55+Math.random()*50;
@@ -2489,9 +2727,8 @@ function pythFigure(q,maxW=340,mb=12){
   const un=(A,B)=>{ const dx=B[0]-A[0], dy=B[1]-A[1], d=Math.hypot(dx,dy); return [dx/d,dy/d]; };
   const u=un(pts[R],pts[P]), v=un(pts[R],pts[Q]), m=13, r0=pts[R];
   const sq=[[r0[0]+u[0]*m,r0[1]+u[1]*m],[r0[0]+(u[0]+v[0])*m,r0[1]+(u[1]+v[1])*m],[r0[0]+v[0]*m,r0[1]+v[1]*m]].map(t=>t.map(x=>x.toFixed(1)).join(',')).join(' ');
-  const labels=[R,P,Q].map(k=>{ const d=un(g,pts[k]); return `<text x="${(pts[k][0]+d[0]*17).toFixed(1)}" y="${(pts[k][1]+d[1]*17).toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="22" font-weight="700" fill="currentColor" font-family="Space Grotesk,system-ui,sans-serif">${k}</text>`; }).join('');
-  const dots=[R,P,Q].map(k=>`<circle cx="${pts[k][0].toFixed(1)}" cy="${pts[k][1].toFixed(1)}" r="3" fill="currentColor"/>`).join('');
-  return `<div style="display:flex;justify-content:center;width:100%;margin-bottom:${mb}px;"><svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${maxW}px;color:var(--ink);" role="img" aria-label="Triangle ${q.name} rectangle en ${R}"><polygon points="${pl}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><polyline points="${sq}" fill="none" stroke="currentColor" stroke-width="2"/>${dots}${labels}</svg></div>`;
+  const labels=[R,P,Q].map(k=>{ const d=un(g,pts[k]); return `<text x="${(pts[k][0]+d[0]*17).toFixed(1)}" y="${(pts[k][1]+d[1]*17).toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="27" fill="currentColor" style="font-family:var(--mf);">${k}</text>`; }).join('');
+  return `<div style="display:flex;justify-content:center;width:100%;margin-bottom:${mb}px;"><svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${maxW}px;color:var(--ink);" role="img" aria-label="Triangle ${q.name} rectangle en ${R}"><polygon points="${pl}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="miter" stroke-miterlimit="6"/><polyline points="${sq}" fill="none" stroke="currentColor" stroke-width="2"/>${labels}</svg></div>`;
 }
 function renderPythQCM(){
   const q=withHistory(genPyth); state.current=q;
@@ -2499,10 +2736,10 @@ function renderPythQCM(){
   const correct=pythRhs(q);
   const options=shuffle([correct,...shuffle(pythWrong(q)).slice(0,3)]);
   const head=pythHead(q);
-  const ask=`${pythLeft(q)}² = ?`;
+  const ask=gm(`${pythLeft(q)}² = ?`);
   content.innerHTML=`${head}
     <div class="question" style="font-size:1.7rem;">${ask}</div>
-    <div class="options">${options.map(o=>`<button class="opt-btn" style="font-size:1.25rem;" data-k="${o}">${o}</button>`).join('')}</div>
+    <div class="options">${options.map(o=>`<button class="opt-btn" style="font-size:1.25rem;" data-k="${o}">${gm(o)}</button>`).join('')}</div>
     <div class="feedback" id="fb"></div>`;
   content.querySelectorAll('.opt-btn').forEach(btn=>{
     btn.onclick=()=>{
@@ -2527,7 +2764,7 @@ function renderPythJeu(){
   const L=shuffle([...PY_LETTERS]).slice(0,3);
   const qs=shuffle(L.map(rv=>genPyth(L,rv)));
   const fig=Math.random()<.5;
-  renderMatch(qs, q=>`${q.name} rectangle en ${q.rv}`, pythEq, explainPyth, fig?(q=>pythFigure(q,170,0)):null);
+  renderMatch(qs, q=>`${gm(q.name)} rectangle en ${gm(q.rv)}`, pythEq, explainPyth, fig?(q=>pythFigure(q,170,0)):null);
 }
 function pythParse(s){
   s=s.toUpperCase().replace(/[\s()\[\]]/g,'').replace(/[−–—]/g,'-').replace(/\^2|²/g,'');
@@ -2547,7 +2784,7 @@ function renderPythTrou(){
   const q=withHistory(genPyth); state.current=q;
   const content=document.getElementById('content');
   content.innerHTML=`${pythHead(q)}
-    <div class="fill-row">${pythLeft(q)}² = <input type="text" id="ans" placeholder="?" autocomplete="off" autocapitalize="characters" spellcheck="false" style="width:220px;"></div>
+    <div class="fill-row">${gm(`${pythLeft(q)}² =`)} <input type="text" id="ans" placeholder="?" autocomplete="off" autocapitalize="characters" spellcheck="false" style="width:220px;"></div>
     <div class="pykeys" style="display:flex;justify-content:center;gap:8px;margin:-4px 0 12px;">${['+','−','²'].map(k=>`<button type="button" class="opt-btn pykey" data-ins="${k}" style="padding:8px 18px;font-size:1.3rem;min-width:56px;">${k}</button>`).join('')}</div>
     <div class="actions"><button class="primary" id="check">Valider</button></div>
     <div class="feedback" id="fb"></div>`;
@@ -2634,28 +2871,105 @@ function genPyv(o){
   q.pk=`pv|${right?1:0}|${t.join('-')}`;
   return q;
 }
-function pvStmt(q){ const s=q.sides.map(x=>`${x.n} = ${pvTenths(x.v)}`); return `${s[0]} ; ${s[1]} et ${s[2]}`; }
+function pvStmt(q){ const s=q.sides.map(x=>gm(`${x.n} = ${pvTenths(x.v)}`)); return `${s[0]} ; ${s[1]} et ${s[2]}`; }
 function pvKey(q){ return q.right?'r'+q.rv:'non'; }
-function pvAns(q){ return q.right?`${q.name} est rectangle en ${q.rv}`:`${q.name} n’est pas rectangle`; }
-function pvEq(q){ return `${q.big.n}² = ${pvSq(q.sq)} et ${q.s1.n}² + ${q.s2.n}² = ${pvSq(q.sum)}`; }
+function pvAns(q){ return q.right?`${gm(q.name)} est rectangle en ${gm(q.rv)}`:`${gm(q.name)} n’est pas rectangle`; }
+function pvEq(q){ return `${gm(`${q.big.n}² = ${pvSq(q.sq)}`)} et ${gm(`${q.s1.n}² + ${q.s2.n}² = ${pvSq(q.sum)}`)}`; }
 function explainPyv(q){
-  let s=`Le plus grand côté est [${q.big.n}] : c’est le seul qui puisse être l’hypoténuse. `
-    +`${q.big.n}² = ${pvTenths(q.big.v)}² = ${pvSq(q.sq)}. `
-    +`${q.s1.n}² + ${q.s2.n}² = ${pvTenths(q.s1.v)}² + ${pvTenths(q.s2.v)}² = ${pvSq(q.sq1)} + ${pvSq(q.sq2)} = ${pvSq(q.sum)}. `;
+  let s=`Le plus grand côté est ${gm('['+q.big.n+']')} : c’est le seul qui puisse être l’hypoténuse. `
+    +`${gm(`${q.big.n}² = ${pvTenths(q.big.v)}² = ${pvSq(q.sq)}`)}. `
+    +`${gm(`${q.s1.n}² + ${q.s2.n}² = ${pvTenths(q.s1.v)}² + ${pvTenths(q.s2.v)}² = ${pvSq(q.sq1)} + ${pvSq(q.sq2)} = ${pvSq(q.sum)}`)}. `;
   s+=q.right
-    ?`Les deux résultats sont égaux : d’après la réciproque du théorème de Pythagore, le triangle ${q.name} est rectangle en ${q.rv}.`
-    :`Les deux résultats sont différents : d’après la contraposée du théorème de Pythagore, le triangle ${q.name} n’est pas rectangle.`;
+    ?`Les deux résultats sont égaux : d’après la réciproque du théorème de Pythagore, le triangle ${gm(q.name)} est rectangle en ${gm(q.rv)}.`
+    :`Les deux résultats sont différents : d’après la contraposée du théorème de Pythagore, le triangle ${gm(q.name)} n’est pas rectangle.`;
   return s;
 }
-function pvHead(q){
-  return `<div class="question" style="font-size:1.05rem;margin-bottom:4px;">Triangle ${q.name} </div>`
-    +`<div class="question" style="font-size:1.6rem;margin-bottom:14px;">${pvStmt(q)}</div>`;
+/* Figure à main levée : triangle dessiné « à peu près » rectangle, sans codage de l'angle droit, avec le nom des trois sommets et les trois longueurs.
+   Le dessin n'est pas à l'échelle : l'angle au sommet « rectangle » est tiré entre 80° et 100° (jamais exactement 90°),
+   donc la figure ne donne pas la réponse. Les longueurs servent à peine pour les proportions (compressées). */
+function pvFigure(q,maxW=340,mb=12){
+  /* Figure à main levée : un seul contour fermé (sommets bien pointus), côtés tremblés, sommets en gras, longueurs sans unité au milieu de chaque côté.
+     Les longueurs sont posées à l'extérieur, au plus près du trait réellement dessiné, sans jamais toucher un côté, une lettre ou une autre longueur.
+     Le dessin n'est pas à l'échelle : l'angle « presque droit » est tiré entre 80° et 100° (jamais 90°), donc la figure ne donne pas la réponse. */
+  const R=q.rv, other=(s,x)=>s.n.replace(x,''), P=other(q.s1,R), Q=other(q.s2,R);
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+  const un=(A,B)=>{ const dx=B[0]-A[0], dy=B[1]-A[1], d=Math.hypot(dx,dy)||1; return [dx/d,dy/d]; };
+  const FL=22, FV=27, f1=v=>v.toFixed(1);
+  const TW=t=>[...t].reduce((a,ch)=>a+(ch===','?.3:.62),0)*FL;   /* largeur d'une longueur */
+  let best=null;
+  for(let att=0; att<120; att++){
+    let d1=Math.pow(q.s1.v,.7)*rnd(.88,1.12), d2=Math.pow(q.s2.v,.7)*rnd(.88,1.12);
+    const mx=Math.max(d1,d2), mn=Math.min(.7,.4+att*.006); d1=Math.max(d1,mn*mx); d2=Math.max(d2,mn*mx);   /* triangle très aplati : on l'épaissit peu à peu */
+    let ang=(90+(Math.random()<.5?-1:1)*rnd(5,10))*Math.PI/180;
+    if(Math.sqrt(d1*d1+d2*d2-2*d1*d2*Math.cos(ang))<1.04*Math.max(d1,d2)) ang=(90+rnd(5,10))*Math.PI/180;
+    let pts={[R]:[0,0],[P]:[d1,0],[Q]:[d2*Math.cos(ang),d2*Math.sin(ang)]};
+    const th=Math.random()*2*Math.PI, c=Math.cos(th), sn=Math.sin(th), fl=Math.random()<.5?-1:1;
+    Object.keys(pts).forEach(k=>{ const [x,y]=pts[k]; pts[k]=[fl*(x*c-y*sn), x*sn+y*c]; });
+    const xs=Object.values(pts).map(v=>v[0]), ys=Object.values(pts).map(v=>v[1]);
+    const w=Math.max(...xs)-Math.min(...xs), h=Math.max(...ys)-Math.min(...ys);
+    const sc=Math.min(190/w,112/h), cx=(Math.max(...xs)+Math.min(...xs))/2, cy=(Math.max(...ys)+Math.min(...ys))/2;
+    Object.keys(pts).forEach(k=>{ pts[k]=[(pts[k][0]-cx)*sc,(pts[k][1]-cy)*sc]; });
+    const g=[0,1].map(i=>(pts[R][i]+pts[P][i]+pts[Q][i])/3);
+    /* 1. contour à main levée : un seul tracé fermé R → P → Q → R, les côtés passent exactement par les sommets */
+    const samples=[], sideSmp={};
+    const side=(a,b)=>{ const A=pts[a], B=pts[b], t=un(A,B), n=[-t[1],t[0]], L=Math.hypot(B[0]-A[0],B[1]-A[1]);
+      const bow=rnd(-1,1)*Math.min(5,2+L*.05), N=5, Z=[A];
+      for(let k=1;k<N;k++){ const u=k/N, off=bow*Math.sin(Math.PI*u)+rnd(-1,1)*1.7; Z.push([A[0]+(B[0]-A[0])*u+n[0]*off, A[1]+(B[1]-A[1])*u+n[1]*off]); }
+      Z.push(B);
+      let d='', sm=[];
+      for(let k=0;k<Z.length-1;k++){ const p0=Z[Math.max(0,k-1)], p1=Z[k], p2=Z[k+1], p3=Z[Math.min(Z.length-1,k+2)];
+        const c1=[p1[0]+(p2[0]-p0[0])/6,p1[1]+(p2[1]-p0[1])/6], c2=[p2[0]-(p3[0]-p1[0])/6,p2[1]-(p3[1]-p1[1])/6];
+        d+=` C${f1(c1[0])},${f1(c1[1])} ${f1(c2[0])},${f1(c2[1])} ${f1(p2[0])},${f1(p2[1])}`;
+        for(let i=0;i<=8;i++){ const u=i/8, v=1-u; sm.push([v*v*v*p1[0]+3*v*v*u*c1[0]+3*v*u*u*c2[0]+u*u*u*p2[0], v*v*v*p1[1]+3*v*v*u*c1[1]+3*v*u*u*c2[1]+u*u*u*p2[1]]); } }
+      sideSmp[[a,b].sort().join('')]=sm; samples.push(...sm); return d; };
+    const contour=`M${f1(pts[R][0])},${f1(pts[R][1])}`+side(R,P)+side(P,Q)+side(Q,R)+' Z';
+    /* 2. lettres des sommets, à l'extérieur, dans la direction opposée au centre */
+    const rects=[], vl={};
+    [R,P,Q].forEach(k=>{ const u=un(g,pts[k]), w2=FV*(/[WMQ]/.test(k)?1.05:.8), h2=FV*1.05, dd=Math.abs(u[0])*w2/2+Math.abs(u[1])*h2/2+6;
+      vl[k]={cx:pts[k][0]+u[0]*dd, cy:pts[k][1]+u[1]*dd, w:w2, h:h2}; rects.push(vl[k]); });
+    /* 3. longueurs : milieu du côté, à l'extérieur, le plus près possible du trait dessiné */
+    const PAD=5;
+    const touches=r=>{
+      const x0=r.cx-r.w/2-PAD, x1=r.cx+r.w/2+PAD, y0=r.cy-r.h/2-PAD, y1=r.cy+r.h/2+PAD;
+      if(samples.some(p=>p[0]>=x0&&p[0]<=x1&&p[1]>=y0&&p[1]<=y1)) return true;
+      return rects.some(o=>Math.abs(o.cx-r.cx)<(o.w+r.w)/2+PAD && Math.abs(o.cy-r.cy)<(o.h+r.h)/2+PAD);
+    };
+    let ok=true; const lens=[];
+    for(const sd of q.sides){
+      const A=pts[sd.n[0]], B=pts[sd.n[1]], m=[(A[0]+B[0])/2,(A[1]+B[1])/2], t=un(A,B), L=Math.hypot(B[0]-A[0],B[1]-A[1]);
+      let n=[-t[1],t[0]]; if(n[0]*(m[0]-g[0])+n[1]*(m[1]-g[1])<0) n=[-n[0],-n[1]];
+      const txt=pvTenths(sd.v), w2=TW(txt), h2=FL*.8, base=Math.abs(n[0])*w2/2+Math.abs(n[1])*h2/2;
+      let put=null, cost=1e9;
+      for(const s of [0,.08,-.08,.16,-.16]) for(let ex=0; ex<=34; ex+=.7){
+        const r={cx:m[0]+n[0]*(base+ex)+t[0]*s*L, cy:m[1]+n[1]*(base+ex)+t[1]*s*L, w:w2, h:h2, txt};
+        if(!touches(r)){ const cst=ex+Math.abs(s)*70; if(cst<cost){ cost=cst; put=r; } break; }
+      }
+      if(!put){ ok=false; put={cx:m[0]+n[0]*(base+8), cy:m[1]+n[1]*(base+8), w:w2, h:h2, txt}; }
+      rects.push(put); lens.push(put);
+    }
+    best={pts,vl,lens,rects,contour,samples};
+    if(ok) break;
+  }
+  const {pts,vl,lens,rects,contour,samples}=best;
+  /* cadre : tout le dessin tient dans la figure */
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  samples.forEach(p=>{ x0=Math.min(x0,p[0]-4); x1=Math.max(x1,p[0]+4); y0=Math.min(y0,p[1]-4); y1=Math.max(y1,p[1]+4); });
+  rects.forEach(r=>{ x0=Math.min(x0,r.cx-r.w/2); x1=Math.max(x1,r.cx+r.w/2); y0=Math.min(y0,r.cy-r.h/2); y1=Math.max(y1,r.cy+r.h/2); });
+  x0-=8; y0-=8; x1+=8; y1+=8;
+  const vw=x1-x0, vh=y1-y0, px=Math.round(vw/280*maxW);
+  const ff=`style="font-family:var(--mf);" text-anchor="middle" dominant-baseline="central"`;
+  const shape=`<path d="${contour}" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="miter" stroke-miterlimit="6" stroke-linecap="round"/>`;
+  const labels=[R,P,Q].map(k=>`<text x="${f1(vl[k].cx)}" y="${f1(vl[k].cy)}" font-size="${FV}" fill="currentColor" ${ff}>${k}</text>`).join('');
+  const lenTxt=lens.map(r=>`<text x="${f1(r.cx)}" y="${f1(r.cy)}" font-size="${FL}" fill="currentColor" ${ff}>${r.txt}</text>`).join('');
+  return `<div style="display:flex;justify-content:center;width:100%;margin-bottom:${mb}px;"><svg viewBox="${f1(x0)} ${f1(y0)} ${f1(vw)} ${f1(vh)}" width="${px}" style="max-width:100%;height:auto;color:var(--ink);" role="img" aria-label="Triangle ${q.name} : ${q.sides.map(sd=>sd.n+' = '+pvTenths(sd.v)).join(', ')}">${shape}${labels}${lenTxt}</svg></div>`;
 }
+/* en-tête : une fois sur deux la figure, une fois sur deux le texte brut (comme pour l'égalité de Pythagore) */
+function pvHead(q){ return Math.random()<.5?pvFigure(q):`<div class="question" style="font-size:1.6rem;margin-bottom:12px;">${pvStmt(q)}</div>`; }
 function renderPvQCM(){
   const q=withHistory(genPyv); state.current=q;
   const content=document.getElementById('content');
   const correct=pvKey(q);
-  const opts=shuffle([...q.name.split('').map(v=>({k:'r'+v,t:`Rectangle en ${v}`})),{k:'non',t:'Pas rectangle'}]);
+  const opts=shuffle([...q.name.split('').map(v=>({k:'r'+v,t:`Rectangle en ${gm(v)}`})),{k:'non',t:'Pas rectangle'}]);
   content.innerHTML=`${pvHead(q)}
     <div class="question" style="font-size:1.35rem;">Ce triangle est-il rectangle ?</div>
     <div class="options">${opts.map(o=>`<button class="opt-btn" style="font-size:1.15rem;" data-k="${o.k}">${o.t}</button>`).join('')}</div>
@@ -2680,7 +2994,7 @@ function renderPvQCM(){
     };
   });
 }
-function pvMatchRight(q){ return q.right?`Rectangle en ${q.rv}`:'Pas rectangle'; }
+function pvMatchRight(q){ return q.right?`Rectangle en ${gm(q.rv)}`:'Pas rectangle'; }
 /* 4 triangles de mêmes sommets : rectangle en chacun des 3 sommets, et un triangle non rectangle */
 function renderPvJeu(){
   const L=shuffle([...PY_LETTERS]).slice(0,3);
@@ -2689,8 +3003,9 @@ function renderPvJeu(){
   do{ qs=specs.map(sp=>genPyv({right:sp.right,rv:sp.rv,letters:L})); g++; }
   while(g<50 && new Set(qs.map(q=>q.pk)).size<4);
   shuffle(qs);
-  renderMatch(qs, pvStmt, pvMatchRight, explainPyv);
-  document.getElementById('content').insertAdjacentHTML('afterbegin',`<div class="question" style="font-size:1.05rem;margin-bottom:8px;">Triangles de sommets ${[...L].sort().join(', ')}</div>`);
+  const fig=Math.random()<.5;
+  renderMatch(qs, pvStmt, pvMatchRight, explainPyv, fig?(q=>pvFigure(q,250,0)):null);
+  document.getElementById('content').insertAdjacentHTML('afterbegin',`<div class="question" style="font-size:1.05rem;margin-bottom:8px;">Triangles de sommets ${gm([...L].sort().join(', '))}</div>`);
   pvCalcMount(document.getElementById('content'));
 }
 /* Calculatrice (icône en bas à droite) pour l'automatisme n°6, mode « À compléter » */
@@ -2769,7 +3084,7 @@ function renderPvTrou(){
     if(!isNaN(a)&&!isNaN(b)&&Math.abs(a*100-q.sq)<1e-6&&Math.abs(b*100-q.sum)<1e-6&&okC){
       rowEls.forEach(r=>r.classList.add('anim-good'));
       bumpStreak(getStreak());
-      fb.textContent=`Exact, bravo ! ${q.right?'Les deux résultats sont égaux':'Les deux résultats sont différents'} : ${pvAns(q)}.`; fb.className='feedback ok';
+      fb.innerHTML=`Exact, bravo ! ${q.right?'Les deux résultats sont égaux':'Les deux résultats sont différents'} : ${pvAns(q)}.`; fb.className='feedback ok';
       autoNext(1100);
     }else{
       rowEls.forEach(r=>r.classList.add('anim-bad'));
@@ -3322,7 +3637,81 @@ function litExpand(parts,v){
 function litWrongSigns(parts,v,ansStr){
   const w=litPoly(litSum(parts.map(q=>q.inner?{...q,m:Math.abs(q.m)}:q),v).ans,v); return w!==ansStr?[w]:[];
 }
-function genLitSign(v){
+/* Cas à trois termes dans la parenthèse, avec deux lettres (comme sur la fiche : −(7 − 2x + 3y), 4 − (2a − 3b + 6)).
+   Sur la fiche, 2 exercices sur 15 sont de ce type : on garde la même proportion (2/15 ≈ 13 %).
+   Les polynômes sont codés [constante, coefficient de la lettre v, coefficient de la lettre w]. */
+/* lettre qui accompagne la première lettre dans les cas à deux lettres */
+const LIT_PW={x:['y','y','t'],a:['b','b','c'],y:['x','x','z'],k:['m','n']};
+const LIT_P3=2/15;
+function genLitSign3(V,v,wf){
+  const w=wf||pick(LIT_PW[v]||['y']), W=`<i class='mv'>${w}</i>`;
+  const cf={c:()=>litNZ(-9,9),v:()=>litNZ(-6,6),w:()=>litNZ(-6,6)};
+  const tS=(k,c)=>{ if(!c) return ''; const a=Math.abs(c); return (c<0?LM:'')+(k==='c'?a:(a===1?'':a)+(k==='v'?V:W)); };
+  const form=f=>litTrim([f.c,f.v,f.w]);
+  const strOf=f=>litJoin(['v','w','c'].filter(k=>f[k]).map(k=>tS(k,f[k])));
+  for(let n=0;n<300;n++){
+    const inner={c:cf.c(),v:cf.v(),w:cf.w()}, ord=shuffle(['c','v','w']);
+    const tpl=pick(['A','A','B','B','C']), m=tpl==='A'?-1:(Math.random()<.75?-1:1);
+    const ok=tpl==='A'?null:(Math.random()<.7?{k:'c',c:cf.c()}:{k:'v',c:cf.v()});
+    const out={c:0,v:0,w:0}; if(ok) out[ok.k]=ok.c;
+    const comb=signs=>{ const f={...out}; ord.forEach((k,i)=>{ f[k]+=signs[i]*inner[k]; }); return f; };
+    const good=comb(ord.map(()=>m)), nz=['c','v','w'].filter(k=>good[k]).length;
+    if(nz<2) continue;
+    /* erreurs de signe classiques : un signe − oublié sur certains termes de la parenthèse */
+    const wrong=new Map();
+    for(let mask=0;mask<8;mask++){
+      const flipped=[0,1,2].map(i=>(mask>>i)&1), signs=flipped.map(f=>f?-1:1);   /* 1 = ce terme change de signe */
+      const f=comb(signs), s=strOf(f);
+      if(!s||litEq(form(f),form(good))) continue;
+      wrong.set(s,1);
+    }
+    if(wrong.size<3) continue;
+    const wr=shuffle([...wrong.keys()]).slice(0,3);
+    const P=litJoin(ord.map(k=>tS(k,inner[k]))), par=(m<0?LM:'')+'('+P+')';
+    const pieces=tpl==='A'?[par]:tpl==='B'?[tS(ok.k,ok.c),par]:[par,tS(ok.k,ok.c)];
+    const expr=litJoin(pieces);
+    const ts=ord.map(k=>tS(k,m*inner[k])), all=tpl==='B'?[tS(ok.k,ok.c),...ts]:tpl==='C'?[...ts,tS(ok.k,ok.c)]:ts;
+    const ansStr=strOf(good);
+    return {type:'dev',two:true,kind:'t3',w,W,expr:M(expr),ans:form(good),ansStr:M(ansStr),wr,
+      expl:`On supprime les parenth\u00e8ses : devant un +, rien ne change ; devant un \u2212, tous les signes changent. Puis on regroupe les termes de m\u00eame nature : ${M(expr+' = '+litJoin(all)+' = '+ansStr)}.`};
+  }
+}
+/* Cas à deux lettres et deux termes dans chaque parenthèse, comme sur la fiche : (b − 2a) − (a − b), (t − 2x) − (3x − 2t).
+   2 exercices sur 15 sur la fiche : même proportion (2/15). */
+const LIT_P2L=2/15;
+function genLitSign2L(V,v,wf){
+  const w=wf||pick(LIT_PW[v]||['y']), W=`<i class='mv'>${w}</i>`;
+  const cf=()=>litNZ(-5,5);
+  const tS=(k,c)=>{ if(!c) return ''; const a=Math.abs(c); return (c<0?LM:'')+(a===1?'':a)+(k==='v'?V:W); };
+  const form=f=>litTrim([0,f.v,f.w]);
+  const strOf=f=>litJoin(['v','w'].filter(k=>f[k]).map(k=>tS(k,f[k])));
+  for(let n=0;n<300;n++){
+    const p1={v:cf(),w:cf()}, p2={v:cf(),w:cf()}, o1=shuffle(['v','w']), o2=shuffle(['v','w']);
+    const m=Math.random()<.75?-1:1;
+    const comb=fl=>({v:p1.v+(fl[o2.indexOf('v')]?-1:1)*p2.v, w:p1.w+(fl[o2.indexOf('w')]?-1:1)*p2.w});   /* fl[i]=1 : le terme i de la 2e parenthèse change de signe */
+    const good=comb([m<0?1:0,m<0?1:0]);
+    if(!good.v||!good.w) continue;
+    const wrong=new Map();
+    for(let mask=0;mask<4;mask++){
+      const fl=[mask&1,(mask>>1)&1], isGood=fl.every(x=>x===(m<0?1:0));
+      if(isGood) continue;
+      const f=comb(fl), s=strOf(f); if(s&&!litEq(form(f),form(good))) wrong.set(s,1);
+    }
+    if(wrong.size<3) continue;
+    const par1='('+litJoin(o1.map(k=>tS(k,p1[k])))+')', par2=(m<0?LM:'')+'('+litJoin(o2.map(k=>tS(k,p2[k])))+')';
+    const expr=litJoin([par1,par2]);
+    const all=[...o1.map(k=>tS(k,p1[k])),...o2.map(k=>tS(k,m*p2[k]))];
+    const ansStr=strOf(good);
+    return {type:'dev',two:true,kind:'l2',w,W,expr:M(expr),ans:form(good),ansStr:M(ansStr),wr:[...wrong.keys()].slice(0,3),
+      expl:`On supprime les parenth\u00e8ses : devant un +, rien ne change ; devant un \u2212, tous les signes changent. Puis on regroupe les termes de m\u00eame nature : ${M(expr+' = '+litJoin(all)+' = '+ansStr)}.`};
+  }
+}
+/* kind : 'one' (une seule lettre), 't3' (3 termes, 2 lettres), 'l2' (2 lettres, 2 termes) ; sans kind, tirage selon les proportions de la fiche */
+function genLitSign(v,vp,kind,wf){
+  if(vp&&kind!=='one'){ const u=Math.random();
+    if(kind==='t3'||kind==='l2'){ for(let t=0;t<30;t++){ const r=kind==='t3'?genLitSign3(v,vp,wf):genLitSign2L(v,vp,wf); if(r) return r; } }
+    else if(u<LIT_P3){ const r3=genLitSign3(v,vp); if(r3) return r3; }
+    else if(u<LIT_P3+LIT_P2L){ const r2=genLitSign2L(v,vp); if(r2) return r2; } }
   /* devant une parenthèse : signe − dans 75 % des cas, signe + dans 25 % des cas */
   const inn=()=>[litNZ(-9,9),litNZ(-6,6)], pl=()=>pick([0,1])?[litNZ(-9,9)]:[0,litNZ(-6,6)], sg=()=>Math.random()<.75?-1:1;
   for(let n=0;n<80;n++){
@@ -3410,22 +3799,22 @@ function genLitFact(v){
       expl:`Le facteur commun est ${M(kv)} (le plus grand nombre commun, et ${v} pr\u00e9sent dans les deux termes). ${M(litPoly(litMul([0,1],litSc(inner,k)),v)+' = '+kv+' \u00d7 '+litT(a,1,v)+' + '+kv+' \u00d7 '+litW(litNum(b))+' = '+ansStr)}.`};
   }
 }
-function genLit(vf){
+function genLit(vf,kind,wf){
   const v=vf||pick(['x','x','x','x','a','y','k']), V=`<i class='mv'>${v}</i>`;
-  const q=state.cat==='double'?genLitDouble(V):state.cat==='fact'?genLitFact(V):state.cat==='signe'?genLitSign(V):genLitNum(V);
+  const q=state.cat==='double'?genLitDouble(V):state.cat==='fact'?genLitFact(V):state.cat==='signe'?genLitSign(V,v,kind,wf):genLitNum(V);
   q.v=v; q.V=V; q.pk=q.expr; return q;
 }
 function litOpts(q){
   const set=new Set(), add=s=>{ if(s&&litPlain(s)!==litPlain(q.ansStr)) set.add(s); };
   (q.wr||[]).forEach(add);
-  if(q.type==='dev'){
+  if(q.type==='dev'&&!q.two){
     const a=q.ans, pool=[];
     a.forEach((c,i)=>{ if(c){ [-c,2*c,c+1,c-1].forEach(x=>{ if(x!==c){ const b=a.slice(); b[i]=x; pool.push(litPoly(b,q.V)); } }); } });
     shuffle(pool).forEach(s=>{ if(set.size<3) add(s); });
   }
   return shuffle([q.ansStr,...[...set].slice(0,3).map(litLower)]);
 }
-function litParse(str,v){
+function litParse(str,v,w){
   const s=str.toLowerCase().replace(/\s+/g,'').replace(/[\u2212\u2013\u2014]/g,'-').replace(/[\u00d7\u00b7]/g,'*');
   let i=0; const fail=()=>{throw 0;}; const fl={one:0,rep:0,ord:0};
   function expr(){
@@ -3454,6 +3843,7 @@ function litParse(str,v){
     if(ch==='('){ i++; const e=expr(); if(s[i]!==')') fail(); i++; f={p:e.p,paren:true,nt:e.terms.length}; }
     else if(/\d/.test(ch)){ const j=i; while(/\d/.test(s[i]||'')) i++; const val=+s.slice(j,i); f={p:[val],nt:1,num:true,one:val===1&&s[i]!=='\u00b2'}; }
     else if(ch===v){ i++; f={p:[0,1],nt:1,letter:true}; }
+    else if(w&&ch===w){ i++; f={p:[0,0,1],nt:1,letter:true}; }   /* 2e lettre (cas à deux lettres) */
     else fail();
     if(s[i]==='\u00b2'){ i++; f={...f,p:litMul(f.p,f.p)}; }
     return f;
@@ -3471,7 +3861,7 @@ function litNotes(q,times,fl){
   const V=q.V, n=[];
   if(times){
     let ex=[];
-    if(q.type==='dev'&&Array.isArray(q.ans)) for(let d=q.ans.length-1;d>=1;d--){ const c=Math.abs(q.ans[d]); if(c>1){ const x=d>1?V+'\u00b2':V; ex.push(`${M(c+x)} et non ${M(c+' \u00d7 '+x)}`); } }
+    if(q.type==='dev'&&Array.isArray(q.ans)) for(let d=q.ans.length-1;d>=1;d--){ const c=Math.abs(q.ans[d]); if(c>1){ const x=d>1?(q.W||V+'\u00b2'):V; ex.push(`${M(c+x)} et non ${M(c+' \u00d7 '+x)}`); } }
     if(q.type==='dev'&&!ex.length) ex=[`${M('9'+V)} et non ${M('9 \u00d7 '+V)}`];
     n.push(q.type==='dev'
     ?`les signes \u00d7 sont inutiles (on \u00e9crit ${ex.join(', ')})`
@@ -3503,7 +3893,11 @@ function renderLitQCM(){
 }
 function renderLitJeu(){
   const qs=[],seen=new Set(), vr=pick(['x','x','x','x','a','y','k']); /* même lettre pour les 4 questions */
-  for(let g=0;qs.length<4&&g<80;g++){ const q=genLit(vr); if(!seen.has(q.ansStr)&&!seen.has(q.expr)){ seen.add(q.ansStr); seen.add(q.expr); qs.push(q); } }
+  /* Suppression des parenthèses : les 4 questions ont toutes le même nombre de lettres différentes (sinon il suffit de compter les lettres).
+     Une partie sur quatre environ est à deux lettres (même proportion que sur la fiche), avec les deux mêmes lettres pour les 4 questions. */
+  let kind,wr;
+  if(state.cat==='signe'){ kind=Math.random()<4/15?pick(['t3','l2']):'one'; if(kind!=='one') wr=pick(LIT_PW[vr]||['y']); }
+  for(let g=0;qs.length<4&&g<120;g++){ const q=genLit(vr,kind,wr); if(!seen.has(q.ansStr)&&!seen.has(q.expr)){ seen.add(q.ansStr); seen.add(q.expr); qs.push(q); } }
   renderMatch(qs,q=>q.expr,q=>q.ansStr,q=>q.expl);
 }
 function renderLitTrou(){
@@ -3524,8 +3918,8 @@ function renderLitTrou(){
       inp.value=inp.value.slice(0,a)+t+inp.value.slice(z); inp.focus({preventScroll:true}); inp.setSelectionRange(a+t.length,a+t.length); syncOv(); };
   });
   document.getElementById('check').onclick=()=>{
-    const raw=inp.value, fb=document.getElementById('fb'), r=litParse(raw,q.v), times=/[*\u00d7]/.test(raw);
-    const same=!!r&&litEq(r.p,q.type==='dev'?q.ans:q.poly);
+    const raw=inp.value, fb=document.getElementById('fb'), r=litParse(raw,q.v,q.w), times=/[*\u00d7]/.test(raw);
+    const same=!!r&&litEq(r.p,q.type==='dev'?q.ans:q.poly)&&!(q.w&&/[\u00b2^]/.test(raw));
     const core=!!r&&(q.type==='dev'?(same&&!/[()]/.test(raw)&&r.terms.length===r.p.filter(x=>x).length):litFactOK(r,q));
     const chk=document.getElementById('check'), rowEl=content.querySelector('.fill-row'); chk.disabled=true;
     const fl=(r&&r.fl)||{}, flagged=times||fl.one||fl.rep||fl.ord;
@@ -3537,11 +3931,1181 @@ function renderLitTrou(){
   };
 }
 /* ===== fin calcul littéral ===== */
+/* ===== Questions de cours · 3e · EG 2 – Solides (QCM) =====
+   Un cas = une notion du cours + un sens de question. Tous les cas sont tirés au hasard (avec l'historique de 20 questions).
+   - defB : on donne le mot, 4 définitions semblables dont une seule est bonne
+   - defA : (désactivé) on donne la définition, 4 noms
+   - prop : propriétés des sections planes
+   - formB : formules des volumes (formule d'un solide) ; formA (désactivé) : solide d'une formule
+   Pour retirer une famille de questions : supprimer ses lignes dans CQ_CASES (en bas du module). */
+const CQ_NB='\u00a0';
+const cqQ=s=>`«${CQ_NB}${s}${CQ_NB}»`;
+const cqCap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const cqI=s=>`<i>${s}</i>`;
+const cqO=cqI('O'), cqR=cqI('r');
+const cqQM='\u00a0?';
+
+/* ---------- Définitions ---------- */
+const CQ_DEF=[
+ {name:'prisme droit', stemB:`Quelle est la définition d’un prisme droit${cqQM}`,
+  def:'Solide à faces planes composé de deux faces polygonales identiques et parallèles (les bases) et de faces latérales rectangles.',
+  wrong:[
+   {t:'Solide à faces planes composé d’une face polygonale (la base) et de faces latérales triangles ayant un sommet en commun.', why:'c’est la définition d’une pyramide (une seule base, des faces latérales triangles).'},
+   {t:'Solide composé de deux disques identiques et parallèles (les bases) et d’un rectangle « enroulé » autour des bases.', why:'c’est la définition d’un cylindre de révolution (les bases sont des disques).'},
+   {t:'Solide à faces planes composé de deux faces polygonales identiques et parallèles (les bases) et de faces latérales triangles.', why:'les faces latérales d’un prisme droit sont des rectangles, pas des triangles.'}],
+  A:{distr:['cylindre de révolution','pyramide','cône de révolution','boule']}},
+
+ {name:'pavé droit', stemB:`Quelle est la définition d’un pavé droit (ou parallélépipède rectangle)${cqQM}`,
+  def:'Prisme droit dont les bases sont des rectangles.',
+  wrong:[
+   {t:'Prisme droit dont les bases sont des triangles.', why:'les bases d’un pavé droit sont des rectangles, pas des triangles.'},
+   {t:'Prisme droit dont les bases sont des hexagones.', why:'les bases d’un pavé droit sont des rectangles, pas des hexagones.'},
+   {t:'Pyramide dont la base est un rectangle.', why:'une pyramide n’a qu’une seule base et ses faces latérales sont des triangles : ce n’est pas un pavé droit.'}],
+  A:{distr:['pyramide','cylindre de révolution','cône de révolution','boule']}},
+
+ {name:'cube', stemB:`Quelle est la définition d’un cube${cqQM}`,
+  def:'Prisme droit dont toutes les faces sont des carrés.',
+  wrong:[
+   {t:'Prisme droit dont les bases sont des carrés.', why:'si seules les bases sont des carrés, la hauteur peut être différente du côté : pour un cube, toutes les faces sont des carrés.'},
+   {t:'Prisme droit dont les faces latérales sont des carrés.', why:'si seules les faces latérales sont des carrés, les bases peuvent avoir une autre forme (des triangles par exemple) : pour un cube, toutes les faces sont des carrés.'},
+   {t:'Pyramide dont la base est un carré.', why:'les faces latérales d’une pyramide sont des triangles : ce n’est pas un cube.'}],
+  A:{distr:['pyramide','cylindre de révolution','cône de révolution','boule']}},
+
+ {name:'cylindre de révolution', stemB:`Quelle est la définition d’un cylindre de révolution${cqQM}`,
+  def:'Solide composé de deux disques identiques et parallèles (les bases) et d’un rectangle « enroulé » autour des bases ; la droite passant par les centres des deux disques est perpendiculaire aux bases.',
+  wrong:[
+   {t:'Solide composé de deux disques identiques et parallèles (les bases) et d’un rectangle « enroulé » autour des bases ; la droite passant par les centres des deux disques n’est pas forcément perpendiculaire aux bases.', why:'dans un cylindre de révolution, la droite passant par les centres des deux disques (l’axe) est perpendiculaire aux bases.'},
+   {t:'Solide composé de deux disques parallèles de rayons différents (les bases) et d’une surface « enroulée » autour des bases ; la droite passant par les centres des deux disques est perpendiculaire aux bases.', why:'les deux disques d’un cylindre de révolution sont identiques : ils ont le même rayon.'},
+   {t:'Solide composé d’un disque (la base) et d’une surface conique ; la droite passant par la pointe est perpendiculaire à la base.', why:'c’est la définition d’un cône de révolution (une seule base).'}],
+  A:{distr:['cône de révolution','prisme droit','pyramide','boule']}},
+
+ {name:'pyramide', stemB:`Quelle est la définition d’une pyramide${cqQM}`,
+  def:'Solide à faces planes composé d’une face polygonale (la base) et de faces latérales triangles ayant un sommet en commun.',
+  wrong:[
+   {t:'Solide composé d’un disque (la base) et d’une surface conique engendrée par une génératrice.', why:'c’est la définition d’un cône de révolution (la base est un disque).'},
+   {t:'Solide à faces planes composé de deux faces polygonales identiques et parallèles (les bases) et de faces latérales rectangles.', why:'c’est la définition d’un prisme droit (deux bases, des faces latérales rectangles).'},
+   {t:'Solide à faces planes dont toutes les faces sont des triangles.', why:'seules les faces latérales d’une pyramide sont des triangles : la base peut être un carré, un rectangle, un pentagone…'}],
+  A:{distr:['prisme droit','cône de révolution','cylindre de révolution','boule']}},
+
+ {name:'cône de révolution', stemB:`Quelle est la définition d’un cône de révolution${cqQM}`,
+  def:'Solide composé d’un disque (la base) et d’une surface conique engendrée par une génératrice ; la droite passant par la pointe est perpendiculaire à la base.',
+  wrong:[
+   {t:'Solide composé d’un disque (la base) et d’une surface conique engendrée par une génératrice ; la droite passant par la pointe n’est pas forcément perpendiculaire à la base.', why:'dans un cône de révolution, la droite passant par la pointe est perpendiculaire à la base.'},
+   {t:'Solide à faces planes composé d’une face polygonale (la base) et de faces latérales triangles ayant un sommet en commun.', why:'c’est la définition d’une pyramide (la base est un polygone, pas un disque).'},
+   {t:'Solide composé de deux disques identiques et parallèles (les bases) et d’un rectangle « enroulé » autour des bases.', why:'c’est la définition d’un cylindre de révolution (deux bases).'}],
+  A:{distr:['cylindre de révolution','pyramide','prisme droit','boule']}},
+
+ {name:'sphère', stemB:`Quelle est la définition d’une sphère de centre ${cqO} et de rayon ${cqR}${cqQM}`,
+  def:`Ensemble des points de l’espace dont la distance à ${cqO} est égale à ${cqR}.`,
+  wrong:[
+   {t:`Ensemble des points de l’espace dont la distance à ${cqO} est inférieure ou égale à ${cqR}.`, why:'c’est la définition d’une boule : elle contient aussi les points situés à l’intérieur.'},
+   {t:`Ensemble des points de l’espace dont la distance à ${cqO} est supérieure ou égale à ${cqR}.`, why:`ce sont les points situés sur la sphère ou à l’extérieur : pour une sphère, la distance à ${cqO} est exactement égale à ${cqR}.`},
+   {t:`Ensemble des points de l’espace dont la distance à ${cqO} est égale à 2 × ${cqR}.`, why:`la distance à ${cqO} est égale à ${cqR} (le rayon), pas au diamètre.`}],
+  A:{distr:['boule','cercle','disque']}},
+
+ {name:'boule', stemB:`Quelle est la définition d’une boule de centre ${cqO} et de rayon ${cqR}${cqQM}`,
+  def:`Ensemble des points de l’espace dont la distance à ${cqO} est inférieure ou égale à ${cqR}.`,
+  wrong:[
+   {t:`Ensemble des points de l’espace dont la distance à ${cqO} est égale à ${cqR}.`, why:`c’est la définition de la sphère : seuls les points de la surface sont à la distance ${cqR} de ${cqO}.`},
+   {t:`Ensemble des points de l’espace dont la distance à ${cqO} est supérieure ou égale à ${cqR}.`, why:'ce sont les points situés sur la sphère ou à l’extérieur de la boule.'},
+   {t:`Ensemble des points de l’espace dont la distance à ${cqO} est inférieure ou égale à 2 × ${cqR}.`, why:`la boule de rayon ${cqR} contient les points dont la distance à ${cqO} est inférieure ou égale à ${cqR}, pas à 2 × ${cqR}.`}],
+  A:{distr:['sphère','disque','cercle']}},
+
+ {name:'perspective cavalière', stemB:`Quels sont les quatre critères que doit respecter une représentation en perspective cavalière${cqQM}`,
+  def:'– Faces avant et arrière en vraie grandeur<br>– Arêtes parallèles et de même longueur représentées par des segments parallèles et de même longueur<br>– Arêtes cachées en pointillés<br>– Arêtes obliques représentées par des segments plus petits qu’en réalité',
+  wrong:[
+   {t:'– Faces avant et arrière en vraie grandeur<br>– Arêtes parallèles et de même longueur représentées par des segments parallèles et de même longueur<br>– Arêtes cachées non représentées<br>– Arêtes obliques représentées par des segments plus petits qu’en réalité', why:'les arêtes cachées doivent être représentées en pointillés.'},
+   {t:'– Faces avant et arrière en vraie grandeur<br>– Arêtes parallèles et de même longueur représentées par des segments parallèles et de même longueur<br>– Arêtes cachées en pointillés<br>– Arêtes obliques représentées en vraie grandeur', why:'les arêtes obliques sont représentées par des segments plus petits qu’en réalité.'},
+   {t:'– Faces avant et arrière en vraie grandeur<br>– Arêtes parallèles et de même longueur représentées par des segments de longueurs différentes<br>– Arêtes cachées en pointillés<br>– Arêtes obliques représentées par des segments plus petits qu’en réalité', why:'des arêtes parallèles et de même longueur sont représentées par des segments parallèles et de même longueur.'}]},
+
+ {name:'axe', stemA:`Dans un cylindre de révolution, comment s’appelle la droite passant par les centres des deux disques${cqQM}`, stemB:`Dans un cylindre de révolution, que désigne l’axe${cqQM}`,
+  def:'La droite passant par les centres des deux disques.',
+  wrong:[
+   {t:'Le segment qui joint le centre d’un disque à un point de son bord.', why:'c’est un rayon d’un disque de base.'},
+   {t:'Le segment qui joint deux points du bord d’un disque en passant par son centre.', why:'c’est un diamètre d’un disque de base.'},
+   {t:'Le rectangle « enroulé » autour des bases.', why:'c’est la surface latérale du cylindre.'}],
+  A:{distr:['rayon','diamètre','surface latérale']}},
+
+ {name:'surface latérale', stemA:`Dans un cylindre de révolution, comment s’appelle le rectangle « enroulé » autour des bases${cqQM}`, stemB:`Dans un cylindre de révolution, que désigne la surface latérale${cqQM}`,
+  def:'Le rectangle « enroulé » autour des bases.',
+  wrong:[
+   {t:'Les deux disques identiques et parallèles.', why:'ce sont les bases du cylindre.'},
+   {t:'La droite passant par les centres des deux disques.', why:'c’est l’axe du cylindre.'},
+   {t:'Le segment qui joint le centre d’un disque à un point de son bord.', why:'c’est un rayon d’un disque de base.'}],
+  A:{distr:['base','axe','rayon']}}
+];
+
+/* définitions des noms proposés comme mauvaises réponses (pour l'explication en cas d'erreur) */
+const CQ_NAMEDEF={
+  'rayon':'Segment qui joint le centre d’un disque à un point de son bord.',
+  'diamètre':'Segment qui joint deux points du bord d’un disque en passant par son centre.',
+  'cercle':`Ensemble des points d’un plan dont la distance à un point ${cqO} est égale à ${cqR}.`,
+  'disque':`Ensemble des points d’un plan dont la distance à un point ${cqO} est inférieure ou égale à ${cqR}.`,
+  'base':'L’un des deux disques identiques et parallèles.'
+};
+CQ_DEF.forEach(n=>{ if(n.A) CQ_NAMEDEF[n.name]=n.def; });
+
+/* ---------- Sections planes ---------- */
+const CQ_PROP=[
+ {id:'pave-face', stem:'La section d’un pavé droit par un plan parallèle à l’une de ses faces est…',
+  ok:'un rectangle de mêmes dimensions que cette face',
+  wrong:[
+   {t:'un rectangle de dimensions plus petites que cette face', why:'le plan est parallèle à une face : la section est un rectangle de mêmes dimensions que cette face.'},
+   {t:'un carré', why:'la section est un rectangle de mêmes dimensions que la face (un carré seulement si la face est un carré).'},
+   {t:'un triangle', why:'un plan parallèle à une face coupe le pavé droit selon un rectangle, jamais selon un triangle.'}]},
+ {id:'pave-arete', stem:'La section d’un pavé droit par un plan parallèle à l’une de ses arêtes est…',
+  ok:'un rectangle',
+  wrong:[
+   {t:'un carré', why:'la section est un rectangle ; ce n’est un carré que dans des cas particuliers.'},
+   {t:'un triangle', why:'un plan parallèle à une arête coupe le pavé droit selon un rectangle.'},
+   {t:'un pentagone', why:'un plan parallèle à une arête coupe le pavé droit selon un rectangle.'}]},
+ {id:'cyl-base', stem:'La section d’un cylindre de révolution par un plan parallèle à l’une de ses bases est…',
+  ok:'un cercle de même rayon que la base',
+  wrong:[
+   {t:'un rectangle', why:'un rectangle est la section par un plan perpendiculaire à une base ; ici le plan est parallèle à une base.'},
+   {t:'un cercle de rayon plus petit que celui de la base', why:'les deux bases sont identiques et la section leur est parallèle : elle a le même rayon.'},
+   {t:'un triangle', why:'un plan parallèle à une base coupe le cylindre selon un cercle.'}]},
+ {id:'cyl-perp', stem:'La section d’un cylindre de révolution par un plan perpendiculaire à l’une de ses bases est…',
+  ok:'un rectangle',
+  wrong:[
+   {t:'un cercle de même rayon que la base', why:'c’est la section par un plan parallèle à une base ; ici le plan est perpendiculaire à une base.'},
+   {t:'un carré', why:'la section est un rectangle ; ce n’est un carré que dans des cas particuliers.'},
+   {t:'un triangle', why:'un plan perpendiculaire à une base coupe le cylindre selon un rectangle.'}]},
+ {id:'pyr-base', stem:'La section d’une pyramide ou d’un cône de révolution par un plan parallèle à la base est…',
+  ok:'une réduction de la base (même forme, mesures plus petites)',
+  wrong:[
+   {t:'un agrandissement de la base (même forme, mesures plus grandes)', why:'le plan coupe la pyramide (ou le cône) avant d’atteindre la base : la section est plus petite que la base.'},
+   {t:'une figure identique à la base (mêmes mesures)', why:'c’est le cas pour un prisme droit ou un cylindre ; pour une pyramide ou un cône, la section est plus petite que la base.'},
+   {t:'un triangle, quelle que soit la base', why:'la section a la même forme que la base (un disque pour un cône, un carré pour une pyramide à base carrée…).'}]},
+ {id:'sphere', stem:'La section d’une sphère par un plan est…',
+  ok:'un cercle',
+  wrong:[
+   {t:'un disque', why:'la sphère est une surface : sa section par un plan est un cercle (le disque est la section d’une boule).'},
+   {t:'une sphère de rayon plus petit', why:'la section d’une sphère par un plan est une courbe plane : un cercle.'},
+   {t:'un carré', why:'la section d’une sphère par un plan est un cercle, jamais un carré.'}]}
+];
+
+/* ---------- Volumes ---------- */
+const cqV=e=>cqM(`<i class="ms">𝒱</i> = ${e}`);
+const cqX='<span class="cq-x" role="img" aria-label="fois"></span>';
+const cqOp=(c,l)=>`<span class="${c}" role="img" aria-label="${l}"></span>`;
+const cqPlus=cqOp('cq-plus','plus'), cqMinus=cqOp('cq-minus','moins'), cqEq=cqOp('cq-eq','égal'), cqDiv=cqOp('cq-div','divisé par'),
+      cqLt=cqOp('cq-lt','inférieur à'), cqLe=cqOp('cq-lt le','inférieur ou égal à'), cqGe=cqOp('cq-gt le','supérieur ou égal à'), cqGt=cqOp('cq-gt','supérieur à'), cqNeg=cqOp('cq-neg','moins');
+/* remplace, dans le texte (hors balises), les signes ×, ÷, =, +, −, <, > par leur dessin CSS ; un « − » collé à ce qui suit (−a, −12) devient un signe moins */
+/* Égalités insécables : chaque égalité / inégalité (avec ses deux membres, calcul compris) est entourée d'un <span class="eqn"> qui interdit le retour à la ligne ;
+   si elle ne tient pas sur la ligne, c'est toute l'égalité qui passe à la ligne suivante.
+   On découpe le texte aux espaces « de premier niveau » (hors balises) : une fraction, une puissance, une accolade… forment un seul morceau. */
+const CQ_REL=['=','≠','<','>','≤','≥'], CQ_BIN=['×','÷','+','−'];
+function cqEqWrap(h){
+  if(!h||!/[=≠<>≤≥]/.test(h.replace(/<\/?[a-zA-Z][^>]*>/g,''))) return h;
+  const items=[]; let cur='', depth=0, m;
+  const re=/(<\/?[a-zA-Z][^>]*>)|(\s+)|([^<\s]+|<)/g;
+  const flush=()=>{ if(cur!==''){ items.push({k:1,s:cur}); cur=''; } };
+  while((m=re.exec(h))){
+    if(m[1]){ cur+=m[1]; if(m[1][1]==='/') depth--; else if(!/\/>$/.test(m[1])&&!/^<(br|hr|img|input|wbr)\b/i.test(m[1])) depth++; }
+    else if(m[2]){ if(depth>0) cur+=m[2]; else { flush(); items.push({k:0,s:m[2]}); } }
+    else cur+=m[3];
+  }
+  flush();
+  const T=[]; items.forEach((it,i)=>{ if(it.k) T.push(i); });
+  const P=T.map(i=>items[i].s.replace(/<[^>]*>/g,'')), R=P.map(x=>CQ_REL.includes(x)), O=P.map(x=>CQ_BIN.includes(x));
+  const ranges=[];
+  for(let k=0;k<T.length;k++){
+    if(!R[k]) continue;
+    let a=k-1, b=k+1;
+    if(a<0||b>=T.length||R[a]||O[a]||R[b]||O[b]) continue;
+    while(a-2>=0&&(O[a-1]||R[a-1])&&!O[a-2]&&!R[a-2]) a-=2;
+    while(b+2<T.length&&(O[b+1]||R[b+1])&&!O[b+2]&&!R[b+2]) b+=2;
+    ranges.push([a,b]);
+  }
+  if(!ranges.length) return h;
+  ranges.sort((x,y)=>x[0]-y[0]);
+  const merged=[]; ranges.forEach(r=>{ const l=merged[merged.length-1]; if(l&&r[0]<=l[1]) l[1]=Math.max(l[1],r[1]); else merged.push(r.slice()); });
+  const open={}, close={}; merged.forEach(([a,b])=>{ open[T[a]]=1; close[T[b]]=1; });
+  return items.map((it,i)=>(open[i]?'<span class="eqn">':'')+it.s+(close[i]?'</span>':'')).join('');
+}
+/* même chose pour un bloc complet (énoncé, formule…) : on traite le contenu des <div> de premier niveau */
+const cqRel=h=>{ const parts=(h||'').split(/(<\/?[a-zA-Z][^>]*>)/);
+  return parts.map((t,i)=>(i%2||parts[i-1]==='<span class="rel">')?t:t.replace(/[≤≥≠<>]/g,c=>'<span class="rel">'+(c==='<'?'&lt;':c==='>'?'&gt;':c)+'</span>')).join(''); };
+const cqEqWrapDivs=h=>(h||'').replace(/(<div class="(?:question cq-q|cq-formula|cq-def)">)([\s\S]*?)(<\/div>)/g,(m,a,b,c)=>a+cqEqWrap(b)+c);
+
+/* remplace, dans le texte (hors balises), les signes ×, ÷, =, +, − par leur dessin CSS ; un « − » collé à ce qui suit (−a, −12) devient un signe moins.
+   Les signes < > ≤ ≥ restent des caractères du texte. */
+/* « mode maths » : toute expression littérale (au moins une lettre en <i>) est écrite avec la police des automatismes de calcul littéral
+   (chiffres et signes en romain, lettres en italique, signes − + = légèrement abaissés). Les mots autour ne changent pas. */
+function mathRuns(h){
+  if(!h||!/<i[ >]/.test(h)) return h;
+  const MINUS="<span class='mn'>\u2212</span>";
+  const vs=[],ss=[],fs=[],bs=[]; let flat='',last=0,m;
+  const re=/<i( class="ms")?>([^<]*)<\/i>|<(sup|sub)>([\s\S]*?)<\/\3>|<span class="frac">(?:<span>[\s\S]*?<\/span>){2}<\/span>|<\/?[a-zA-Z][^>]*>/g;
+  while((m=re.exec(h))){
+    flat+=h.slice(last,m.index); last=re.lastIndex;
+    if(m[2]!==undefined){ vs.push({t:m[2],ms:!!m[1]}); flat+='\uE001'; }
+    else if(m[3]!==undefined){ ss.push({g:m[3],c:m[4]}); flat+='\uE002'; }
+    else if(m[0].indexOf('<span class="frac">')===0){ fs.push(m[0]); flat+='\uE003'; }
+    else { bs.push(m[0]); flat+='\uE004'; }
+  }
+  flat+=h.slice(last);
+  const core='(?:[\\uE001-\\uE003]|\\d+(?:,\\d+)?|[()\\[\\]]|[\u2032\u2033]|\u2212(?=[\\uE001-\\uE003\\d(\\[])|\u2026)';
+  const RUN=new RegExp(core+'+(?:(?: ?(?:[+\u2212\u00d7\u00f7=<>\u2264\u2265\u2260\u2208\u2209\u22a5\u2225]|\\/\\/) ?)'+core+'+)*','g');
+  let vi=0,si=0,fi=0,bi=0;
+  const inner=t=>t.replace(/<i>([^<]*)<\/i>/g,'$1').replace(/\u2212/g,MINUS);
+  const raw=seg=>seg.replace(/[\uE001-\uE004]/g,c=>c==='\uE001'?(v=>'<i'+(v.ms?' class="ms"':'')+'>'+v.t+'</i>')(vs[vi++]):c==='\uE002'?(x=>'<'+x.g+'>'+x.c+'</'+x.g+'>')(ss[si++]):c==='\uE003'?fs[fi++]:bs[bi++]);
+  let out='',i=0;
+  while((m=RUN.exec(flat))){
+    let start=m.index, end=start+m[0].length;
+    const isO=c=>c==='('||c==='[', isC=c=>c===')'||c===']';
+    const cO=x=>[...x].filter(isO).length, cC=x=>[...x].filter(isC).length;
+    while(start<end&&isC(flat[start])) start++;
+    while(end>start&&isO(flat[end-1])) end--;
+    while(end>start&&isC(flat[end-1])&&cC(flat.slice(start,end))>cO(flat.slice(start,end))) end--;
+    while(start<end&&isO(flat[start])&&cO(flat.slice(start,end))>cC(flat.slice(start,end))) start++;
+    if(end<=start) continue;
+    const r=flat.slice(start,end);
+    let bal=0, ok=true; for(const c of r){ if(isO(c)) bal++; else if(isC(c)){ bal--; if(bal<0) ok=false; } }
+    if(bal!==0) ok=false;
+    out+=raw(flat.slice(i,start));
+    let v2=vi,s2=si,f2=fi,has=false;
+    for(const c of r){ if(c==='\uE001'){ has=true; v2++; } else if(c==='\uE002'){ if(/<i>/.test(ss[s2].c)) has=true; s2++; } else if(c==='\uE003'){ if(/<i>/.test(fs[f2])) has=true; f2++; } }
+    if(!has||!ok) out+=raw(r);
+    else{
+      let h2='';
+      for(const c of r){
+        if(c==='\uE001'){ const v=vs[vi++]; h2+=v.ms?'<span class="ms">'+v.t+'</span>':v.t; }
+        else if(c==='\uE002'){ const x=ss[si++]; h2+='<'+x.g+'>'+inner(x.c)+'</'+x.g+'>'; }
+        else if(c==='\uE003') h2+=inner(fs[fi++]);
+        else if(c==='\u2212') h2+=MINUS;
+        else if(c==='+'||c==='=') h2+="<span class='mn'>"+c+"</span>";
+        else h2+=c;
+      }
+      out+='<span class="mx cqm">'+h2+'</span>';
+    }
+    i=end; RUN.lastIndex=end;
+  }
+  out+=raw(flat.slice(i));
+  return out;
+}
+const cqM=h=>cqOps(mathRuns(h));
+function cqOps(h){
+  let mx=0;
+  return cqEqWrap(h).split(/(<\/?[a-zA-Z][^>]*>)/).map((t,i)=>{
+    if(i%2){ if(mx){ if(/^<span\b/.test(t)) mx++; else if(t==='</span>') mx--; } else if(t==='<span class="mx cqm">') mx=1; return t; }
+    return mx?t:t
+    .replace(/ × /g,cqX).replace(/ ÷ /g,cqDiv).replace(/ = /g,cqEq).replace(/ \+ /g,cqPlus)
+    .replace(/ − /g,cqMinus).replace(/−/g,cqNeg); }).join('');
+}
+const CQ_FORM=[
+ {name:'prisme droit', stemB:`Quelle est la formule du volume d’un prisme droit${cqQM}`,
+  f:`<i class="ms">𝒜</i><sub><i>base</i></sub> × <i>h</i>`,
+  wrong:[
+   {t:`${fracHTML(1,3)} × <i class="ms">𝒜</i><sub><i>base</i></sub> × <i>h</i>`, why:'le facteur ⅓ apparaît pour une pyramide ou un cône, pas pour un prisme droit.'},
+   {t:`${fracHTML(1,2)} × <i class="ms">𝒜</i><sub><i>base</i></sub> × <i>h</i>`, why:'le volume d’un prisme droit est le produit de l’aire de la base par la hauteur : aucun facteur ½.'},
+   {t:`<i class="ms">𝒜</i><sub><i>base</i></sub> × <i>h</i><sup>2</sup>`, why:'la hauteur n’intervient qu’une seule fois dans la formule.'}],
+  A:{distr:['pyramide','cône de révolution','boule']}},
+ {name:'cylindre de révolution', stemB:`Quelle est la formule du volume d’un cylindre de révolution${cqQM}`,
+  f:`<i>π</i> × <i>r</i><sup>2</sup> × <i>h</i>`,
+  wrong:[
+   {t:`<i>π</i> × <i>r</i> × <i>h</i>`, why:`l’aire de la base est <i>π</i> × <i>r</i><sup>2</sup> (et non <i>π</i> × <i>r</i>).`},
+   {t:`${fracHTML(1,3)} × <i>π</i> × <i>r</i><sup>2</sup> × <i>h</i>`, why:'c’est la formule du volume d’un cône.'},
+   {t:`2 × <i>π</i> × <i>r</i> × <i>h</i>`, why:'cette expression est l’aire latérale du cylindre, pas son volume.'}],
+  A:{distr:['cône de révolution','pyramide','boule']}},
+ {name:'pyramide', stemB:`Quelle est la formule du volume d’une pyramide${cqQM}`,
+  f:`${fracHTML(1,3)} × <i class="ms">𝒜</i><sub><i>base</i></sub> × <i>h</i>`,
+  wrong:[
+   {t:`<i class="ms">𝒜</i><sub><i>base</i></sub> × <i>h</i>`, why:'c’est la formule du volume d’un prisme droit ; pour une pyramide, on multiplie par ⅓.'},
+   {t:`${fracHTML(1,2)} × <i class="ms">𝒜</i><sub><i>base</i></sub> × <i>h</i>`, why:'le facteur est ⅓ (et non ½) pour une pyramide.'},
+   {t:`${fracHTML(1,3)} × <i>π</i> × <i>r</i><sup>2</sup> × <i>h</i>`, why:'c’est la formule du volume d’un cône : la base d’une pyramide est un polygone, pas un disque.'}],
+  A:{distr:['prisme droit','cylindre de révolution','boule']}},
+ {name:'cône de révolution', stemB:`Quelle est la formule du volume d’un cône de révolution${cqQM}`,
+  f:`${fracHTML(1,3)} × <i>π</i> × <i>r</i><sup>2</sup> × <i>h</i>`,
+  wrong:[
+   {t:`<i>π</i> × <i>r</i><sup>2</sup> × <i>h</i>`, why:'c’est la formule du volume d’un cylindre ; pour un cône, on multiplie par ⅓.'},
+   {t:`${fracHTML(1,3)} × <i>π</i> × <i>r</i> × <i>h</i>`, why:`l’aire de la base est <i>π</i> × <i>r</i><sup>2</sup> (et non <i>π</i> × <i>r</i>).`},
+   {t:`${fracHTML(1,2)} × <i>π</i> × <i>r</i><sup>2</sup> × <i>h</i>`, why:'le facteur est ⅓ (et non ½) pour un cône.'}],
+  A:{distr:['cylindre de révolution','prisme droit','boule']}},
+ {name:'boule', stemB:`Quelle est la formule du volume d’une boule${cqQM}`,
+  f:`${fracHTML(4,3)} × <i>π</i> × <i>r</i><sup>3</sup>`,
+  wrong:[
+   {t:`${fracHTML(4,3)} × <i>π</i> × <i>r</i><sup>2</sup>`, why:`l’exposant de <i>r</i> est 3 : le volume se mesure en unités de longueur au cube.`},
+   {t:`${fracHTML(1,3)} × <i>π</i> × <i>r</i><sup>3</sup>`, why:'le facteur est 4/3 (et non 1/3).'},
+   {t:`4 × <i>π</i> × <i>r</i><sup>3</sup>`, why:'le facteur est 4/3 (et non 4).'}],
+  A:{distr:['cylindre de révolution','cône de révolution','pyramide','prisme droit']}}
+];
+const CQ_FORMBY={}; CQ_FORM.forEach(n=>CQ_FORMBY[n.name]=n.f);
+const cqVol=nm=>`Volume d’${nm==='pyramide'||nm==='boule'?'une':'un'} ${nm} : ${cqV(CQ_FORMBY[nm])}`;
+
+/* ---------- Fabrication des questions ---------- */
+function cqFinish(q,opts){
+  opts.forEach(o=>{ o.html=cqRel(cqEqWrap(mathRuns(o.html))); if(o.why) o.why=cqRel(cqEqWrap(mathRuns(o.why))); });
+  q.head=cqRel(cqEqWrapDivs(mathRuns(q.head))); if(q.ansHTML) q.ansHTML=cqRel(cqEqWrap(mathRuns(q.ansHTML)));
+  q.options=shuffle(opts);
+  q.okIdx=q.options.findIndex(o=>o.ok);
+  return q;
+}
+function cqMakeDefB(n){
+  const opts=[{html:n.def,ok:true},...n.wrong.map(w=>({html:w.t,ok:false,why:cqCap(w.why)}))];
+  return cqFinish({kind:'defB',long:true,head:`<div class="question cq-q">${n.stemB}</div>`,ansHTML:n.def,expl:''},opts);
+}
+function cqMakeDefA(n){
+  const picked=n.A.distr.length>3?shuffle(n.A.distr.slice()).slice(0,3):n.A.distr;
+  const opts=[{html:cqCap(n.name),ok:true},...picked.map(nm=>({html:cqCap(nm),ok:false,
+    why:`${cqQ(nm)} : ${CQ_NAMEDEF[nm]}<br>La définition proposée est celle de ${cqQ(n.name)}.`}))];
+  return cqFinish({kind:'defA',long:false,head:n.stemA?`<div class="question cq-q">${n.stemA}</div>`:`<div class="cq-def">${n.def}</div><div class="question cq-q">De quoi s’agit-il${cqQM}</div>`,
+    ansHTML:cqCap(n.name),expl:`${cqQ(n.name)} : ${n.def}`},opts);
+}
+function cqMakeProp(p){
+  const f=/…/.test(p.stem)?(x=>x):cqCap;   /* avec un trou, la réponse complète la phrase : pas de majuscule */
+  const opts=[{html:f(p.ok),ok:true},...p.wrong.map(w=>({html:f(w.t),ok:false,why:cqCap(w.why)}))];
+  return cqFinish({kind:'prop',long:!p.short,head:`<div class="question cq-q">${p.stem}</div>`,ansHTML:f(p.ok),expl:''},opts);
+}
+function cqMakeFormB(n){
+  const opts=[{html:cqV(n.f),ok:true},...n.wrong.map(w=>({html:cqV(w.t),ok:false,why:cqCap(cqM(w.why))}))];
+  return cqFinish({kind:'formB',long:false,head:`<div class="question cq-q">${n.stemB}</div>`,ansHTML:cqV(n.f),expl:''},opts);
+}
+function cqMakeFormA(n){
+  const picked=shuffle(n.A.distr.slice()).slice(0,3);
+  const opts=[{html:cqCap(n.name),ok:true},...picked.map(nm=>({html:cqCap(nm),ok:false,
+    why:cqVol(nm)}))];
+  return cqFinish({kind:'formA',long:false,
+    head:`<div class="cq-formula">${cqV(n.f)}</div><div class="question cq-q">À quel solide correspond cette formule du volume${cqQM}</div>`,
+    ansHTML:cqCap(n.name),expl:cqVol(n.name)},opts);
+}
+
+const CQ_CASES=[];
+/* th : 1 = I – Solides · 2 = II – Représentations · 3 = III – Volumes (comme dans les feuilles de cours) */
+CQ_DEF.forEach(n=>{
+  const th=n.name==='perspective cavalière'?2:1;
+  CQ_CASES.push({th,pk:'defB|'+n.name,make:()=>cqMakeDefB(n)});
+});
+CQ_PROP.forEach(p=>CQ_CASES.push({th:2,pk:'prop|'+p.id,make:()=>cqMakeProp(p)}));
+CQ_FORM.forEach(n=>{
+  CQ_CASES.push({th:3,pk:'formB|'+n.name,make:()=>cqMakeFormB(n)});
+});
+CQ_CASES.forEach(c=>{ c.ch='eg2'; });
+
+/* ---------- EG 1 – Propriétés géométriques ----------
+   th : 1 = I – Propriétés · 2 = II – Somme des angles d'un triangle · 3 = III – Angles alternes-internes
+        4 = IV – Angles correspondants · 5 = V – Angles opposés par le sommet
+   Toutes les questions sont des propriétés du cours (et leurs réciproques). */
+const cqP=(th,id,stem,ok,wrong,short)=>CQ_CASES.push({ch:'eg1',th,pk:'p|'+id,make:()=>cqMakeProp({stem,ok,wrong,short})});
+const cqPROP='Quelle proposition est vraie\u00a0?';
+const cqW=(t,why)=>({t,why});
+
+/* I – Propriétés */
+cqP(1,'perp-a','Si deux droites sont perpendiculaires à une même droite, alors elles sont…','parallèles',[
+  cqW('perpendiculaires','deux droites perpendiculaires à une même droite ne se coupent pas : elles sont parallèles.'),
+  cqW('sécantes','deux droites perpendiculaires à une même droite ne se coupent pas : elles sont parallèles.'),
+  cqW('ni parallèles ni perpendiculaires','deux droites perpendiculaires à une même droite sont parallèles.')],true);
+cqP(1,'perp-b',cqPROP,'Si deux droites sont perpendiculaires à une même droite alors elles sont parallèles.',[
+  cqW('Si deux droites sont perpendiculaires à une même droite alors elles sont perpendiculaires.','deux droites perpendiculaires à une même droite sont parallèles.'),
+  cqW('Si deux droites sont parallèles à une même droite alors elles sont perpendiculaires.','deux droites parallèles à une même droite sont parallèles entre elles.'),
+  cqW('Si deux droites sont perpendiculaires à une même droite alors elles sont sécantes.','deux droites perpendiculaires à une même droite ne se coupent pas : elles sont parallèles.')]);
+cqP(1,'para-a','Si deux droites sont parallèles à une même droite, alors elles sont…','parallèles',[
+  cqW('perpendiculaires','deux droites parallèles à une même droite sont parallèles entre elles.'),
+  cqW('sécantes','deux droites parallèles à une même droite ne se coupent pas : elles sont parallèles entre elles.'),
+  cqW('perpendiculaires à cette droite','elles sont parallèles à cette droite (et parallèles entre elles), pas perpendiculaires.')],true);
+cqP(1,'para-b',cqPROP,'Si deux droites sont parallèles à une même droite alors elles sont parallèles.',[
+  cqW('Si deux droites sont parallèles à une même droite alors elles sont perpendiculaires.','deux droites parallèles à une même droite sont parallèles entre elles.'),
+  cqW('Si deux droites sont parallèles à une même droite alors elles sont sécantes.','deux droites parallèles à une même droite ne se coupent pas.'),
+  cqW('Si deux droites sont perpendiculaires à une même droite alors elles sont perpendiculaires.','deux droites perpendiculaires à une même droite sont parallèles.')]);
+cqP(1,'mix-a','Si deux droites sont parallèles, alors toute droite perpendiculaire à l’une est… à l’autre.','perpendiculaire',[
+  cqW('parallèle','une droite perpendiculaire à l’une des deux droites parallèles est perpendiculaire à l’autre.'),
+  cqW('sécante mais pas forcément perpendiculaire','une droite perpendiculaire à l’une des deux droites parallèles est aussi perpendiculaire à l’autre.'),
+  cqW('parallèle ou perpendiculaire, on ne peut pas savoir','on peut toujours conclure : elle est perpendiculaire à l’autre droite.')],true);
+cqP(1,'mix-b',cqPROP,'Si deux droites sont parallèles alors toute droite perpendiculaire à l’une est perpendiculaire à l’autre.',[
+  cqW('Si deux droites sont parallèles alors toute droite perpendiculaire à l’une est parallèle à l’autre.','une droite perpendiculaire à l’une des deux droites parallèles est perpendiculaire à l’autre.'),
+  cqW('Si deux droites sont perpendiculaires alors toute droite parallèle à l’une est parallèle à l’autre.','une droite parallèle à l’une des deux droites perpendiculaires est perpendiculaire à l’autre.'),
+  cqW('Si deux droites sont parallèles alors toute droite parallèle à l’une est perpendiculaire à l’autre.','une droite parallèle à l’une des deux droites parallèles est parallèle à l’autre.')]);
+
+/* II – Somme des angles d'un triangle */
+cqP(2,'tri-a','Dans un triangle, la somme des angles est égale à…','180°',[
+  cqW('90°','la somme des angles d’un triangle est égale à 180°.'),
+  cqW('360°','la somme des angles d’un triangle est égale à 180° (360° est la somme des angles d’un quadrilatère).'),
+  cqW('270°','la somme des angles d’un triangle est égale à 180°.')],true);
+cqP(2,'tri-b',cqPROP,'Dans un triangle, la somme des angles est égale à 180°.',[
+  cqW('Dans un triangle, la somme des angles est égale à 360°.','la somme des angles d’un triangle est égale à 180°.'),
+  cqW('Dans un triangle rectangle, la somme des trois angles est égale à 90°.','dans tout triangle, la somme des trois angles est égale à 180° ; ce sont les deux angles aigus d’un triangle rectangle qui ont pour somme 90°.'),
+  cqW('Dans un triangle, la somme de deux angles est égale à 180°.','c’est la somme des trois angles qui est égale à 180°.')]);
+cqP(2,'rect-a','Dans un triangle rectangle, la somme des deux angles aigus est égale à…','90°',[
+  cqW('180°','180° est la somme des trois angles ; l’angle droit mesure 90°, il reste 90° pour les deux angles aigus.'),
+  cqW('45°','la somme des deux angles aigus est égale à 90° (45° seulement pour chacun dans un triangle rectangle isocèle).'),
+  cqW('360°','la somme des trois angles d’un triangle est égale à 180° ; il reste 90° pour les deux angles aigus.')],true);
+cqP(2,'rect-b',cqPROP,'Dans un triangle rectangle, la somme des deux angles aigus est égale à 90°.',[
+  cqW('Dans un triangle rectangle, la somme des deux angles aigus est égale à 180°.','la somme des deux angles aigus est égale à 90°.'),
+  cqW('Dans un triangle rectangle, la somme des deux angles aigus est égale à 45°.','la somme des deux angles aigus est égale à 90°.'),
+  cqW('Dans un triangle rectangle, la somme des trois angles est égale à 270°.','la somme des trois angles d’un triangle est égale à 180°.')]);
+
+/* III et IV – Angles alternes-internes / correspondants (propriété et réciproque) */
+function cqAngPairs(th,key,nom,acc,sing){
+  const sup='supplémentaires', comp='complémentaires';
+  cqP(th,key+'-a',`Si deux droites parallèles sont coupées par une sécante, alors les angles ${nom} sont…`,'égaux',[
+    cqW(sup,`deux droites parallèles coupées par une sécante forment des angles ${nom} égaux.`),
+    cqW(comp,`deux droites parallèles coupées par une sécante forment des angles ${nom} égaux.`),
+    cqW('droits','deux droites parallèles coupées par une sécante forment des angles '+nom+' égaux (ils ne sont droits que si la sécante est perpendiculaire aux droites).')],true);
+  cqP(th,key+'-b',cqPROP,`Si deux droites parallèles sont coupées par une sécante alors les angles ${nom} sont égaux.`,[
+    cqW(`Si deux droites parallèles sont coupées par une sécante alors les angles ${nom} sont supplémentaires.`,`les angles ${nom} sont égaux, pas supplémentaires.`),
+    cqW(`Si deux droites parallèles sont coupées par une sécante alors les angles ${nom} sont complémentaires.`,`les angles ${nom} sont égaux, pas complémentaires.`),
+    cqW(`Si deux droites parallèles sont coupées par une sécante alors les angles ${nom} sont droits.`,`les angles ${nom} sont égaux (droits seulement si la sécante est perpendiculaire aux droites).`)]);
+  cqP(th,key+'-c',`Si deux droites sont coupées par une sécante et si les angles ${nom} sont égaux, alors ces droites sont…`,'parallèles',[
+    cqW('perpendiculaires',`si les angles ${nom} sont égaux, alors les droites sont parallèles.`),
+    cqW('sécantes',`si les angles ${nom} sont égaux, alors les droites ne se coupent pas : elles sont parallèles.`),
+    cqW('perpendiculaires à la sécante',`si les angles ${nom} sont égaux, alors les droites sont parallèles.`)],true);
+  cqP(th,key+'-d',`Quelle est la réciproque de la propriété «${CQ_NB}Si deux droites parallèles sont coupées par une sécante, alors les angles ${nom} sont égaux${CQ_NB}»${cqQM}`,
+    `Si deux droites sont coupées par une sécante et si les angles ${nom} sont égaux, alors ces droites sont parallèles.`,[
+    cqW(`Si deux droites parallèles sont coupées par une sécante, alors les angles ${nom} sont égaux.`,'c’est la propriété elle-même, pas sa réciproque : la réciproque échange l’hypothèse et la conclusion.'),
+    cqW(`Si deux droites sont coupées par une sécante et si les angles ${nom} sont égaux, alors ces droites sont perpendiculaires.`,`si les angles ${nom} sont égaux, les droites sont parallèles (et non perpendiculaires).`),
+    cqW(`Si deux droites sont coupées par une sécante et si les angles ${nom} sont supplémentaires, alors ces droites sont parallèles.`,`c’est lorsque les angles ${nom} sont égaux (et non supplémentaires) que les droites sont parallèles.`)]);
+}
+cqAngPairs(3,'alt','alternes-internes');
+cqAngPairs(4,'cor','correspondants');
+
+/* V – Angles opposés par le sommet */
+cqP(5,'opp-a','Si deux droites sont sécantes, alors les angles opposés par le sommet sont…','de même mesure',[
+  cqW('supplémentaires','deux angles opposés par le sommet ont la même mesure (deux angles supplémentaires sont, par exemple, des angles adjacents).'),
+  cqW('complémentaires','deux angles opposés par le sommet ont la même mesure.'),
+  cqW('toujours droits','deux angles opposés par le sommet ont la même mesure ; ils ne sont droits que si les droites sont perpendiculaires.')],true);
+cqP(5,'opp-b',cqPROP,'Si deux droites sont sécantes alors les angles opposés par le sommet sont de même mesure.',[
+  cqW('Si deux droites sont sécantes alors les angles opposés par le sommet sont supplémentaires.','les angles opposés par le sommet ont la même mesure.'),
+  cqW('Si deux droites sont sécantes alors les angles opposés par le sommet sont complémentaires.','les angles opposés par le sommet ont la même mesure.'),
+  cqW('Si deux droites sont sécantes alors les angles opposés par le sommet sont toujours des angles droits.','les angles opposés par le sommet ont la même mesure ; ils ne sont droits que si les droites sont perpendiculaires.')]);
+
+/* Figures : reconnaître la relation entre deux angles colorés
+   (alternes-internes, correspondants, opposés par le sommet) – figure tirée au hasard à chaque question */
+const CQ_ANGTH=['eg1-3','eg1-4','eg1-5'];
+const CQ_FIGN={alt:'Angles alternes-internes',cor:'Angles correspondants',opp:'Angles opposés par le sommet'};
+const CQ_FIGWHY={
+  alt:{
+    cor:'des angles correspondants sont du même côté de la sécante ; ici, les deux angles colorés sont entre les deux droites, de part et d’autre de la sécante : ce sont des angles alternes-internes.',
+    opp:'des angles opposés par le sommet ont le même sommet ; ici, les deux angles colorés ont des sommets différents. Ils sont entre les deux droites, de part et d’autre de la sécante : ce sont des angles alternes-internes.'},
+  cor:{
+    alt:'des angles alternes-internes sont entre les deux droites, de part et d’autre de la sécante ; ici, les deux angles colorés sont du même côté de la sécante : ce sont des angles correspondants.',
+    opp:'des angles opposés par le sommet ont le même sommet ; ici, les deux angles colorés ont des sommets différents, mais la même position par rapport à la sécante et à leur droite : ce sont des angles correspondants.'},
+  opp:{
+    alt:'des angles alternes-internes ont des sommets différents ; ici, les deux angles colorés ont le même sommet et sont opposés (leurs côtés sont dans le prolongement l’un de l’autre) : ce sont des angles opposés par le sommet.',
+    cor:'des angles correspondants ont des sommets différents ; ici, les deux angles colorés ont le même sommet et sont opposés (leurs côtés sont dans le prolongement l’un de l’autre) : ce sont des angles opposés par le sommet.'}
+};
+function cqAngFig(type){
+  const rnd=(a,b)=>a+Math.random()*(b-a), f=x=>x.toFixed(1);
+  const th=rnd(-10,10)*Math.PI/180;
+  let phiD=rnd(52,76); if(Math.random()<.5) phiD=180-phiD;
+  const phi=phiD*Math.PI/180;
+  const u=[Math.cos(th),Math.sin(th)], v=[Math.cos(th+phi),Math.sin(th+phi)], n=[-Math.sin(th),Math.cos(th)];
+  const C=[180,115], h=42, t=h/Math.sin(phi);
+  const P={A:[C[0]-t*v[0],C[1]-t*v[1]], B:[C[0]+t*v[0],C[1]+t*v[1]]};
+  const SEC={UR:[th+phi-Math.PI,th], UL:[th-Math.PI,th+phi-Math.PI], DL:[th+phi,th+Math.PI], DR:[th,th+phi]};
+  const pick2=a=>a[Math.floor(Math.random()*a.length)];
+  let pair;   /* [sommet, secteur] ×2 */
+  if(type==='alt') pair=pick2([[['A','DR'],['B','UL']],[['A','DL'],['B','UR']]]);
+  else if(type==='cor'){ const k=pick2(['UR','UL','DL','DR']); pair=[['A',k],['B',k]]; }
+  else if(type==='opp'){ const V=pick2(['A','B']); pair=pick2([[[V,'UR'],[V,'DL']],[[V,'UL'],[V,'DR']]]); }
+  else if(type==='ext') pair=pick2([[['A','UL'],['B','DR']],[['A','UR'],['B','DL']]]);      /* alternes-externes */
+  else if(type==='coint') pair=pick2([[['A','DR'],['B','UR']],[['A','DL'],['B','UL']]]);    /* entre les droites, même côté de la sécante */
+  else if(type==='coext') pair=pick2([[['A','UR'],['B','DR']],[['A','UL'],['B','DL']]]);    /* hors des droites, même côté de la sécante */
+  else { const V=pick2(['A','B']); pair=pick2([[[V,'UR'],[V,'UL']],[[V,'UL'],[V,'DL']],[[V,'DL'],[V,'DR']],[[V,'DR'],[V,'UR']]]); }   /* adjacents */
+  if(Math.random()<.5) pair.reverse();
+  const cols=['var(--accent)','#E8871E'], R=20;
+  const pt=(Q,a,r)=>f(Q[0]+r*Math.cos(a))+' '+f(Q[1]+r*Math.sin(a));
+  const wedge=([vx,sec],i)=>{ const Q=P[vx], [a0,a1]=SEC[sec];
+    return `<path d="M${f(Q[0])} ${f(Q[1])} L${pt(Q,a0,R)} A${R} ${R} 0 0 1 ${pt(Q,a1,R)} Z" fill="${cols[i]}" fill-opacity=".38" stroke="${cols[i]}" stroke-width="2.2" stroke-linejoin="round"/>`; };
+  const L=(Q,k)=>[Q[0]+k*u[0],Q[1]+k*u[1]];
+  const line=(Q)=>{ const a=L(Q,-140), b=L(Q,140); return `<line x1="${f(a[0])}" y1="${f(a[1])}" x2="${f(b[0])}" y2="${f(b[1])}" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/>`; };
+  const lab=(x,y,s)=>`<text x="${f(x)}" y="${f(y)}" text-anchor="middle" font-size="16" style="font-family:var(--mf);" fill="var(--muted)">${s}</text>`;
+  const e1=[C[0]-(t+46)*v[0],C[1]-(t+46)*v[1]], e2=[C[0]+(t+46)*v[0],C[1]+(t+46)*v[1]];
+  const la=L(P.A,128), lb=L(P.B,128), ls=[C[0]-(t+60)*v[0],C[1]-(t+60)*v[1]];
+  return `<svg class="cq-fig" viewBox="0 0 360 230" role="img" aria-label="Deux droites parallèles coupées par une sécante ; deux angles sont colorés." style="display:block;width:100%;max-width:380px;height:auto;margin:0 auto 18px;">`
+    +line(P.A)+line(P.B)
+    +`<line x1="${f(e1[0])}" y1="${f(e1[1])}" x2="${f(e2[0])}" y2="${f(e2[1])}" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/>`
+    +wedge(pair[0],0)+wedge(pair[1],1)
+    +lab(la[0]+4,la[1]-n[1]*0-12,'(d)')+lab(lb[0]+4,lb[1]-12,'(d′)')+lab(ls[0]+(v[0]>0?-12:12),ls[1]+4,'(d″)')
+    +`</svg>`;
+}
+const CQ_FIGYES={
+  alt:'les deux angles colorés sont entre les deux droites, de part et d’autre de la sécante : ce sont bien des angles alternes-internes.',
+  cor:'les deux angles colorés sont placés de la même façon par rapport à la sécante et à leur droite : ce sont bien des angles correspondants.',
+  opp:'les deux angles colorés ont le même sommet et sont opposés (leurs côtés sont dans le prolongement l’un de l’autre) : ce sont bien des angles opposés par le sommet.'};
+const CQ_FIGASK={alt:'des angles alternes-internes',cor:'des angles correspondants',opp:'des angles opposés par le sommet'};
+/* figures « aucun » : positions qui ne sont ni alternes-internes, ni correspondants, ni opposés par le sommet
+   ext = à l’extérieur, de part et d’autre de la sécante · coint = entre les droites, même côté de la sécante
+   coext = à l’extérieur, même côté de la sécante · adj = même sommet, côte à côte */
+const CQ_NONEKINDS=['ext','coint','coext','adj'];
+const CQ_NONEWHY={
+  ext:{
+    alt:'des angles alternes-internes sont entre les deux droites ; ici, les deux angles colorés sont à l’extérieur des deux droites : ce ne sont pas des angles alternes-internes.',
+    cor:'des angles correspondants sont du même côté de la sécante ; ici, les deux angles colorés sont de part et d’autre de la sécante : ce ne sont pas des angles correspondants.',
+    opp:'des angles opposés par le sommet ont le même sommet ; ici, les deux angles colorés ont des sommets différents : ce ne sont pas des angles opposés par le sommet.'},
+  coint:{
+    alt:'des angles alternes-internes sont de part et d’autre de la sécante ; ici, les deux angles colorés sont du même côté de la sécante : ce ne sont pas des angles alternes-internes.',
+    cor:'des angles correspondants sont placés de la même façon par rapport à leur droite ; ici, l’un est au-dessus de sa droite et l’autre en dessous : ce ne sont pas des angles correspondants.',
+    opp:'des angles opposés par le sommet ont le même sommet ; ici, les deux angles colorés ont des sommets différents : ce ne sont pas des angles opposés par le sommet.'},
+  coext:{
+    alt:'des angles alternes-internes sont entre les deux droites ; ici, les deux angles colorés sont à l’extérieur des deux droites : ce ne sont pas des angles alternes-internes.',
+    cor:'des angles correspondants sont placés de la même façon par rapport à leur droite ; ici, l’un est au-dessus de sa droite et l’autre en dessous : ce ne sont pas des angles correspondants.',
+    opp:'des angles opposés par le sommet ont le même sommet ; ici, les deux angles colorés ont des sommets différents : ce ne sont pas des angles opposés par le sommet.'},
+  adj:{
+    alt:'des angles alternes-internes ont des sommets différents ; ici, les deux angles colorés ont le même sommet : ce ne sont pas des angles alternes-internes.',
+    cor:'des angles correspondants ont des sommets différents ; ici, les deux angles colorés ont le même sommet : ce ne sont pas des angles correspondants.',
+    opp:'des angles opposés par le sommet n’ont aucun côté commun (leurs côtés sont dans le prolongement l’un de l’autre) ; ici, les deux angles colorés sont côte à côte et ont un côté commun : ce ne sont pas des angles opposés par le sommet.'}
+};
+const cqFigWhy=(actual,asked)=>cqCap((CQ_FIGWHY[actual]||CQ_NONEWHY[actual])[asked]);
+const CQ_ANGMAP={'eg1-3':'alt','eg1-4':'cor','eg1-5':'opp'};
+/* types d'angles de la série en cours (au moins 2) : uniquement ceux-là apparaissent dans les questions */
+function cqSelTypes(){
+  const t=cqRevG?CQ_ANGTH.filter(k=>cqRevG.has(k+'|fig')).map(k=>CQ_ANGMAP[k]):[];
+  return t.length>=2?t:['alt','cor','opp'];
+}
+/* série mêlant plusieurs thèmes d'angles : on reconnaît les angles, avec « Aucun des deux / trois » */
+function cqMakeFig(type){   /* type : alt | cor | opp | none */
+  const types=cqSelTypes(), none=type==='none';
+  const actual=none?pick(CQ_NONEKINDS):type;
+  const opts=shuffle(types.map(k=>({html:CQ_FIGN[k],ok:k===actual,why:k===actual?'':cqFigWhy(actual,k)})));
+  const noneLab=types.length===2?'Aucun des deux':'Aucun des trois';
+  opts.push({html:noneLab,ok:none,why:none?'':cqCap(CQ_FIGYES[actual])});
+  const q={kind:'fig',long:true,
+    head:`<div class="question cq-q">De quels angles s’agit-il${cqQM}</div>${cqAngFig(actual)}`,
+    ansHTML:none?noneLab:CQ_FIGN[type],expl:'',options:opts};
+  q.okIdx=opts.findIndex(o=>o.ok);
+  return q;
+}
+/* question ciblée sur un thème : oui / non (le type demandé est celui du thème) */
+function cqMakeFigYN(asked,yes){
+  const others=Object.keys(CQ_FIGN).filter(k=>k!==asked);
+  const actual=yes?asked:(Math.random()<.5?pick(others):pick(CQ_NONEKINDS));
+  const opts=[
+    {html:'Oui',ok:yes,why:yes?'':cqFigWhy(actual,asked)},
+    {html:'Non',ok:!yes,why:yes?cqCap(CQ_FIGYES[asked]):''}];
+  const q={kind:'figYN',long:false,
+    head:`<div class="question cq-q">Les deux angles colorés sont-ils ${CQ_FIGASK[asked]}${cqQM}</div>${cqAngFig(actual)}`,
+    ansHTML:yes?'Oui':'Non',expl:'',options:opts};
+  q.okIdx=opts.findIndex(o=>o.ok);
+  return q;
+}
+[[3,'alt'],[4,'cor'],[5,'opp']].forEach(([th,type])=>{
+  CQ_CASES.push({ch:'eg1',th,fig:'solo',pk:'fig|yes|'+th,make:()=>cqMakeFigYN(type,true)});
+  CQ_CASES.push({ch:'eg1',th,fig:'solo',pk:'fig|no|'+th,make:()=>cqMakeFigYN(type,false)});
+  CQ_CASES.push({ch:'eg1',th,fig:'multi',pk:'fig|multi|'+th,make:()=>cqMakeFig(type)});
+  CQ_CASES.push({ch:'eg1',th,fig:'multi',none:true,pk:'fig|none|'+th,make:()=>cqMakeFig('none')});   /* une seule fois par série (voir cqPool) */
+});
+
+/* ---------- NC 1 – Fractions ----------
+   th : 1 = I – Définitions · 2 = II – Fractions égales · 3 = III – Comparaisons de fractions · 4 = IV – Opérations
+   Toutes les questions sont des définitions / propriétés du cours (pas d'application numérique). */
+(function(){
+  const fx=cqM;   /* signes ×, ÷, =, +, −, <, > dessinés en CSS : alignés sur la barre de fraction, même épaisseur */
+  const cqN=(th,id,stem,ok,wrong,short)=>CQ_CASES.push({ch:'nc1',th,pk:'p|'+id,make:()=>cqMakeProp({stem:fx(stem),ok:fx(ok),wrong:wrong.map(w=>({t:fx(w.t),why:fx(w.why)})),short})});
+  const NEG='<span class="fneg" role="img" aria-label="moins"></span>';   /* « − » dessiné : aligné sur la barre de fraction */
+  const A='<i>a</i>',B='<i>b</i>',C='<i>c</i>',D='<i>d</i>',K='<i>k</i>', F=(n,d)=>fracHTML(n,d);
+
+  /* I – Définitions */
+  cqN(1,'nc1-quot-a',`Le quotient de ${A} par ${B} est le nombre qui, multiplié par ${B}, donne…`,A,[
+    cqW(B,`le quotient de ${A} par ${B}, multiplié par ${B}, donne ${A} (et non ${B}).`),
+    cqW('0',`le quotient de ${A} par ${B}, multiplié par ${B}, donne ${A}.`),
+    cqW('1',`le quotient de ${A} par ${B}, multiplié par ${B}, donne ${A}.`)],true);
+  cqN(1,'nc1-quot-b',cqPROP,`Le quotient de ${A} par ${B} est le nombre qui, multiplié par ${B}, donne ${A}.`,[
+    cqW(`Le quotient de ${A} par ${B} est le nombre qui, multiplié par ${A}, donne ${B}.`,`c’est par ${B} qu’on multiplie le quotient, et on obtient ${A}.`),
+    cqW(`Le quotient de ${A} par ${B} est le nombre qui, ajouté à ${B}, donne ${A}.`,`le quotient se définit avec une multiplication par ${B}, pas avec une addition.`),
+    cqW(`Le quotient de ${A} par ${B} est le nombre qui, multiplié par ${B}, donne ${B}.`,`multiplié par ${B}, le quotient de ${A} par ${B} donne ${A}.`)]);
+  cqN(1,'nc1-num-a',`Dans la fraction ${F(A,B)}, le nombre ${A} est appelé…`,'numérateur',[
+    cqW('dénominateur',`${A} est le numérateur ; c’est ${B} qui est le dénominateur.`),
+    cqW('quotient',`le quotient est le nombre ${F(A,B)} tout entier ; ${A} est le numérateur.`),
+    cqW('diviseur',`${A} est le numérateur ; ${B}, par lequel on divise, est le dénominateur.`)],true);
+  cqN(1,'nc1-den-a',`Dans la fraction ${F(A,B)}, le nombre ${B} est appelé…`,'dénominateur',[
+    cqW('numérateur',`${B} est le dénominateur ; c’est ${A} qui est le numérateur.`),
+    cqW('quotient',`le quotient est le nombre ${F(A,B)} tout entier ; ${B} est le dénominateur.`),
+    cqW('produit',`${B} est le dénominateur de la fraction ${F(A,B)}.`)],true);
+  cqN(1,'nc1-nd-b',cqPROP,`Dans la fraction ${F(A,B)}, ${A} est le numérateur et ${B} est le dénominateur.`,[
+    cqW(`Dans la fraction ${F(A,B)}, ${A} est le dénominateur et ${B} est le numérateur.`,`c’est l’inverse : ${A} (en haut) est le numérateur et ${B} (en bas) est le dénominateur.`),
+    cqW(`Dans la fraction ${F(A,B)}, ${A} est le quotient et ${B} est le dénominateur.`,`${A} est le numérateur ; le quotient est le nombre ${F(A,B)} tout entier.`)]);
+
+  /* II – Fractions égales */
+  cqN(2,'nc1-eq-a','Pour obtenir une fraction égale à une fraction donnée, on multiplie son numérateur et son dénominateur par…','un même nombre (non nul)',[
+    cqW('deux nombres différents','avec deux nombres différents, on change la valeur de la fraction : il faut multiplier par un même nombre.'),
+    cqW('un nombre pour le numérateur et un autre pour le dénominateur','il faut multiplier le numérateur et le dénominateur par le même nombre.'),
+    cqW('0','on ne peut pas multiplier par 0 : le nombre doit être non nul (on obtiendrait 0 au dénominateur).')]);
+  cqN(2,'nc1-eq-b',cqPROP,'Deux fractions sont égales si on obtient l’une en multipliant le numérateur et le dénominateur de l’autre par un même nombre non nul.',[
+    cqW('Deux fractions sont égales si on obtient l’une en ajoutant un même nombre au numérateur et au dénominateur de l’autre.',`ajouter un même nombre ne conserve pas la valeur : par exemple ${F('1','2')} et ${F('2','3')} ne sont pas égales.`),
+    cqW('Deux fractions sont égales si on obtient l’une en multipliant seulement le numérateur de l’autre par un même nombre.','multiplier seulement le numérateur change la valeur : il faut aussi multiplier le dénominateur par le même nombre.'),
+    cqW('Deux fractions sont égales si on obtient l’une en multipliant le numérateur et le dénominateur de l’autre par deux nombres différents.','il faut multiplier le numérateur et le dénominateur par le même nombre.')]);
+  cqN(2,'nc1-eq-c',`Pour ${A}, ${B} et ${K} entiers (${B} ≠ 0 et ${K} ≠ 0), quelle égalité est vraie${cqQM}`,`${F(A,B)} = ${F(`${A} × ${K}`,`${B} × ${K}`)}`,[
+    cqW(`${F(A,B)} = ${F(`${A} + ${K}`,`${B} + ${K}`)}`,`ajouter ${K} au numérateur et au dénominateur ne conserve pas la valeur : il faut multiplier.`),
+    cqW(`${F(A,B)} = ${F(`${A} × ${K}`,B)}`,`il faut aussi multiplier le dénominateur par ${K}.`),
+    cqW(`${F(A,B)} = ${F(`${A} × ${K}`,`${B} + ${K}`)}`,`on multiplie le numérateur et le dénominateur par le même nombre ${K} (pas d’addition).`)],true);
+  cqN(2,'nc1-eq-d',cqPROP,'Si on multiplie le numérateur et le dénominateur d’une fraction par un même nombre non nul, on obtient une fraction égale.',[
+    cqW('Si on multiplie seulement le dénominateur d’une fraction par un nombre non nul, on obtient une fraction égale.','il faut multiplier le numérateur et le dénominateur par le même nombre.'),
+    cqW('Si on ajoute un même nombre au numérateur et au dénominateur d’une fraction, on obtient une fraction égale.','ajouter un même nombre ne conserve pas la valeur de la fraction.'),
+    cqW('Si on multiplie le numérateur par 2 et le dénominateur par 3, on obtient une fraction égale.','pour obtenir une fraction égale, il faut multiplier par le même nombre (ici, 2 et 3 sont différents).')]);
+
+  /* III – Comparaisons de fractions */
+  cqN(3,'nc1-cmp-a','Pour comparer deux fractions, il faut d’abord qu’elles aient le même…','dénominateur',[
+    cqW('numérateur','c’est le dénominateur qui doit être le même : on compare ensuite les numérateurs.'),
+    cqW('quotient','deux fractions de même quotient sont égales : pour les comparer, on les met au même dénominateur.'),
+    cqW('nombre de chiffres','ce qui compte est d’avoir le même dénominateur : on compare ensuite les numérateurs.')],true);
+  cqN(3,'nc1-cmp-c',`Les fractions ${F(A,B)} et ${F(C,B)} ont le même dénominateur (${B} > 0). Si ${A} < ${C}, alors…`,`${F(A,B)} < ${F(C,B)}`,[
+    cqW(`${F(A,B)} > ${F(C,B)}`,'avec le même dénominateur, la fraction qui a le plus petit numérateur est la plus petite.'),
+    cqW(`${F(A,B)} = ${F(C,B)}`,`les numérateurs sont différents (${A} < ${C}) : les fractions ne sont pas égales.`),
+    cqW('on ne peut pas comparer ces fractions','elles ont le même dénominateur : il suffit de comparer les numérateurs.')],true);
+  cqN(3,'nc1-rem-a','Si deux fractions ont le même numérateur positif, alors la fraction qui a le plus petit dénominateur est…','la plus grande',[
+    cqW('la plus petite','plus le dénominateur est petit, plus les parts sont grandes : la fraction qui a le plus petit dénominateur est la plus grande.'),
+    cqW('égale à l’autre','les dénominateurs sont différents, donc les fractions sont différentes.'),
+    cqW('impossible à comparer','à numérateurs positifs égaux, la fraction qui a le plus petit dénominateur est la plus grande.')],true);
+  cqN(3,'nc1-rem-b',cqPROP,'Si deux fractions ont le même numérateur positif, la fraction qui a le plus petit dénominateur est la plus grande.',[
+    cqW('Si deux fractions ont le même numérateur positif, la fraction qui a le plus petit dénominateur est la plus petite.','c’est le contraire : la fraction qui a le plus petit dénominateur est la plus grande.'),
+    cqW('Si deux fractions ont le même numérateur positif, la fraction qui a le plus grand dénominateur est la plus grande.','c’est le contraire : la fraction qui a le plus grand dénominateur est la plus petite.'),
+    cqW('Si deux fractions ont le même numérateur positif, elles sont égales.','elles ont des dénominateurs différents, donc elles ne sont pas égales.')]);
+
+  /* IV – Opérations */
+  cqN(4,'nc1-add-a','Pour additionner (ou soustraire) deux fractions, il faut qu’elles aient le même…','dénominateur',[
+    cqW('numérateur','c’est le dénominateur qui doit être le même : on additionne (ou soustrait) ensuite les numérateurs.'),
+    cqW('quotient','il faut les mettre au même dénominateur, puis additionner (ou soustraire) les numérateurs.'),
+    cqW('signe','le signe n’a pas d’importance : ce qui compte est d’avoir le même dénominateur.')],true);
+  cqN(4,'nc1-add-b',cqPROP,'Pour additionner deux fractions qui ont le même dénominateur, on additionne les numérateurs et on garde le dénominateur.',[
+    cqW('Pour additionner deux fractions qui ont le même dénominateur, on additionne les numérateurs et on additionne les dénominateurs.',`le dénominateur ne change pas : par exemple ${F('1','5')} + ${F('2','5')} = ${F('3','5')} et non ${F('3','10')}.`),
+    cqW('Pour additionner deux fractions, il n’est pas nécessaire qu’elles aient le même dénominateur.','pour additionner (ou soustraire) deux fractions, il faut d’abord les mettre au même dénominateur.'),
+    cqW('Pour additionner deux fractions qui ont le même dénominateur, on multiplie les numérateurs et on garde le dénominateur.','on additionne les numérateurs (la multiplication des numérateurs sert pour le produit de deux fractions).')]);
+  cqN(4,'nc1-mul-a',cqPROP,'Pour multiplier deux fractions, on multiplie les numérateurs entre eux et les dénominateurs entre eux.',[
+    cqW('Pour multiplier deux fractions, il faut d’abord les mettre au même dénominateur.','le même dénominateur n’est nécessaire que pour l’addition et la soustraction.'),
+    cqW('Pour multiplier deux fractions, on multiplie les numérateurs entre eux et on garde le dénominateur.','on multiplie aussi les dénominateurs entre eux.'),
+    cqW('Pour multiplier deux fractions, on additionne les numérateurs entre eux et on multiplie les dénominateurs entre eux.','on multiplie les numérateurs entre eux (pas d’addition).')]);
+  cqN(4,'nc1-mul-b',`Pour ${A}, ${B}, ${C} et ${D} (${B} ≠ 0 et ${D} ≠ 0), quelle égalité est vraie${cqQM}`,`${F(A,B)} × ${F(C,D)} = ${F(`${A} × ${C}`,`${B} × ${D}`)}`,[
+    cqW(`${F(A,B)} × ${F(C,D)} = ${F(`${A} × ${D}`,`${B} × ${C}`)}`,`cette égalité est celle d’une division, ${F(A,B)} ÷ ${F(C,D)}, pas d’une multiplication.`),
+    cqW(`${F(A,B)} × ${F(C,D)} = ${F(`${A} + ${C}`,`${B} + ${D}`)}`,'on multiplie les numérateurs entre eux et les dénominateurs entre eux (pas d’addition).'),
+    cqW(`${F(A,B)} × ${F(C,D)} = ${F(`${A} × ${C}`,`${B} + ${D}`)}`,'on multiplie aussi les dénominateurs entre eux.')],true);
+  cqN(4,'nc1-inv-def-a','Deux nombres relatifs sont dits inverses si… est égal à 1.','leur produit',[
+    cqW('leur somme','si leur somme est égale à 0, les nombres sont opposés. Deux nombres inverses ont un produit égal à 1.'),
+    cqW('leur différence','deux nombres inverses ont un produit égal à 1.'),
+    cqW('leur quotient','deux nombres inverses ont un produit égal à 1.')],true);
+  cqN(4,'nc1-inv-def-b',cqPROP,'Deux nombres relatifs sont inverses si leur produit est égal à 1.',[
+    cqW('Deux nombres relatifs sont inverses si leur somme est égale à 0.','dans ce cas, les nombres sont opposés. Deux nombres inverses ont un produit égal à 1.'),
+    cqW('Deux nombres relatifs sont inverses si leur somme est égale à 1.','la somme n’intervient pas : deux nombres inverses ont un produit égal à 1.'),
+    cqW('Deux nombres relatifs sont inverses si leur produit est égal à 0.','le produit de deux nombres inverses est égal à 1.')]);
+  cqN(4,'nc1-inv-a-a',`Pour un nombre ${A} ≠ 0, l’inverse de ${A} est…`,F('1',A),[
+    cqW(`−${A}`,`${A} et −${A} sont opposés (leur somme est égale à 0). L’inverse de ${A} est ${F('1',A)}.`),
+    cqW(F(A,'1'),`${F(A,'1')} est égal à ${A} : ce n’est pas l’inverse de ${A}.`),
+    cqW(`1 − ${A}`,`en général, le produit de ${A} par 1 − ${A} n’est pas égal à 1 : l’inverse de ${A} est ${F('1',A)}.`)],true);
+  cqN(4,'nc1-inv-f-a',`Pour des nombres ${A} et ${B} (${A} ≠ 0 et ${B} ≠ 0), l’inverse de ${F(A,B)} est…`,F(B,A),[
+    cqW(`${NEG}${F(A,B)}`,'c’est l’opposé. L’inverse s’obtient en échangeant le numérateur et le dénominateur.'),
+    cqW(F('1',`${A} × ${B}`),`l’inverse de ${F(A,B)} est ${F(B,A)} : on échange le numérateur et le dénominateur.`),
+    cqW(F(A,B),`${F(A,B)} × ${F(A,B)} n’est pas égal à 1 en général : l’inverse de ${F(A,B)} est ${F(B,A)}.`)],true);
+  cqN(4,'nc1-div-a','Diviser par un nombre relatif (non nul) revient à multiplier par son…','inverse',[
+    cqW('opposé','diviser par un nombre ne revient pas à multiplier par son opposé : 6 ÷ 2 = 3 alors que 6 × (−2) = −12.'),
+    cqW('carré',`diviser par 2, ce n’est pas multiplier par 4 : c’est multiplier par ${F('1','2')}.`),
+    cqW('double',`diviser par 2, ce n’est pas multiplier par 2 : c’est multiplier par ${F('1','2')}.`)],true);
+  cqN(4,'nc1-div-b',`Pour des nombres ${A}, ${B}, ${C} et ${D} (${B} ≠ 0, ${C} ≠ 0 et ${D} ≠ 0), quelle égalité est vraie${cqQM}`,`${F(A,B)} ÷ ${F(C,D)} = ${F(A,B)} × ${F(D,C)}`,[
+    cqW(`${F(A,B)} ÷ ${F(C,D)} = ${F(A,B)} × ${F(C,D)}`,`diviser par ${F(C,D)} revient à multiplier par son inverse ${F(D,C)}.`),
+    cqW(`${F(A,B)} ÷ ${F(C,D)} = ${F(B,A)} × ${F(C,D)}`,`c’est par l’inverse de la deuxième fraction, ${F(C,D)}, qu’on multiplie (pas par l’inverse de la première).`),
+    cqW(`${F(A,B)} ÷ ${F(C,D)} = ${F(B,A)} × ${F(D,C)}`,`on garde la première fraction ${F(A,B)} et on multiplie par l’inverse de la deuxième.`)],true);
+  cqN(4,'nc1-div-c',`Pour des nombres ${A} et ${B} (${B} ≠ 0), ${A} ÷ ${B} = ${A} × …`,F('1',B),[
+    cqW(B,`diviser par ${B} revient à multiplier par l’inverse de ${B}, c’est-à-dire ${F('1',B)}.`),
+    cqW(`−${B}`,`diviser par ${B} revient à multiplier par l’inverse de ${B} (et non son opposé), c’est-à-dire ${F('1',B)}.`),
+    cqW(F(B,A),`l’inverse de ${B} est ${F('1',B)} (et non ${F(B,A)}).`)],true);
+})();
+
+/* ===== NC 2 – Puissances ===== */
+(function(){
+  const cqN=(th,id,stem,ok,wrong,short)=>CQ_CASES.push({ch:'nc2',th,pk:'p|'+id,make:()=>cqMakeProp({stem:cqM(stem),ok:cqM(ok),wrong:wrong.map(w=>({t:cqM(w.t),why:cqM(w.why)})),short})});
+  const A='<i>a</i>',B='<i>b</i>',N='<i>n</i>', P=(b,e)=>`${b}<sup>${e}</sup>`, F=(n,d)=>fracHTML(n,d);
+  const AN=P(A,N), TEN=P('10',N), ANEG=P(A,'−'+N), TENNEG=P('10','−'+N);
+  /* accolade sous un produit / un nombre, avec son étiquette (comme dans le cours) */
+  const UB=(top,label)=>`<span class="ubr"><span class="ubr-top">${top}</span><span class="ubr-br"><svg class="ubr-c" viewBox="0 0 6 6" aria-hidden="true"><path d="M.75 0C.75 3 2.5 5 6 5"/></svg><span class="ubr-l"></span><svg class="ubr-m" viewBox="0 0 14 10" aria-hidden="true"><path d="M0 5C3 5 7 4 7 9.5C7 4 11 5 14 5"/></svg><span class="ubr-l"></span><svg class="ubr-c" viewBox="0 0 6 6" aria-hidden="true"><path d="M0 5C3.5 5 5.25 3 5.25 0"/></svg></span><span class="ubr-lab">${label}</span></span>`;
+  const pre1=`Pour un nombre ${A} et un entier ${N} supérieur à 1, `;
+  const pre2=`Pour un nombre ${A} ≠ 0 et un entier ${N} supérieur à 1, `;
+
+  /* I – Puissances positives */
+  cqN(1,'nc2-pos-a',`${pre1}${AN} est égal à…`,UB(`${A} × ${A} × … × ${A}`,`${N} facteurs`),[
+    cqW(`${A} × ${N}`,`${A} × ${N} = ${A} + … + ${A} (${N} termes) ; ${AN} est un produit de ${N} facteurs égaux à ${A}.`),
+    cqW(UB(`${A} × ${A} × … × ${A}`,`${A} facteurs`),`le nombre de facteurs est l’exposant ${N}, pas ${A}.`),
+    cqW(UB(`${N} × ${N} × … × ${N}`,`${A} facteurs`),`le facteur qui se répète est ${A}, et il apparaît ${N} fois.`)],true);
+  cqN(1,'nc2-pos-b',cqPROP,`${pre1}${AN} = ${UB(`${A} × ${A} × … × ${A}`,`${N} facteurs`)}.`,[
+    cqW(`${pre1}${AN} = ${A} × ${N}.`,`${AN} est un produit de ${N} facteurs égaux à ${A}, et non le produit de ${A} par ${N}.`),
+    cqW(`${pre1}${AN} = ${UB(`${A} × ${A} × … × ${A}`,`${A} facteurs`)}.`,`le nombre de facteurs est l’exposant ${N}.`),
+    cqW(`${pre1}${AN} = ${UB(`${A} + ${A} + … + ${A}`,`${N} termes`)}.`,`c’est ${N} × ${A}, une somme de ${N} termes ; ${AN} est un produit de ${N} facteurs.`)]);
+  cqN(1,'nc2-pos-c',`Dans ${AN}, le nombre ${N} est appelé…`,'l’exposant',[
+    cqW('le facteur',`les facteurs sont les nombres ${A} qu’on multiplie ; ${N} est leur nombre, c’est l’exposant.`),
+    cqW('le coefficient',`${N} est l’exposant de ${A}.`),
+    cqW('le diviseur',`${N} est l’exposant de ${A}.`)],true);
+  cqN(1,'nc2-dix-a',`Pour un entier ${N} supérieur à 1, ${TEN} est égal à…`,`1 suivi de ${N} zéros`,[
+    cqW(`1 suivi de ${N} − 1 zéros`,`${P('10','2')} = 100 s’écrit avec 2 zéros, et non 1.`),
+    cqW(`${N} suivi de 10 zéros`,`${TEN} commence par le chiffre 1 et ${N} est le nombre de zéros.`),
+    cqW(`10 × ${N}`,`${P('10','2')} = 100, alors que 10 × 2 = 20.`)],true);
+  cqN(1,'nc2-dix-b',cqPROP,`Pour un entier ${N} supérieur à 1, ${TEN} = ${UB('10 × 10 × … × 10',`${N} facteurs`)} = ${UB('100…0',`${N} zéros`)}.`,[
+    cqW(`Pour un entier ${N} supérieur à 1, ${TEN} = ${UB('10 × 10 × … × 10',`${N} facteurs`)} = ${UB('100…0',`${N} + 1 zéros`)}.`,`${P('10','2')} = 100 s’écrit avec 2 zéros, pas 3.`),
+    cqW(`Pour un entier ${N} supérieur à 1, ${TEN} = ${UB('10 × 10 × … × 10',`${N} facteurs`)} = ${UB('100…0',`${N} − 1 zéros`)}.`,`${P('10','3')} = 1 000 s’écrit avec 3 zéros, pas 2.`),
+    cqW(`Pour un entier ${N} supérieur à 1, ${TEN} = 10 × ${N}.`,`${P('10','3')} = 10 × 10 × 10 = 1 000, alors que 10 × 3 = 30.`)]);
+  cqN(1,'nc2-dix-c',`Le produit ${UB('10 × 10 × … × 10',`${N} facteurs`)} est égal à…`,TEN,[
+    cqW(`10 × ${N}`,`un produit de ${N} facteurs égaux à 10 s’écrit ${TEN}.`),
+    cqW(P(N,'10'),`${P(N,'10')} serait un produit de 10 facteurs égaux à ${N}.`),
+    cqW(`10 + ${N}`,`un produit de ${N} facteurs égaux à 10 s’écrit ${TEN}.`)],true);
+
+  /* II – Puissances négatives */
+  cqN(2,'nc2-inv-a',`${pre2}${ANEG} est … du nombre ${AN}.`,'l’inverse',[
+    cqW('l’opposé',`l’opposé de ${AN} est −${AN} ; ${ANEG} est son inverse (leur produit est égal à 1).`),
+    cqW('le carré',`${ANEG} est l’inverse de ${AN}.`),
+    cqW('le double',`${ANEG} est l’inverse de ${AN}.`)],true);
+  cqN(2,'nc2-inv-b',cqPROP,`${pre2}${ANEG} est l’inverse de ${AN}.`,[
+    cqW(`${pre2}${ANEG} est l’opposé de ${AN}.`,`l’opposé de ${AN} est −${AN} ; ${ANEG} est son inverse.`),
+    cqW(`${pre2}${ANEG} est égal à (−${A})<sup>${N}</sup>.`,`(−${A})<sup>${N}</sup> vaut ${AN} ou −${AN} selon la parité de ${N} : ce n’est pas l’inverse de ${AN}.`),
+    cqW(`${pre2}${ANEG} est égal à ${A} × (−${N}).`,`une puissance n’est pas un produit : ${ANEG} est l’inverse de ${AN}.`)]);
+  cqN(2,'nc2-inv-c',`${pre2}quelle égalité est vraie${cqQM}`,`${ANEG} = ${F('1',AN)}`,[
+    cqW(`${ANEG} = −${AN}`,`−${AN} est l’opposé de ${AN} ; l’inverse de ${AN} est ${F('1',AN)}.`),
+    cqW(`${ANEG} = ${F('1',`${A} × ${N}`)}`,`${AN} est un produit de ${N} facteurs égaux à ${A}, pas le produit ${A} × ${N}.`),
+    cqW(`${ANEG} = ${F('−1',AN)}`,`${ANEG} est l’inverse de ${AN}, c’est-à-dire ${F('1',AN)}.`)],true);
+  cqN(2,'nc2-inv-d',`${pre2}${ANEG} = ${F('1',`${A} × ${A} × … × ${A}`)} où le dénominateur contient…`,`${N} facteurs`,[
+    cqW(`${N} − 1 facteurs`,`le dénominateur est ${AN}, produit de ${N} facteurs égaux à ${A}.`),
+    cqW(`${A} facteurs`,`le nombre de facteurs est l’exposant ${N}.`),
+    cqW(`${N} + 1 facteurs`,`le dénominateur est ${AN}, produit de ${N} facteurs égaux à ${A}.`)],true);
+  cqN(2,'nc2-neg-a',`Pour un entier ${N} supérieur à 1, ${TENNEG} est égal à…`,F('1',TEN),[
+    cqW(`−${TEN}`,`${P('10','−2')} = 0,01 est positif, alors que −${P('10','2')} = −100.`),
+    cqW(TEN,`${TEN} est très grand (100…0) ; ${TENNEG} est son inverse, très petit.`),
+    cqW(F('1',`10 × ${N}`),`${P('10','−2')} = ${F('1',P('10','2'))} = ${F('1','100')}, et non ${F('1','10 × 2')}.`)],true);
+  cqN(2,'nc2-neg-b',cqPROP,`Pour un entier ${N} supérieur à 1, ${TENNEG} = ${UB('0,0…0',`${N} zéros`)}1 (le zéro avant la virgule compris).`,[
+    cqW(`Pour un entier ${N} supérieur à 1, ${TENNEG} = ${UB('100…0',`${N} zéros`)}.`,`100…0 est ${TEN} ; ${TENNEG} est son inverse.`),
+    cqW(`Pour un entier ${N} supérieur à 1, ${TENNEG} = −${UB('100…0',`${N} zéros`)}.`,`${TENNEG} est positif : par exemple ${P('10','−2')} = 0,01.`)]);
+  cqN(2,'nc2-zero-a',`Pour un nombre ${A} ≠ 0, ${P(A,'0')} est égal à…`,'1',[
+    cqW(A,`${P(A,'1')} = ${A}, mais par convention ${P(A,'0')} = 1.`),
+    cqW('0',`par convention, ${P(A,'0')} = 1.`),
+    cqW('−1',`par convention, ${P(A,'0')} = 1.`)],true);
+  cqN(2,'nc2-zero-b',cqPROP,`Par convention, pour un nombre ${A} ≠ 0, ${P(A,'0')} = 1.`,[
+    cqW(`Par convention, pour un nombre ${A} ≠ 0, ${P(A,'0')} = 0.`,`par convention ${P(A,'0')} = 1.`),
+    cqW(`Par convention, pour un nombre ${A} ≠ 0, ${P(A,'0')} = ${A}.`,`${A} = ${P(A,'1')} ; par convention ${P(A,'0')} = 1.`),
+    cqW(`Par convention, pour un nombre ${A} ≠ 0, ${P(A,'0')} = −1.`,`par convention ${P(A,'0')} = 1.`)]);
+
+  /* III – Règles de calcul */
+  cqN(3,'nc2-prio-a','Dans une expression sans parenthèses, on calcule d’abord…','les puissances',[
+    cqW('les additions',`les puissances sont prioritaires : dans 5 + 2 × ${P('5','3')}, on calcule d’abord ${P('5','3')} = 125.`),
+    cqW('les multiplications',`les puissances sont prioritaires sur les multiplications : dans 5 + 2 × ${P('5','3')}, on calcule ${P('5','3')} = 125 avant de multiplier par 2.`),
+    cqW('les opérations, de gauche à droite',`il y a des priorités : on calcule d’abord les puissances.`)]);
+  cqN(3,'nc2-prio-b',cqPROP,'Dans une expression sans parenthèses, les puissances sont prioritaires sur les multiplications et sur les additions.',[
+    cqW('Dans une expression sans parenthèses, les multiplications sont prioritaires sur les puissances.',`ce sont les puissances qui sont prioritaires.`),
+    cqW('Dans une expression sans parenthèses, les additions sont prioritaires sur les puissances.',`ce sont les puissances qui sont prioritaires.`),
+    cqW('Dans une expression sans parenthèses, on calcule toujours de gauche à droite, sans priorité.',`les puissances sont prioritaires sur les multiplications et les additions.`)]);
+  cqN(3,'nc2-prio-c',`Dans l’expression ${B} × ${AN} (sans parenthèses), l’exposant ${N} s’applique…`,`au nombre ${A} seulement`,[
+    cqW(`au produit ${B} × ${A}`,`les puissances sont prioritaires : on calcule ${AN}, puis on multiplie par ${B}. Pour élever le produit à la puissance ${N}, il faudrait des parenthèses : (${B} × ${A})<sup>${N}</sup>.`),
+    cqW(`au nombre ${B} seulement`,`l’exposant ${N} est écrit à droite de ${A} : il s’applique à ${A}.`),
+    cqW(`à tous les nombres de l’expression`,`l’exposant ${N} s’applique seulement à ${A}, le nombre qui est juste avant lui.`)]);
+  cqN(3,'nc2-sign-a',`Pour un nombre ${A} positif et un entier ${N} pair, (−${A})<sup>${N}</sup> est égal à…`,AN,[
+    cqW(`−${AN}`,`${N} est pair : le produit de ${N} facteurs négatifs est positif.`),
+    cqW(A,`(−${A})<sup>${N}</sup> est une puissance de ${A} d’exposant ${N} : on obtient ${AN}.`),
+    cqW(`−${A}`,`(−${A})<sup>${N}</sup> est une puissance de ${A} d’exposant ${N} : on obtient ${AN}.`)],true);
+  cqN(3,'nc2-sign-b',`Pour un nombre ${A} positif et un entier ${N} impair, (−${A})<sup>${N}</sup> est égal à…`,`−${AN}`,[
+    cqW(AN,`${N} est impair : le produit de ${N} facteurs négatifs est négatif.`),
+    cqW(A,`(−${A})<sup>${N}</sup> est une puissance de ${A} d’exposant ${N} : on obtient −${AN}.`),
+    cqW(`−${A}`,`(−${A})<sup>${N}</sup> est une puissance de ${A} d’exposant ${N} : on obtient −${AN}.`)],true);
+  cqN(3,'nc2-sign-c',cqPROP,`Pour un nombre ${A} positif : (−${A})<sup>${N}</sup> = ${AN} si ${N} est pair et (−${A})<sup>${N}</sup> = −${AN} si ${N} est impair.`,[
+    cqW(`Pour un nombre ${A} positif : (−${A})<sup>${N}</sup> = −${AN} si ${N} est pair et (−${A})<sup>${N}</sup> = ${AN} si ${N} est impair.`,`les deux cas sont inversés : si ${N} est pair, (−${A})<sup>${N}</sup> est positif.`),
+    cqW(`Pour un nombre ${A} positif : (−${A})<sup>${N}</sup> = ${AN} quel que soit ${N}.`,`si ${N} est impair, (−${A})<sup>${N}</sup> est négatif : (−2)<sup>3</sup> = −8.`),
+    cqW(`Pour un nombre ${A} positif : (−${A})<sup>${N}</sup> = −${AN} quel que soit ${N}.`,`si ${N} est pair, (−${A})<sup>${N}</sup> est positif : (−3)<sup>4</sup> = 81.`)]);
+  cqN(3,'nc2-sign-d',`Pour un nombre ${A} positif, le signe de (−${A})<sup>${N}</sup> dépend…`,`de la parité de ${N} (pair ou impair)`,[
+    cqW(`de la valeur de ${A}`,`${A} est positif ; c’est la parité de ${N} qui décide du signe.`),
+    cqW(`du nombre de chiffres de ${A}`,`c’est la parité de ${N} qui décide du signe.`),
+    cqW(`de rien : (−${A})<sup>${N}</sup> est toujours négatif`,`si ${N} est pair, (−${A})<sup>${N}</sup> est positif.`)]);
+  cqN(3,'nc2-sgn-a',`Pour un nombre ${A} positif non nul et un entier ${N} impair, (−${A})<sup>−${N}</sup> est…`,'négatif',[
+    cqW('positif',`(−${A})<sup>−${N}</sup> = ${F('1',`(−${A})<sup>${N}</sup>`)} et (−${A})<sup>${N}</sup> est négatif car ${N} est impair.`),
+    cqW('nul',`un inverse n’est jamais nul : (−${A})<sup>−${N}</sup> = ${F('1',`(−${A})<sup>${N}</sup>`)}.`),
+    cqW('impossible à calculer',`(−${A})<sup>−${N}</sup> est l’inverse de (−${A})<sup>${N}</sup>, qui est non nul.`)],true);
+  cqN(3,'nc2-sgn-b',`Pour un nombre ${A} positif non nul et un entier ${N} pair, (−${A})<sup>−${N}</sup> est…`,'positif',[
+    cqW('négatif',`(−${A})<sup>−${N}</sup> = ${F('1',`(−${A})<sup>${N}</sup>`)} et (−${A})<sup>${N}</sup> est positif car ${N} est pair.`),
+    cqW('nul',`un inverse n’est jamais nul : (−${A})<sup>−${N}</sup> = ${F('1',`(−${A})<sup>${N}</sup>`)}.`),
+    cqW('impossible à calculer',`(−${A})<sup>−${N}</sup> est l’inverse de (−${A})<sup>${N}</sup>, qui est non nul.`)],true);
+
+  /* IV – Écriture scientifique */
+  const SCI=`${A} × ${TEN}`;
+  cqN(4,'nc2-sci-a','L’écriture scientifique d’un nombre décimal positif est de la forme…',SCI,[
+    cqW(`${AN} × 10`,`c’est la puissance de 10 qui porte l’exposant : ${SCI}.`),
+    cqW(`${A} + ${TEN}`,`l’écriture scientifique est un produit : ${SCI}.`),
+    cqW(`${A} × ${N}`,`l’écriture scientifique fait intervenir une puissance de 10 : ${SCI}.`)],true);
+  cqN(4,'nc2-sci-b',`Dans l’écriture scientifique ${SCI}, quelle proposition est vraie${cqQM}`,`${A} est un nombre décimal tel que 1 ≤ ${A} < 10 et ${N} est un entier relatif.`,[
+    cqW(`${A} est un nombre décimal tel que 0 ≤ ${A} < 1 et ${N} est un entier relatif.`,`${A} est compris entre 1 (inclus) et 10 (exclu).`),
+    cqW(`${A} est un nombre décimal tel que 1 ≤ ${A} ≤ 10 et ${N} est un entier relatif.`,`${A} ne peut pas valoir 10 : 10 = 1 × 10<sup>1</sup>, avec ${A} = 1.`),
+    cqW(`${A} est un nombre décimal tel que 1 ≤ ${A} < 10 et ${N} est un entier naturel.`,`${N} est un entier relatif : il peut être négatif, par exemple 0,000 000 000 12 = 1,2 × 10<sup>−10</sup>.`)]);
+  cqN(4,'nc2-sci-c',`Dans l’écriture scientifique ${SCI}, le nombre ${A} est un nombre décimal tel que…`,`1 ≤ ${A} < 10`,[
+    cqW(`0 < ${A} < 1`,`${A} est supérieur ou égal à 1 et strictement inférieur à 10.`),
+    cqW(`1 < ${A} ≤ 10`,`${A} peut valoir 1 mais pas 10 : 1 ≤ ${A} < 10.`),
+    cqW(`10 ≤ ${A} < 100`,`${A} est supérieur ou égal à 1 et strictement inférieur à 10.`)],true);
+  cqN(4,'nc2-sci-d',`Dans l’écriture scientifique ${SCI}, l’exposant ${N} est…`,'un entier relatif',[
+    cqW('un entier naturel',`${N} peut être négatif : 0,000 000 000 12 = 1,2 × 10<sup>−10</sup>.`),
+    cqW(`un nombre décimal tel que 1 ≤ ${N} < 10`,`c’est la condition qui porte sur ${A}, pas sur ${N}.`),
+    cqW('un nombre décimal quelconque',`${N} est un entier (positif, négatif ou nul).`)],true);
+})();
+
+/* ===== NC 3 – Calcul littéral ===== */
+(function(){
+  const cqN=(th,id,stem,ok,wrong,short)=>CQ_CASES.push({ch:'nc3',th,pk:'p|'+id,make:()=>cqMakeProp({stem:cqM(stem),ok:cqM(ok),wrong:wrong.map(w=>({t:cqM(w.t),why:cqM(w.why)})),short})});
+  const I=t=>`<i>${t}</i>`, A=I('a'),B=I('b'),C=I('c'),D=I('d'),K=I('k'),X=I('x');
+  const P=(b,e)=>`${b}<sup>${e}</sup>`, A2=P(A,'2'), B2=P(B,'2');
+  const pre3=`Pour des nombres ${A}, ${B} et ${K}, `, pre4=`Pour des nombres ${A}, ${B}, ${C} et ${D}, `, preAB=`Pour des nombres ${A} et ${B}, `;
+
+  /* I – Développer */
+  cqN(1,'nc3-def-a','Développer une expression littérale, c’est l’écrire sous forme d’une…','somme',[
+    cqW('produit','écrire une expression sous forme d’un produit, c’est la factoriser.'),
+    cqW('fraction','développer, c’est écrire l’expression sous forme d’une somme.'),
+    cqW('puissance','développer, c’est écrire l’expression sous forme d’une somme.')],true);
+  cqN(1,'nc3-def-b',cqPROP,'Développer une expression littérale, c’est l’écrire sous forme d’une somme.',[
+    cqW('Développer une expression littérale, c’est l’écrire sous forme d’un produit.','c’est factoriser qui consiste à écrire sous forme d’un produit.'),
+    cqW('Développer une expression littérale, c’est l’écrire avec le moins de termes possibles.','c’est réduire qui consiste à écrire avec le moins de termes possibles.'),
+    cqW('Développer une expression littérale, c’est remplacer chaque lettre par un nombre.','remplacer les lettres par des nombres permet de calculer une valeur de l’expression ; développer, c’est l’écrire sous forme d’une somme.')]);
+  cqN(1,'nc3-red-a','Réduire une expression littérale revient à l’écrire avec…','le moins de termes possibles',[
+    cqW('le plus de termes possibles',`réduire, c’est regrouper les termes : 3${X} + 2${X} = 5${X}.`),
+    cqW('le moins de facteurs possibles',`réduire porte sur les termes d’une somme : 3${X} + 2${X} = 5${X}.`),
+    cqW('uniquement des nombres',`une expression réduite peut contenir des lettres : 5${X} + 1 est réduite.`)],true);
+  cqN(1,'nc3-sim-a',`${pre3}${K}(${A} + ${B}) est égal à…`,`${I('ka')} + ${I('kb')}`,[
+    cqW(`${I('ka')} + ${B}`,`${K} multiplie chaque terme de la parenthèse : ${K}(${A} + ${B}) = ${I('ka')} + ${I('kb')}.`),
+    cqW(I('kab'),`${K}(${A} + ${B}) est le produit de ${K} par une somme ; ce n’est pas le produit ${I('kab')}.`),
+    cqW(`${K} + ${I('ab')}`,`${K} multiplie ${A} et ${B} : ${K}(${A} + ${B}) = ${I('ka')} + ${I('kb')}.`)],true);
+  cqN(1,'nc3-sim-b',cqPROP,`${pre3}on a : ${K}(${A} + ${B}) = ${I('ka')} + ${I('kb')}.`,[
+    cqW(`${pre3}on a : ${K}(${A} + ${B}) = ${I('ka')} + ${B}.`,`${K} doit multiplier chaque terme de la parenthèse, donc aussi ${B}.`),
+    cqW(`${pre3}on a : ${K}(${A} + ${B}) = ${I('kab')}.`,`${K}(${A} + ${B}) est un produit de ${K} par une somme ; ${I('kab')} serait ${K}(${A} × ${B}).`),
+    cqW(`${pre3}on a : ${K}(${A} + ${B}) = ${I('ka')} − ${I('kb')}.`,`le signe + entre ${A} et ${B} ne change pas : ${K}(${A} + ${B}) = ${I('ka')} + ${I('kb')}.`)]);
+  cqN(1,'nc3-sim-c',`${preAB}−(${A} − ${B}) est égal à…`,`−${A} + ${B}`,[
+    cqW(`−${A} − ${B}`,`le signe − devant la parenthèse change tous les signes : −(${A} − ${B}) = −${A} − (−${B}) = −${A} + ${B}.`),
+    cqW(`${A} − ${B}`,`−(${A} − ${B}) est l’opposé de ${A} − ${B}, donc −${A} + ${B}.`),
+    cqW(`${A} + ${B}`,`on change le signe de chaque terme de la parenthèse : −(${A} − ${B}) = −${A} + ${B}.`)],true);
+  cqN(1,'nc3-dbl-a',`${pre4}(${A} + ${B})(${C} + ${D}) est égal à…`,`${I('ac')} + ${I('ad')} + ${I('bc')} + ${I('bd')}`,[
+    cqW(`${I('ac')} + ${I('bd')}`,`chaque terme de la première parenthèse multiplie chaque terme de la seconde : il y a 4 produits, pas 2.`),
+    cqW(`${I('ac')} + ${I('ad')} + ${I('bc')}`,`il manque le produit ${I('bd')} : ${B} multiplie ${C} et ${D}.`),
+    cqW(`${I('ac')} + ${I('ad')} + ${I('bc')} − ${I('bd')}`,`${I('bd')} = ${B} × ${D} est ajouté comme les autres produits.`)],true);
+  cqN(1,'nc3-dbl-b',cqPROP,`${pre4}on a : (${A} + ${B})(${C} + ${D}) = ${I('ac')} + ${I('ad')} + ${I('bc')} + ${I('bd')}.`,[
+    cqW(`${pre4}on a : (${A} + ${B})(${C} + ${D}) = ${I('ac')} + ${I('bd')}.`,`chaque terme d’une parenthèse multiplie chaque terme de l’autre : 4 produits.`),
+    cqW(`${pre4}on a : (${A} + ${B})(${C} + ${D}) = ${A}(${C} + ${D}) + ${B}.`,`${B} doit lui aussi multiplier (${C} + ${D}) : ${A}(${C} + ${D}) + ${B}(${C} + ${D}).`),
+    cqW(`${pre4}on a : (${A} + ${B})(${C} + ${D}) = (${A} + ${B})${C} + ${D}.`,`${D} doit lui aussi être multiplié par (${A} + ${B}) : (${A} + ${B})${C} + (${A} + ${B})${D}.`)]);
+  cqN(1,'nc3-dbl-c',`En développant (${A} + ${B})(${C} + ${D}), on obtient une somme de… produits.`,'4',[
+    cqW('2',`chaque terme de la première parenthèse (2 termes) multiplie chaque terme de la seconde (2 termes) : 2 × 2 = 4 produits.`),
+    cqW('3',`chaque terme de la première parenthèse (2 termes) multiplie chaque terme de la seconde (2 termes) : 2 × 2 = 4 produits.`),
+    cqW('6',`chaque terme de la première parenthèse (2 termes) multiplie chaque terme de la seconde (2 termes) : 2 × 2 = 4 produits.`)],true);
+
+  /* II – Factoriser */
+  cqN(2,'nc3-fdef-a','Factoriser une expression, c’est l’écrire sous forme d’un…','produit de facteurs',[
+    cqW('somme de termes','écrire une expression sous forme d’une somme, c’est la développer.'),
+    cqW('quotient','factoriser, c’est écrire l’expression sous forme d’un produit de facteurs.'),
+    cqW('carré','factoriser, c’est écrire l’expression sous forme d’un produit de facteurs.')],true);
+  cqN(2,'nc3-fdef-b',cqPROP,'Factoriser une expression, c’est l’écrire sous forme d’un produit de facteurs.',[
+    cqW('Factoriser une expression, c’est l’écrire sous forme d’une somme de termes.','c’est développer qui consiste à écrire sous forme d’une somme.'),
+    cqW('Factoriser une expression, c’est l’écrire avec le moins de termes possibles.','c’est réduire qui consiste à écrire avec le moins de termes possibles.'),
+    cqW('Factoriser une expression, c’est remplacer chaque lettre par un nombre.','remplacer les lettres par des nombres permet de calculer une valeur de l’expression ; factoriser, c’est l’écrire sous forme d’un produit.')]);
+  cqN(2,'nc3-fac-a',`${pre3}${I('ka')} + ${I('kb')} est égal à…`,`${K}(${A} + ${B})`,[
+    cqW(`${K}(${A} + ${K}${B})`,`${K}(${A} + ${I('kb')}) = ${I('ka')} + ${P(K,'2')}${B} : ${K} ne doit plus apparaître dans la parenthèse.`),
+    cqW(`${A}(${K} + ${B})`,`${A}(${K} + ${B}) = ${I('ak')} + ${I('ab')}, ce n’est pas ${I('ka')} + ${I('kb')}.`),
+    cqW(`${K}(${I('ab')})`,`${K}(${I('ab')}) = ${I('kab')}, ce n’est pas ${I('ka')} + ${I('kb')}.`)],true);
+  cqN(2,'nc3-fac-b',cqPROP,`${pre3}on a : ${I('ka')} + ${I('kb')} = ${K}(${A} + ${B}).`,[
+    cqW(`${pre3}on a : ${I('ka')} + ${I('kb')} = ${K}(${A} − ${B}).`,`${K}(${A} − ${B}) = ${I('ka')} − ${I('kb')} : le signe + doit rester.`),
+    cqW(`${pre3}on a : ${I('ka')} + ${I('kb')} = ${A}(${K} + ${B}).`,`${A}(${K} + ${B}) = ${I('ak')} + ${I('ab')}, ce n’est pas ${I('ka')} + ${I('kb')}.`),
+    cqW(`${pre3}on a : ${I('ka')} + ${I('kb')} = ${I('kab')}.`,`${I('ka')} + ${I('kb')} est une somme ; ${I('kab')} est un produit.`)]);
+
+  /* III – Identités remarquables */
+  cqN(3,'nc3-ip-a',`${preAB}(${A} + ${B})(${A} − ${B}) est égal à…`,`${A2} − ${B2}`,[
+    cqW(`${A2} + ${B2}`,`(${A} + ${B})(${A} − ${B}) = ${A2} − ${I('ab')} + ${I('ab')} − ${B2} = ${A2} − ${B2}.`),
+    cqW(`${A2} − 2${I('ab')} + ${B2}`,`c’est le développement de (${A} − ${B})<sup>2</sup> ; ici les termes en ${I('ab')} s’annulent.`),
+    cqW(`${A2} + 2${I('ab')} + ${B2}`,`c’est le développement de (${A} + ${B})<sup>2</sup> ; ici les termes en ${I('ab')} s’annulent.`)],true);
+  cqN(3,'nc3-ip-b',cqPROP,`${preAB}(${A} + ${B})(${A} − ${B}) = ${A2} − ${B2}.`,[
+    cqW(`${preAB}(${A} + ${B})(${A} − ${B}) = ${A2} + ${B2}.`,`(${A} + ${B})(${A} − ${B}) = ${A2} − ${I('ab')} + ${I('ab')} − ${B2} = ${A2} − ${B2}.`),
+    cqW(`${preAB}(${A} + ${B})(${A} − ${B}) = (${A} − ${B})<sup>2</sup>.`,`(${A} − ${B})<sup>2</sup> = ${A2} − 2${I('ab')} + ${B2}, ce qui est différent de ${A2} − ${B2}.`),
+    cqW(`${preAB}(${A} + ${B})(${A} − ${B}) = ${A2} − 2${I('ab')} + ${B2}.`,`les termes en ${I('ab')} s’annulent : −${I('ab')} + ${I('ab')} = 0.`)]);
+  cqN(3,'nc3-is-a',`${preAB}(${A} + ${B})<sup>2</sup> est égal à…`,`${A2} + 2${I('ab')} + ${B2}`,[
+    cqW(`${A2} + ${B2}`,`il manque le double produit : (${A} + ${B})<sup>2</sup> = (${A} + ${B})(${A} + ${B}) = ${A2} + ${I('ab')} + ${I('ab')} + ${B2}.`),
+    cqW(`${A2} − 2${I('ab')} + ${B2}`,`c’est le développement de (${A} − ${B})<sup>2</sup>.`),
+    cqW(`${A2} + ${I('ab')} + ${B2}`,`le double produit est 2${I('ab')} : on l’obtient deux fois (${I('ab')} + ${I('ab')}).`)],true);
+  cqN(3,'nc3-is-b',cqPROP,`${preAB}(${A} + ${B})<sup>2</sup> = ${A2} + 2${I('ab')} + ${B2}.`,[
+    cqW(`${preAB}(${A} + ${B})<sup>2</sup> = ${A2} + ${B2}.`,`par exemple (1 + 2)<sup>2</sup> = 9, alors que 1<sup>2</sup> + 2<sup>2</sup> = 5.`),
+    cqW(`${preAB}(${A} + ${B})<sup>2</sup> = ${A2} + ${I('ab')} + ${B2}.`,`par exemple (1 + 1)<sup>2</sup> = 4, alors que 1<sup>2</sup> + 1 × 1 + 1<sup>2</sup> = 3.`),
+    cqW(`${preAB}(${A} + ${B})<sup>2</sup> = 2${A} + 2${B}.`,`par exemple (1 + 2)<sup>2</sup> = 9, alors que 2 × 1 + 2 × 2 = 6.`)]);
+  cqN(3,'nc3-id-a',`${preAB}(${A} − ${B})<sup>2</sup> est égal à…`,`${A2} − 2${I('ab')} + ${B2}`,[
+    cqW(`${A2} − ${B2}`,`${A2} − ${B2} est le développement de (${A} + ${B})(${A} − ${B}).`),
+    cqW(`${A2} − 2${I('ab')} − ${B2}`,`le carré de ${B} s’ajoute : (−${B})<sup>2</sup> = ${B2} est positif.`),
+    cqW(`${A2} + 2${I('ab')} + ${B2}`,`c’est le développement de (${A} + ${B})<sup>2</sup>.`)],true);
+  cqN(3,'nc3-id-b',cqPROP,`${preAB}(${A} − ${B})<sup>2</sup> = ${A2} − 2${I('ab')} + ${B2}.`,[
+    cqW(`${preAB}(${A} − ${B})<sup>2</sup> = ${A2} − ${B2}.`,`par exemple (3 − 1)<sup>2</sup> = 4, alors que 3<sup>2</sup> − 1<sup>2</sup> = 8.`),
+    cqW(`${preAB}(${A} − ${B})<sup>2</sup> = ${A2} − 2${I('ab')} − ${B2}.`,`le carré de ${B} s’ajoute : par exemple (3 − 1)<sup>2</sup> = 4, alors que 3<sup>2</sup> − 2 × 3 × 1 − 1<sup>2</sup> = 2.`),
+    cqW(`${preAB}(${A} − ${B})<sup>2</sup> = ${A2} + 2${I('ab')} + ${B2}.`,`par exemple (3 − 1)<sup>2</sup> = 4, alors que 3<sup>2</sup> + 2 × 3 × 1 + 1<sup>2</sup> = 16.`)]);
+  cqN(3,'nc3-ifa-a',`${preAB}${A2} − ${B2} peut se factoriser en…`,`(${A} + ${B})(${A} − ${B})`,[
+    cqW(`(${A} − ${B})<sup>2</sup>`,`(${A} − ${B})<sup>2</sup> = ${A2} − 2${I('ab')} + ${B2}.`),
+    cqW(`(${A} + ${B})<sup>2</sup>`,`(${A} + ${B})<sup>2</sup> = ${A2} + 2${I('ab')} + ${B2}.`),
+    cqW(`${A}(${A} − ${B})`,`${A}(${A} − ${B}) = ${A2} − ${I('ab')}.`)],true);
+})();
+
+/* Regroupement des questions en « notions » (utilisé par les révisions personnalisées : un thème se déroule en notions) */
+const CQ_GLAB={perp:'Deux droites perpendiculaires à une même droite',para:'Deux droites parallèles à une même droite',mix:'Parallèles et perpendiculaire',
+  tri:'Somme des angles d’un triangle',rect:'Angles aigus d’un triangle rectangle'};
+const CQ_SECLAB={'pave-face':'Section d’un pavé droit (plan parallèle à une face)','pave-arete':'Section d’un pavé droit (plan parallèle à une arête)',
+  'cyl-base':'Section d’un cylindre (plan parallèle à une base)','cyl-perp':'Section d’un cylindre (plan perpendiculaire à une base)',
+  'pyr-base':'Section d’une pyramide ou d’un cône','sphere':'Section d’une sphère'};
+/* ===== Questions de cours 6e – EG 1 : Vocabulaire et notations =====
+   Thèmes : 1 = I – Vocabulaire · 2 = II – Position de deux droites
+   Toutes les questions sont des définitions et des notations du cours. */
+Object.assign(CQ_GLAB,{droite:'Droite passant par deux points',align:'Points alignés',app:'Appartenance d’un point à une droite',
+  dd:'Demi-droite',seg:'Segment',long:'Longueur d’un segment',mil:'Milieu d’un segment',
+  par:'Droites parallèles',sec:'Droites sécantes',ang:'Droites perpendiculaires',sym:'Notations // et ⊥',fpos:'Position de deux droites (figure)'});
+(function(){
+  const fx=cqM;
+  const N=(th,id,stem,ok,wrong,short)=>CQ_CASES.push({ch:'6eg1',th,pk:'p|'+id,make:()=>cqMakeProp({stem:fx(stem),ok:fx(ok),wrong:wrong.map(w=>({t:fx(w.t),why:fx(w.why)})),short})});
+  const A=cqI('A'), B=cqI('B'), C=cqI('C'), D=cqI('D'), AB=cqI('AB'), BA=cqI('BA'), AC=cqI('AC'), CB=cqI('CB'), d=cqI('d'), dp=cqI('d')+'′';
+  const line=s=>`(${s})`, seg=s=>`[${s}]`, half=s=>`[${s})`;
+  const dr=line(d), drp=line(dp);
+
+  /* I – Vocabulaire */
+  N(1,'droite-a',`La droite passant par les points ${A} et ${B} se note…`,line(AB),[
+    cqW(seg(AB),'les crochets [ ] désignent un segment ; pour une droite, on utilise des parenthèses.'),
+    cqW(half(AB),`${half(AB)} est la demi-droite d’origine ${A} passant par ${B}.`),
+    cqW(AB,`${AB}, sans parenthèses ni crochets, désigne la longueur du segment ${seg(AB)}.`)],true);
+  N(1,'droite-b',cqPROP,`La droite passant par ${A} et ${B} se note ${line(AB)}.`,[
+    cqW(`La droite passant par ${A} et ${B} se note ${seg(AB)}.`,'les crochets [ ] désignent un segment ; une droite se note avec des parenthèses.'),
+    cqW(`La droite passant par ${A} et ${B} se note ${half(AB)}.`,`${half(AB)} est une demi-droite ; une droite se note avec des parenthèses.`),
+    cqW(`La droite passant par ${A} et ${B} se note ${AB}.`,`${AB} désigne la longueur du segment ${seg(AB)} ; une droite se note avec des parenthèses.`)]);
+  N(1,'droite-c',`Les notations ${line(AB)} et ${line(BA)} désignent…`,'la même droite',[
+    cqW('deux droites différentes','la droite passant par A et B est la même, quel que soit l’ordre des points.'.replace('A',A).replace('B',B)),
+    cqW('deux demi-droites','des parenthèses désignent une droite, pas une demi-droite.'),
+    cqW('deux segments de même longueur','des parenthèses désignent une droite, pas un segment.')],true);
+  N(1,'align-a','Des points sont alignés s’ils sont…','sur la même droite',[
+    cqW('sur deux droites parallèles','des points alignés sont sur une seule et même droite.'),
+    cqW('à la même distance les uns des autres','des points alignés sont simplement sur une même droite, à n’importe quelle distance les uns des autres.'),
+    cqW('sur deux droites sécantes','des points alignés sont sur une seule et même droite, pas sur deux droites qui se coupent.')],true);
+  N(1,'app-a',`Le point ${C} appartient à la droite ${dr}. On note…`,`${C} ∈ ${dr}`,[
+    cqW(`${C} ∉ ${dr}`,'∉ se lit « n’appartient pas à » : ici, le point est bien sur la droite.'),
+    cqW(`${C} ⊥ ${dr}`,'⊥ se lit « est perpendiculaire à » et s’utilise pour deux droites.'),
+    cqW(`${C} // ${dr}`,'// s’utilise pour deux droites parallèles, pas pour un point et une droite.')],true);
+  N(1,'app-b',`Le point ${D} n’appartient pas à la droite ${dr}. On note…`,`${D} ∉ ${dr}`,[
+    cqW(`${D} ∈ ${dr}`,'∈ se lit « appartient à » : ici, le point n’est pas sur la droite.'),
+    cqW(`${D} ⊥ ${dr}`,'⊥ se lit « est perpendiculaire à » et s’utilise pour deux droites.'),
+    cqW(`${D} // ${dr}`,'// s’utilise pour deux droites parallèles, pas pour un point et une droite.')],true);
+  N(1,'dd-a','Le morceau de droite délimité d’un seul côté par un point s’appelle…','une demi-droite',[
+    cqW('un segment','un segment est délimité des deux côtés, par deux points.'),
+    cqW('une droite','une droite n’est délimitée d’aucun côté.'),
+    cqW('un milieu','un milieu est un point, pas un morceau de droite.')],true);
+  N(1,'dd-b','Le point qui délimite une demi-droite s’appelle…','l’origine',[
+    cqW('l’extrémité','on parle d’extrémités pour un segment ; une demi-droite a une origine.'),
+    cqW('le milieu','le milieu est un point d’un segment, à égale distance de ses extrémités.'),
+    cqW('le sommet','le point qui délimite une demi-droite s’appelle l’origine.')],true);
+  N(1,'dd-c',`La demi-droite d’origine ${A} passant par ${B} se note…`,half(AB),[
+    cqW(line(AB),`${line(AB)} est la droite passant par ${A} et ${B}.`),
+    cqW(seg(AB),`${seg(AB)} est le segment d’extrémités ${A} et ${B}.`),
+    cqW(AB,`${AB} désigne la longueur du segment ${seg(AB)}.`)],true);
+  N(1,'dd-d',cqPROP,`La demi-droite d’origine ${A} passant par ${B} se note ${half(AB)}.`,[
+    cqW(`La demi-droite d’origine ${A} passant par ${B} se note ${half(BA)}.`,`${half(BA)} est la demi-droite d’origine ${B} : l’origine s’écrit en premier.`),
+    cqW(`La demi-droite d’origine ${A} passant par ${B} se note ${line(AB)}.`,`${line(AB)} est la droite entière passant par ${A} et ${B}.`),
+    cqW(`La demi-droite d’origine ${A} passant par ${B} se note ${seg(AB)}.`,`${seg(AB)} est le segment d’extrémités ${A} et ${B}.`)]);
+  N(1,'seg-a','Le morceau de droite délimité par deux points s’appelle…','un segment',[
+    cqW('une demi-droite','une demi-droite n’est délimitée que d’un seul côté.'),
+    cqW('une droite','une droite n’est délimitée d’aucun côté.'),
+    cqW('un milieu','un milieu est un point, pas un morceau de droite.')],true);
+  N(1,'seg-b','Les points qui délimitent un segment s’appellent…','les extrémités',[
+    cqW('les origines','on parle d’origine pour une demi-droite ; un segment a deux extrémités.'),
+    cqW('les milieux','le milieu est un seul point, situé entre les deux extrémités.'),
+    cqW('les sommets','les points qui délimitent un segment s’appellent les extrémités.')],true);
+  N(1,'seg-c',`Le segment d’extrémités ${A} et ${B} se note…`,seg(AB),[
+    cqW(line(AB),`${line(AB)} est la droite passant par ${A} et ${B}.`),
+    cqW(half(AB),`${half(AB)} est la demi-droite d’origine ${A} passant par ${B}.`),
+    cqW(AB,`${AB} désigne la longueur du segment ${seg(AB)}.`)],true);
+  N(1,'seg-d',cqPROP,`Le segment d’extrémités ${A} et ${B} se note ${seg(AB)} et sa longueur se note ${AB}.`,[
+    cqW(`Le segment d’extrémités ${A} et ${B} se note ${line(AB)} et sa longueur se note ${seg(AB)}.`,`le segment se note ${seg(AB)} et sa longueur ${AB}.`),
+    cqW(`Le segment d’extrémités ${A} et ${B} se note ${AB} et sa longueur se note ${seg(AB)}.`,`c’est l’inverse : le segment se note ${seg(AB)} et sa longueur ${AB}.`),
+    cqW(`Le segment d’extrémités ${A} et ${B} se note ${half(AB)} et sa longueur se note ${line(AB)}.`,`le segment se note ${seg(AB)} et sa longueur ${AB}.`)]);
+  N(1,'long-a',`La longueur du segment ${seg(AB)} se note…`,AB,[
+    cqW(seg(AB),`${seg(AB)} désigne le segment lui-même, pas sa longueur.`),
+    cqW(line(AB),`${line(AB)} désigne la droite passant par ${A} et ${B}, qui n’a pas de longueur.`),
+    cqW(half(AB),`${half(AB)} désigne une demi-droite, qui n’a pas de longueur.`)],true);
+  N(1,'long-b',`La longueur ${AB} est…`,`la distance du point ${A} au point ${B}`,[
+    cqW(`la droite passant par ${A} et ${B}`,`la droite se note ${line(AB)} ; ${AB} est une longueur.`),
+    cqW(`le milieu du segment ${seg(AB)}`,`${AB} est la distance de ${A} à ${B}, pas un point.`),
+    cqW(`la demi-droite d’origine ${A} passant par ${B}`,`la demi-droite se note ${half(AB)} ; ${AB} est une longueur.`)]);
+  N(1,'mil-a','Le milieu d’un segment est le point situé sur le segment…','à la même distance des deux extrémités',[
+    cqW('à l’une des deux extrémités','le milieu est à égale distance des deux extrémités, donc il n’est sur aucune d’elles.'),
+    cqW('à l’extérieur du segment','le milieu est un point du segment.'),
+    cqW('plus près d’une extrémité que de l’autre','le milieu est à la même distance des deux extrémités.')]);
+  N(1,'mil-b',`Si ${C} est le milieu du segment ${seg(AB)}, alors…`,`${AC} = ${CB}`,[
+    cqW(`${AC} = ${AB}`,`${AC} est la moitié de ${AB}, pas ${AB} tout entier.`),
+    cqW(`${AC} = 2 × ${CB}`,`le milieu est à la même distance des deux extrémités : ${AC} = ${CB}.`),
+    cqW(`${AC} + ${CB} = 2 × ${AB}`,`${AC} + ${CB} = ${AB} : le segment ${seg(AB)} est coupé en deux longueurs égales.`)],true);
+  N(1,'mil-c','Pour marquer deux longueurs égales sur une figure, on code avec…','le même symbole',[
+    cqW('des symboles différents','deux longueurs égales se codent avec le même symbole.'),
+    cqW('des lettres différentes','le codage se fait avec un symbole (par exemple des petits traits), le même pour les deux longueurs égales.'),
+    cqW('des couleurs différentes','deux longueurs égales se codent avec le même symbole.')],true);
+
+  /* II – Position de deux droites */
+  N(2,'par-a','Deux droites qui ne se coupent jamais sont…','parallèles',[
+    cqW('sécantes','deux droites sécantes se coupent en un point.'),
+    cqW('perpendiculaires','deux droites perpendiculaires se coupent en formant un angle droit.'),
+    cqW('alignées','on parle de points alignés ; deux droites qui ne se coupent jamais sont parallèles.')],true);
+  N(2,'par-b',`Deux droites ${dr} et ${drp} parallèles se notent…`,`${dr} // ${drp}`,[
+    cqW(`${dr} ⊥ ${drp}`,'⊥ se lit « est perpendiculaire à ».'),
+    cqW(`${dr} ∈ ${drp}`,'∈ se lit « appartient à » et s’utilise pour un point et une droite.'),
+    cqW(`${dr} = ${drp}`,'= signifierait que les deux droites sont la même droite.')],true);
+  N(2,'par-c',cqPROP,'Deux droites parallèles ne se coupent jamais.',[
+    cqW('Deux droites parallèles se coupent en un point.','deux droites parallèles ne se coupent jamais.'),
+    cqW('Deux droites parallèles se coupent en formant un angle droit.','ce sont les droites perpendiculaires qui se coupent en formant un angle droit.'),
+    cqW('Deux droites parallèles sont toujours perpendiculaires.','deux droites parallèles ne se coupent jamais, alors que deux droites perpendiculaires se coupent.')]);
+  N(2,'sec-a','Deux droites qui se coupent en un point sont…','sécantes',[
+    cqW('parallèles','deux droites parallèles ne se coupent jamais.'),
+    cqW('alignées','on parle de points alignés ; deux droites qui se coupent sont sécantes.'),
+    cqW('égales','deux droites qui se coupent en un seul point sont sécantes.')],true);
+  N(2,'sec-b','Le point où deux droites sécantes se coupent s’appelle…','le point d’intersection',[
+    cqW('le milieu','le milieu concerne un segment ; ici, c’est le point d’intersection.'),
+    cqW('l’origine','l’origine concerne une demi-droite ; ici, c’est le point d’intersection.'),
+    cqW('l’extrémité','l’extrémité concerne un segment ; ici, c’est le point d’intersection.')],true);
+  N(2,'sec-c',cqPROP,'Deux droites sécantes se coupent en un point, appelé point d’intersection.',[
+    cqW('Deux droites sécantes ne se coupent jamais.','deux droites sécantes se coupent en un point.'),
+    cqW('Deux droites sécantes sont toujours parallèles.','deux droites sécantes se coupent, alors que deux droites parallèles ne se coupent jamais.'),
+    cqW('Deux droites sécantes se coupent toujours en formant un angle droit.','ce sont les droites perpendiculaires qui forment un angle droit ; des droites sécantes peuvent former un autre angle.')]);
+  N(2,'ang-a','Deux droites perpendiculaires se coupent en formant…','un angle droit',[
+    cqW('un angle de 45°','des droites perpendiculaires forment un angle droit, c’est-à-dire de 90°.'),
+    cqW('un angle de 180°','des droites perpendiculaires forment un angle droit, c’est-à-dire de 90°.'),
+    cqW('un angle de 60°','des droites perpendiculaires forment un angle droit, c’est-à-dire de 90°.')],true);
+  N(2,'ang-b',`Deux droites ${dr} et ${drp} perpendiculaires se notent…`,`${dr} ⊥ ${drp}`,[
+    cqW(`${dr} // ${drp}`,'// se lit « est parallèle à ».'),
+    cqW(`${dr} ∈ ${drp}`,'∈ se lit « appartient à » et s’utilise pour un point et une droite.'),
+    cqW(`${dr} = ${drp}`,'= signifierait que les deux droites sont la même droite.')],true);
+  N(2,'ang-c',cqPROP,'Deux droites perpendiculaires se coupent en formant un angle droit.',[
+    cqW('Deux droites perpendiculaires ne se coupent jamais.','deux droites perpendiculaires se coupent en formant un angle droit.'),
+    cqW('Deux droites perpendiculaires sont parallèles.','deux droites parallèles ne se coupent jamais, alors que deux droites perpendiculaires se coupent.'),
+    cqW('Deux droites perpendiculaires se coupent en formant un angle de 45°.','deux droites perpendiculaires forment un angle droit, c’est-à-dire de 90°.')]);
+  N(2,'sym-a',`Dans l’écriture ${dr} // ${drp}, les droites ${dr} et ${drp} sont…`,'parallèles',[
+    cqW('perpendiculaires','pour des droites perpendiculaires, on écrit ⊥.'),
+    cqW('sécantes','des droites parallèles ne se coupent jamais.'),
+    cqW('alignées','on parle de points alignés ; // signifie « est parallèle à ».')],true);
+  N(2,'sym-b',`Dans l’écriture ${dr} ⊥ ${drp}, les droites ${dr} et ${drp} sont…`,'perpendiculaires',[
+    cqW('parallèles','pour des droites parallèles, on écrit //.'),
+    cqW('alignées','on parle de points alignés ; ⊥ signifie « est perpendiculaire à ».'),
+    cqW('de même longueur','une droite n’a pas de longueur ; ⊥ signifie « est perpendiculaire à ».')],true);
+
+  /* Figures : position de deux droites */
+  const rnd=(a,b)=>a+Math.random()*(b-a), RAD=Math.PI/180;
+  function posFig(type){
+    const W=380,H=190, box=[56,44,324,146];   /* les droites sont coupées par ce cadre ; leurs noms sont posés juste au-delà d'une extrémité */
+    const names=['(d)','(d′)'], LW=46, LH=26, f=v=>v.toFixed(1);
+    let fallback=null;
+    for(let att=0; att<400; att++){
+      const rot=rnd(-30,30)*RAD, flip=Math.random()<.5?-1:1;
+      let lines, cross=null;
+      if(type==='par'){
+        const g=rnd(46,70), u=[Math.cos(rot),Math.sin(rot)], n=[-u[1],u[0]], c=[190+rnd(-10,10),95];
+        lines=[{p:[c[0]-n[0]*g/2,c[1]-n[1]*g/2],u},{p:[c[0]+n[0]*g/2,c[1]+n[1]*g/2],u}];
+      }else{
+        const phi=type==='perp'?90:flip*rnd(38,68), c=[190+rnd(-30,30),95+rnd(-8,8)], a2=rot+phi*RAD; cross=c;
+        lines=[{p:c,u:[Math.cos(rot),Math.sin(rot)]},{p:c,u:[Math.cos(a2),Math.sin(a2)]}];
+      }
+      const segs=lines.map(L=>{
+        let tmin=-1e9,tmax=1e9;
+        [[0,box[0],box[2]],[1,box[1],box[3]]].forEach(([k,lo,hi])=>{ if(Math.abs(L.u[k])<1e-6) return; const t1=(lo-L.p[k])/L.u[k], t2=(hi-L.p[k])/L.u[k]; tmin=Math.max(tmin,Math.min(t1,t2)); tmax=Math.min(tmax,Math.max(t1,t2)); });
+        L.ends=[[L.p[0]+L.u[0]*tmin,L.p[1]+L.u[1]*tmin,-1],[L.p[0]+L.u[0]*tmax,L.p[1]+L.u[1]*tmax,1]];
+        return [L.ends[0],L.ends[1]];
+      });
+      const sample=[]; segs.forEach(([a,b])=>{ for(let k=0;k<=70;k++) sample.push([a[0]+(b[0]-a[0])*k/70,a[1]+(b[1]-a[1])*k/70]); });
+      /* un nom par droite, au-delà d'une de ses deux extrémités : on garde la combinaison valide où les deux noms sont les plus éloignés */
+      const place=(L,e)=>{ const dir=[L.u[0]*e[2],L.u[1]*e[2]], d=Math.abs(dir[0])*LW/2+Math.abs(dir[1])*LH/2+9; return [e[0]+dir[0]*d,e[1]+dir[1]*d]; };
+      const valid=c=>{
+        if(c[0]-LW/2<2||c[0]+LW/2>W-2||c[1]-LH/2<2||c[1]+LH/2>H-2) return false;
+        return !sample.some(p=>p[0]>c[0]-LW/2-6&&p[0]<c[0]+LW/2+6&&p[1]>c[1]-LH/2-6&&p[1]<c[1]+LH/2+6);
+      };
+      let best=null;
+      for(const e0 of lines[0].ends) for(const e1 of lines[1].ends){
+        const c0=place(lines[0],e0), c1=place(lines[1],e1);
+        if(!valid(c0)||!valid(c1)) continue;
+        if(Math.abs(c0[0]-c1[0])<LW+6&&Math.abs(c0[1]-c1[1])<LH+6) continue;
+        const sc=Math.hypot(c0[0]-c1[0],c0[1]-c1[1]);
+        if(!best||sc>best.sc) best={sc,labs:[c0,c1]};
+      }
+      if(!best) continue;
+      let mark='';
+      if(type==='perp'){ const s=12, u1=lines[0].u, u2=lines[1].u, sg=Math.random()<.5?1:-1, sg2=Math.random()<.5?1:-1;
+        const p1=[cross[0]+u1[0]*s*sg,cross[1]+u1[1]*s*sg], p3=[cross[0]+u2[0]*s*sg2,cross[1]+u2[1]*s*sg2], p2=[p1[0]+u2[0]*s*sg2,p1[1]+u2[1]*s*sg2];
+        mark=`<polyline points="${f(p1[0])},${f(p1[1])} ${f(p2[0])},${f(p2[1])} ${f(p3[0])},${f(p3[1])}" fill="none" stroke="currentColor" stroke-width="2"/>`; }
+      const body=segs.map(([a,b])=>`<line x1="${f(a[0])}" y1="${f(a[1])}" x2="${f(b[0])}" y2="${f(b[1])}" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>`).join('')+mark
+        +best.labs.map((c,i)=>`<text x="${f(c[0])}" y="${f(c[1])}" font-size="24" style="font-family:var(--mf);" text-anchor="middle" dominant-baseline="central" fill="currentColor">${names[i]}</text>`).join('');
+      return `<svg class="cq-fig" viewBox="0 0 ${W} ${H}" role="img" aria-label="Deux droites (d) et (d′)" style="display:block;width:100%;max-width:360px;margin:6px auto 14px;color:var(--ink);">${body}</svg>`;
+    }
+  }
+  const POSLAB={par:'parallèles',sec:'sécantes (non perpendiculaires)',perp:'perpendiculaires'};
+  const POSWHY={
+    par:{sec:'les deux droites ne se coupent pas : elles sont parallèles.',perp:'les deux droites ne se coupent pas : elles sont parallèles.'},
+    sec:{par:'les deux droites se coupent : elles ne sont pas parallèles.',perp:'l’angle formé n’est pas un angle droit : elles sont sécantes sans être perpendiculaires.'},
+    perp:{par:'les deux droites se coupent : elles ne sont pas parallèles.',sec:'elles se coupent en formant un angle droit (codé sur la figure) : elles sont perpendiculaires.'}};
+  function posMake(type){
+    const opts=Object.keys(POSLAB).map(k=>({html:POSLAB[k],ok:k===type,why:k===type?'':cqCap(POSWHY[type][k])}));
+    const q={kind:'fig',long:true,head:`<div class="question cq-q">Les droites ${dr} et ${drp} sont…</div>${posFig(type)}`,ansHTML:POSLAB[type],expl:''};
+    return cqFinish(q,opts);
+  }
+  [['par','a'],['sec','b'],['perp','c']].forEach(([t,l])=>CQ_CASES.push({ch:'6eg1',th:2,pk:'p|fpos-'+l,make:()=>posMake(t)}));
+})();
+
+function cqGrpOf(c){
+  const [kind,a]=c.pk.split('|');
+  if(kind==='defB') return {k:'def:'+a,l:'Définition : '+a};
+  if(kind==='formB') return {k:'vol:'+a,l:'Volume : '+a};
+  if(kind==='prop') return {k:'sec:'+a,l:CQ_SECLAB[a]||a};
+  if(kind==='fig') return {k:'fig',l:'Figures : reconnaître les angles'};
+  const m=a.match(/^(.+)-([a-d])$/), base=m[1], v=m[2];
+  if(base==='alt'||base==='cor') return 'ab'.includes(v)?{k:'prop',l:'Propriété'}:{k:'rec',l:'Réciproque'};
+  if(base==='opp') return {k:'prop',l:'Propriété'};
+  return {k:base,l:CQ_GLAB[base]||base};
+}
+CQ_CASES.forEach(c=>{ const g=cqGrpOf(c); c.g=g.k; c.gl=g.l; });
+
+/* chapitre et thème en cours (état : state.cat = 'eg2-1', 'eg1-3'…) */
+function cqWhere(){ const m=String(state.cat||'eg2-1').match(/^(6?[a-z]+\d+)-(\d+)$/); return m?{ch:m[1],th:Number(m[2])}:{ch:'eg2',th:1}; }
+function cqTheme(){ return cqWhere().th; }
+let cqRevG=null;   /* notions choisies ('eg1-3|fig'…) en révisions personnalisées */
+let cqRev=null;   /* révisions personnalisées : liste des thèmes choisis ('eg1-2', 'eg2-1'…), null sinon */
+function cqPool(){
+  if(state.cat==='rev'&&cqRevG){
+    /* figures d'angles : oui/non si une seule figure d'angles est choisie ; sinon on reconnaît les angles
+       parmi les types choisis (+ « aucun »), la question « aucun » n'étant présente qu'une fois */
+    const figT=CQ_ANGTH.filter(t=>cqRevG.has(t+'|fig')), multi=figT.length>=2;
+    return CQ_CASES.filter(c=>{ const t=c.ch+'-'+c.th;
+      if(!cqRevG.has(t+'|'+c.g)) return false;
+      if(c.fig){ if(c.fig!==(multi?'multi':'solo')) return false; if(c.none&&t!==figT[0]) return false; }
+      return true; });
+  }
+  const {ch,th}=cqWhere(); return CQ_CASES.filter(c=>c.ch===ch&&c.th===th&&(!c.fig||c.fig==='solo'));
+}
+const cqLabel=(ch,th)=>{ const lv=ch[0]==='6'?'6e':'3e', id=ch.replace(/^6/,''), it=SCREENS[lv+'/qcours/'+id].items[th-1]; return id.replace(/([a-z]+)(\d+)/,(m,a,b)=>a.toUpperCase()+' '+b)+' · '+it[1]; };
+/* Tirage avec historique : jamais les 20 dernières questions,
+   ou (nombre de questions disponibles − 2) quand il y en a moins de 22. */
+function cqNext(){
+  const pool=cqPool();
+  const key=keyFor(), h=qHistory[key]||(qHistory[key]=[]);
+  const recent=h.slice(-Math.min(20,Math.max(1,pool.length-2)));
+  let cand=pool.filter(c=>!recent.includes(c.pk)); if(!cand.length) cand=pool;
+  const c=pick(cand), q=c.make(); q.pk=c.pk; q.ch=c.ch; q.th=c.th;
+  h.push(c.pk); if(h.length>20) h.shift();
+  return q;
+}
+
+function renderCqQCM(){
+  const q=cqNext(); state.current=q;
+  if(state.cat==='rev') document.getElementById('subtitle').textContent=cqLabel(q.ch,q.th);
+  const content=document.getElementById('content');
+  content.innerHTML=`${q.head.replace(/\s*…(?![\s\S]*…)/,' '+MLD_BLANK)}
+    <div class="options cq-opts${q.long?' cq-long':''}">${q.options.map((o,i)=>`<button class="opt-btn" data-k="${i}">${o.html}</button>`).join('')}</div>
+    <div class="feedback" id="fb"></div>`;
+  content.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      content.querySelectorAll('.opt-btn').forEach(b=>b.onclick=null);
+      const fb=document.getElementById('fb'), i=Number(btn.dataset.k);
+      if(i===q.okIdx){
+        btn.classList.add('correct','anim-good');
+        bumpStreak(getStreak());
+        fb.textContent="Bravo, c'est correct !"; fb.className='feedback ok';
+        autoNext(450);
+      }else{
+        btn.classList.add('wrong','anim-bad');
+        failStreak();
+        fb.innerHTML=`Ce n'est pas ça. <span class="expl">${q.options[i].why}</span>`;
+        fb.className='feedback ko';
+        content.querySelectorAll('.opt-btn').forEach(b=>{ if(Number(b.dataset.k)===q.okIdx) b.classList.add('correct'); });
+      }
+    };
+  });
+}
+
 const LEVEL_ITEMS=lv=>[[lv+'/auto','Automatismes','S\u2019entra\u00eener'],[lv+'/cours','Cours','R\u00e9viser les le\u00e7ons']];
 const SCREENS={
   home:{title:'Math\u00e9matiques',sub:'Choisis ton niveau',items:[['6e','Niveau 6e',''],['3e','Niveau 3e','']]},
-  '6e':{title:'Niveau 6e',sub:'Que veux-tu faire ?',items:LEVEL_ITEMS('6e')},
-  '3e':{title:'Niveau 3e',sub:'Que veux-tu faire ?',items:LEVEL_ITEMS('3e')},
+  '6e':{title:'Niveau 6e',sub:'Que veux-tu faire ?',items:[...LEVEL_ITEMS('6e'),['6e/qcours','Questions de cours','Tester ses connaissances du cours']]},
+  '3e':{title:'Niveau 3e',sub:'Que veux-tu faire ?',items:[...LEVEL_ITEMS('3e'),['3e/qcours','Questions de cours','Tester ses connaissances du cours']]},
+  '3e/qcours':{title:'Questions de cours 3e',sub:'Choisis un thème',items:[['3e/qcours/eg','Espace et Géométrie'],['3e/qcours/nc','Nombres et Calcul']]},
+  '3e/qcours/eg':{title:'Espace et Géométrie',sub:'Questions de cours 3e',items:[['3e/qcours/eg1','EG 1 \u2013 Propriétés géométriques','Droites, angles du triangle, angles et parallèles'],['3e/qcours/eg2','EG 2 \u2013 Solides','Définitions, représentations et volumes']]},
+  '3e/qcours/nc':{title:'Nombres et Calcul',sub:'Questions de cours 3e',items:[['3e/qcours/nc1','NC 1 \u2013 Fractions','Définitions, fractions égales, comparaisons et opérations'],['3e/qcours/nc2','NC 2 \u2013 Puissances','Puissances positives et négatives, règles de calcul, écriture scientifique'],['3e/qcours/nc3','NC 3 \u2013 Calcul littéral','Développer, factoriser et identités remarquables']]},
+  '3e/qcours/eg1':{title:'EG 1 \u2013 Propriétés géométriques',sub:'Choisis un thème du cours',items:[['3e/qcours/eg1/1','I \u2013 Propriétés','Perpendiculaires et parallèles'],['3e/qcours/eg1/2','II \u2013 Somme des angles d’un triangle','Triangle quelconque et triangle rectangle'],['3e/qcours/eg1/3','III \u2013 Angles alternes-internes','Propriété et réciproque'],['3e/qcours/eg1/4','IV \u2013 Angles correspondants','Propriété et réciproque'],['3e/qcours/eg1/5','V \u2013 Angles opposés par le sommet','Droites sécantes']]},
+  '3e/qcours/nc1':{title:'NC 1 \u2013 Fractions',sub:'Choisis un thème du cours',items:[['3e/qcours/nc1/1','I \u2013 Définitions','Quotient, fraction, numérateur et dénominateur'],['3e/qcours/nc1/2','II \u2013 Fractions égales','Multiplier le numérateur et le dénominateur'],['3e/qcours/nc1/3','III \u2013 Comparaisons de fractions','Même dénominateur, même numérateur'],['3e/qcours/nc1/4','IV \u2013 Opérations','Additions, multiplications, inverses et divisions']]},
+  '3e/qcours/nc2':{title:'NC 2 \u2013 Puissances',sub:'Choisis un thème du cours',items:[['3e/qcours/nc2/1','I \u2013 Puissances positives','Définition et puissances de 10'],['3e/qcours/nc2/2','II \u2013 Puissances négatives','Inverse, puissances de 10 négatives et exposant 0'],['3e/qcours/nc2/3','III \u2013 Règles de calcul','Priorités et signe de (−<i>a</i>)<sup><i>n</i></sup>'],['3e/qcours/nc2/4','IV \u2013 Écriture scientifique','Forme <i>a</i> × 10<sup><i>n</i></sup> et conditions sur <i>a</i> et <i>n</i>']]},
+  '3e/qcours/nc3':{title:'NC 3 \u2013 Calcul littéral',sub:'Choisis un thème du cours',items:[['3e/qcours/nc3/1','I \u2013 Développer','Simple et double distributivité : <i>k</i>(<i>a</i> + <i>b</i>), (<i>a</i> + <i>b</i>)(<i>c</i> + <i>d</i>)'],['3e/qcours/nc3/2','II \u2013 Factoriser','Écrire sous forme d’un produit : <i>ka</i> + <i>kb</i> = <i>k</i>(<i>a</i> + <i>b</i>)'],['3e/qcours/nc3/3','III \u2013 Identités remarquables','(<i>a</i> + <i>b</i>)<sup>2</sup>, (<i>a</i> − <i>b</i>)<sup>2</sup> et (<i>a</i> + <i>b</i>)(<i>a</i> − <i>b</i>)']]},
+  '3e/qcours/eg2':{title:'EG 2 \u2013 Solides',sub:'Choisis un thème du cours',items:[['3e/qcours/eg2/1','I \u2013 Solides','Prisme droit, cylindre, pyramide, cône, sphère, boule…'],['3e/qcours/eg2/2','II \u2013 Représentations','Perspective cavalière et sections planes'],['3e/qcours/eg2/3','III \u2013 Volumes','Formules des volumes']]},
   '3e/auto':{title:'Automatismes 3e',sub:'Choisis un th\u00e8me',items:[
     ['3e/auto/tables','1. Tables de multiplication','Les tables de 0 \u00e0 12'],
     ['3e/auto/frac','2. Fractions irr\u00e9ductibles','\u00c9crire la fraction irr\u00e9ductible \u00e9gale \u00e0 une fraction'],
@@ -3551,8 +5115,8 @@ const SCREENS={
     ['3e/auto/pyth-verif','6. Vérification de l\u2019égalité de Pythagore','Calculer les carrés des côtés et dire si le triangle est rectangle'],
     ['3e/auto/lit-signe','7. Suppression des parenth\u00e8ses','Supprimer des parenth\u00e8ses pr\u00e9c\u00e9d\u00e9es de + ou \u2212, puis r\u00e9duire'],
     ['3e/auto/sci','8. \u00c9criture scientifique','Passer de l\u2019\u00e9criture d\u00e9cimale \u00e0 l\u2019\u00e9criture scientifique'],
-    ['3e/auto/lit-nombre','10. Simple distributivit\u00e9','D\u00e9velopper k(ax + b), puis r\u00e9duire'],
-    ['3e/auto/lit-double','11. Double distributivit\u00e9','D\u00e9velopper et r\u00e9duire : (ax + b)(cx + d)'],
+    ['3e/auto/lit-nombre','10. Simple distributivit\u00e9','D\u00e9velopper <i>k</i>(<i>ax</i> + <i>b</i>), puis r\u00e9duire'],
+    ['3e/auto/lit-double','11. Double distributivit\u00e9','D\u00e9velopper et r\u00e9duire : (<i>ax</i> + <i>b</i>)(<i>cx</i> + <i>d</i>)'],
     ['3e/auto/conv-longueur','31. Conversions de longueurs, capacités et masses','m, mm… ; L, mL… ; g, mg…'],
     ['3e/auto/conv-aire','32. Conversions d\u2019aires','km\u00b2, hm\u00b2, dam\u00b2, m\u00b2, dm\u00b2, cm\u00b2, mm\u00b2'],
     ['3e/auto/conv-volume','33. Conversions de volumes','km\u00b3, hm\u00b3, dam\u00b3, m\u00b3, dm\u00b3, cm\u00b3, mm\u00b3 et litres'],
@@ -3566,8 +5130,26 @@ const SCREENS={
     ['6e/auto/clock','4. Lecture d\u2019heure','Lire l\u2019heure sur une horloge \u00e0 aiguilles'],
     ['6e/auto/multiples','5. Multiples et diviseurs','Multiple, diviseur, multiples et diviseurs communs'],
     ['6e/auto/hands','6. Placer les aiguilles','Placer les aiguilles pour afficher l’heure demandée'],
-    ['6e/auto/mult10','7. Multiplications par 10, 100 et 1 000','Décaler les chiffres de 1, 2 ou 3 rangs : × 10, × 100, × 1 000']]}
+    ['6e/auto/mult10','7. Multiplications par 10, 100 et 1 000','Décaler les chiffres de 1, 2 ou 3 rangs : × 10, × 100, × 1 000'],
+    ['6e/auto/fracheure','8. Fractions d’heure','Quart d’heure, demi-heure, trois quarts d’heure et minutes']]}
 };
+/* Questions de cours 6e : toute la structure est prête (domaines → chapitres → thèmes).
+   Un chapitre sans questions s'affiche « Bientôt disponible » ; pour en ouvrir un : l'ajouter dans CQ6_DONE (thèmes),
+   écrire ses questions (ch:'6'+id, ex. '6eg2'), ajouter ses écrans dans go() (EXO) et son nom dans cqRevisionSetup('6e',…). */
+const CQ6_DONE={eg1:[['I \u2013 Vocabulaire','Droite, demi-droite, segment, milieu et notations'],['II \u2013 Position de deux droites','Parallèles, sécantes et perpendiculaires']]};
+const CQ6_DESC={eg1:'Droites, demi-droites, segments et position de deux droites'};
+(function(){
+  const DOM=[['eg'],['ncrp'],['ogdp'],['gm'],['p']];
+  SCREENS['6e/qcours']={title:'Questions de cours 6e',sub:'Choisis un thème',items:DOM.map(([k])=>['6e/qcours/'+k,THEMES6E[k].title])};
+  DOM.forEach(([k])=>{
+    SCREENS['6e/qcours/'+k]={title:THEMES6E[k].title,sub:'Questions de cours 6e',
+      items:THEMES6E[k].chapters.map(([id,name])=>CQ6_DONE[id]?['6e/qcours/'+id,name,CQ6_DESC[id]]:['6e/qcours/'+id,name,'Bientôt disponible','soon'])};
+  });
+  Object.keys(CQ6_DONE).forEach(id=>{
+    const name=[].concat(...Object.values(THEMES6E).map(t=>t.chapters)).find(c=>c[0]===id)[1];
+    SCREENS['6e/qcours/'+id]={title:name,sub:'Choisis un thème du cours',items:CQ6_DONE[id].map(([t,d],i)=>['6e/qcours/'+id+'/'+(i+1),t,d])};
+  });
+})();
 function go(s){
   abandon();
   viewStash={};
@@ -3593,19 +5175,41 @@ function go(s){
     '3e/auto/pythagore':{theme:'pyth',title:'Égalité de Pythagore',sub:'Automatismes 3e'},
     '3e/auto/pyth-verif':{theme:'pyv',title:'Vérification de l’égalité de Pythagore',sub:'Automatismes 3e'},
     '3e/auto/mdfrac':{theme:'mdf',title:'Multiplications et divisions de fractions',sub:'Automatismes 3e'},
+    '3e/qcours/eg1/1':{theme:'cq',cat:'eg1-1',title:'I \u2013 Propriétés',sub:'EG 1 \u2013 Questions de cours'},
+    '3e/qcours/eg1/2':{theme:'cq',cat:'eg1-2',title:'II \u2013 Somme des angles d’un triangle',sub:'EG 1 \u2013 Questions de cours'},
+    '3e/qcours/eg1/3':{theme:'cq',cat:'eg1-3',title:'III \u2013 Angles alternes-internes',sub:'EG 1 \u2013 Questions de cours'},
+    '3e/qcours/eg1/4':{theme:'cq',cat:'eg1-4',title:'IV \u2013 Angles correspondants',sub:'EG 1 \u2013 Questions de cours'},
+    '3e/qcours/eg1/5':{theme:'cq',cat:'eg1-5',title:'V \u2013 Angles opposés par le sommet',sub:'EG 1 \u2013 Questions de cours'},
+    '3e/qcours/eg2/1':{theme:'cq',cat:'eg2-1',title:'I \u2013 Solides',sub:'EG 2 \u2013 Questions de cours'},
+    '3e/qcours/eg2/2':{theme:'cq',cat:'eg2-2',title:'II \u2013 Représentations',sub:'EG 2 \u2013 Questions de cours'},
+    '3e/qcours/eg2/3':{theme:'cq',cat:'eg2-3',title:'III \u2013 Volumes',sub:'EG 2 \u2013 Questions de cours'},
+    '3e/qcours/nc1/1':{theme:'cq',cat:'nc1-1',title:'I \u2013 Définitions',sub:'NC 1 \u2013 Questions de cours'},
+    '3e/qcours/nc1/2':{theme:'cq',cat:'nc1-2',title:'II \u2013 Fractions égales',sub:'NC 1 \u2013 Questions de cours'},
+    '3e/qcours/nc1/3':{theme:'cq',cat:'nc1-3',title:'III \u2013 Comparaisons de fractions',sub:'NC 1 \u2013 Questions de cours'},
+    '3e/qcours/nc1/4':{theme:'cq',cat:'nc1-4',title:'IV \u2013 Opérations',sub:'NC 1 \u2013 Questions de cours'},
+    '3e/qcours/nc2/1':{theme:'cq',cat:'nc2-1',title:'I \u2013 Puissances positives',sub:'NC 2 \u2013 Questions de cours'},
+    '3e/qcours/nc2/2':{theme:'cq',cat:'nc2-2',title:'II \u2013 Puissances négatives',sub:'NC 2 \u2013 Questions de cours'},
+    '3e/qcours/nc2/3':{theme:'cq',cat:'nc2-3',title:'III \u2013 Règles de calcul',sub:'NC 2 \u2013 Questions de cours'},
+    '3e/qcours/nc2/4':{theme:'cq',cat:'nc2-4',title:'IV \u2013 Écriture scientifique',sub:'NC 2 \u2013 Questions de cours'},
+    '3e/qcours/nc3/1':{theme:'cq',cat:'nc3-1',title:'I \u2013 Développer',sub:'NC 3 \u2013 Questions de cours'},
+    '3e/qcours/nc3/2':{theme:'cq',cat:'nc3-2',title:'II \u2013 Factoriser',sub:'NC 3 \u2013 Questions de cours'},
+    '3e/qcours/nc3/3':{theme:'cq',cat:'nc3-3',title:'III \u2013 Identités remarquables',sub:'NC 3 \u2013 Questions de cours'},
     '6e/auto/tables':{theme:'tables',title:'Tables de multiplication',sub:'Automatismes 6e'},
     '6e/auto/durees':{theme:'durees',title:'Unit\u00e9s de dur\u00e9es',sub:'Automatismes 6e'},
     '6e/auto/comp':{theme:'comp',title:'Compl\u00e9ments',sub:'Automatismes 6e'},
     '6e/auto/hands':{theme:'hands',title:'Placer les aiguilles',sub:'Automatismes 6e'},
     '6e/auto/clock':{theme:'clock',title:'Lecture d\u2019heure',sub:'Automatismes 6e'},
     '6e/auto/multiples':{theme:'mld',title:'Multiples et diviseurs',sub:'Automatismes 6e'},
-    '6e/auto/mult10':{theme:'mult10',title:'Multiplications par 10, 100 et 1 000',sub:'Automatismes 6e'}
+    '6e/auto/mult10':{theme:'mult10',title:'Multiplications par 10, 100 et 1 000',sub:'Automatismes 6e'},
+    '6e/auto/fracheure':{theme:'fh',title:'Fractions d’heure',sub:'Automatismes 6e'},
+    '6e/qcours/eg1/1':{theme:'cq',cat:'6eg1-1',title:'I \u2013 Vocabulaire',sub:'EG 1 \u2013 Questions de cours'},
+    '6e/qcours/eg1/2':{theme:'cq',cat:'6eg1-2',title:'II \u2013 Position de deux droites',sub:'EG 1 \u2013 Questions de cours'}
   };
   const isExo=!!EXO[s];
   exo.hidden=!isExo; menu.hidden=isExo;
   if(isExo){
     state.theme=EXO[s].theme; state.lvl=s.slice(0,2);
-    if(state.theme==='lit'){ state.cat=EXO[s].cat; } else if(state.theme==='conversions'){ state.cat=EXO[s].cat; }
+    if(state.theme==='lit'){ state.cat=EXO[s].cat; } else if(state.theme==='conversions'){ state.cat=EXO[s].cat; } else if(state.theme==='cq'){ state.cat=EXO[s].cat; }
     title.textContent=EXO[s].title;
     sub.textContent=EXO[s].sub;
     const litIntro=(state.theme==='lit');
@@ -3643,7 +5247,7 @@ function go(s){
   title.textContent=sc.title;
   if(sc.items){
     sub.textContent=sc.sub;
-    menu.innerHTML='<div class="menu-list">'+sc.items.map(it=>`<button class="menu-btn" data-go="${it[0]}"><strong>${it[1]}</strong>${it[2]?`<span>${it[2]}</span>`:''}</button>`).join('')+'</div>';
+    menu.innerHTML='<div class="menu-list">'+sc.items.map(it=>`<button class="menu-btn" data-go="${it[0]}"${it[3]==='soon'?' disabled':''}><strong>${it[1]}</strong>${it[2]?`<span>${mathRuns(it[2])}</span>`:''}</button>`).join('')+'</div>';
     menu.querySelectorAll('.menu-btn').forEach(b=>b.onclick=()=>go(b.dataset.go));
   }else{
     sub.textContent='';
@@ -3676,7 +5280,7 @@ const startLit=()=>{ document.getElementById('litNote').hidden=true; document.ge
 go('home');
 </script>
 <script>
-/* Mode entraînement : on choisit les automatismes, les questions sont tirées au hasard parmi eux. */
+/* Entraînement personnalisé : on choisit les automatismes, les questions sont tirées au hasard parmi eux. */
 (function(){
   const TR={
     '3e/auto/tables':{theme:'tables'},'3e/auto/frac':{theme:'frac'},'3e/auto/opfrac':{theme:'opf'},'3e/auto/pythagore':{theme:'pyth'},'3e/auto/pyth-verif':{theme:'pyv'},
@@ -3686,9 +5290,9 @@ go('home');
     '3e/auto/conv-volume':{theme:'conversions',cat:'volume'},'3e/auto/conv-duree':{theme:'conversions',cat:'duree'},
     '3e/auto/lit-fact':{theme:'lit',cat:'fact'},'3e/auto/tableur':{theme:'tab'},
     '6e/auto/tables':{theme:'tables'},'6e/auto/durees':{theme:'durees'},'6e/auto/comp':{theme:'comp'},'6e/auto/clock':{theme:'clock'},
-    '6e/auto/multiples':{theme:'mld'},'6e/auto/hands':{theme:'hands'},'6e/auto/mult10':{theme:'mult10'}
+    '6e/auto/multiples':{theme:'mld'},'6e/auto/hands':{theme:'hands'},'6e/auto/mult10':{theme:'mult10'},'6e/auto/fracheure':{theme:'fh'}
   };
-  ['3e','6e'].forEach(lv=>SCREENS[lv+'/auto'].items.unshift([lv+'/auto/entrainement','Mode entraînement','Choisis les automatismes sur lesquels travailler']));
+  ['3e','6e'].forEach(lv=>SCREENS[lv+'/auto'].items.unshift([lv+'/auto/entrainement','Entraînement personnalisé','Choisis les automatismes sur lesquels travailler']));
   let training=null;
   const $=id=>document.getElementById(id);
   const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
@@ -3723,7 +5327,7 @@ go('home');
   function showSelect(lv){
     const items=itemsOf(lv), saved=load(lv);
     let sel=new Set(saved?saved.filter(id=>items.some(i=>i[0]===id)):items.map(i=>i[0]));
-    $('title').textContent='Mode entraînement';
+    $('title').textContent='Entraînement personnalisé';
     $('subtitle').textContent='Choisis les automatismes à travailler';
     $('back').hidden=false; $('back').onclick=()=>go(lv+'/auto');
     const menu=$('menu');
@@ -3753,6 +5357,86 @@ go('home');
   }
 })();
 </script>
+
+<script>
+/* Révisions personnalisées des questions de cours : on choisit un chapitre entier (EG 1, EG 2) ou, en le déroulant, des thèmes précis ; les questions sont tirées au hasard parmi eux. */
+function cqRevisionSetup(lv,CH,SK){
+  SCREENS[lv+'/qcours'].items.unshift([lv+'/qcours/revision','Révisions personnalisées','Choisis les thèmes du cours à réviser']);
+  const $=id=>document.getElementById(id);
+  const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const themesOf=c=>SCREENS[lv+'/qcours/'+c].items.map(i=>({key:(lv==='6e'?'6':'')+c+'-'+i[0].split('/').pop(),label:i[1]}));
+  const allKeys=()=>[].concat(...CH.map(([c])=>themesOf(c).map(t=>t.key)));
+  const load=()=>{ try{ const a=JSON.parse(localStorage.getItem('mb-cq-rev'+SK)); if(Array.isArray(a)) return a; }catch(e){} return null; };
+  const save=a=>{ try{ localStorage.setItem('mb-cq-rev'+SK,JSON.stringify(a)); }catch(e){} };
+
+  const origGo=go;
+  go=function(sc){
+    cqRev=null; cqRevG=null;
+    if(sc!==lv+'/qcours/revision'){
+      origGo(sc);
+      const m=sc.match(/^(6e|3e)\/qcours\/([a-z]+)\d+$/);
+      if(m&&m[1]===lv) document.getElementById('back').onclick=()=>go(lv+'/qcours/'+m[2]);
+      return;
+    }
+    origGo(lv+'/qcours'); showSelect();
+  };
+
+  function showSelect(){
+    const keys=allKeys(), saved=load();
+    /* un thème jamais proposé jusqu'ici (nouveau chapitre) est coché par défaut, même si une sélection est déjà mémorisée */
+    let known; try{ known=JSON.parse(localStorage.getItem('mb-cq-rev-known'+SK)); }catch(e){}
+    if(!Array.isArray(known)) known=lv==='3e'?['eg1-1','eg1-2','eg1-3','eg1-4','eg1-5','eg2-1','eg2-2','eg2-3']:[];
+    let sel=new Set(saved?[...saved.filter(k=>keys.includes(k)),...keys.filter(k=>!known.includes(k))]:keys);
+    try{ localStorage.setItem('mb-cq-rev-known'+SK,JSON.stringify(keys)); }catch(e){}
+    $('title').textContent='Révisions personnalisées';
+    $('subtitle').textContent='Choisis un chapitre entier, ou déroule-le pour choisir des thèmes';
+    $('back').hidden=false; $('back').onclick=()=>go(lv+'/qcours');
+    const menu=$('menu');
+    menu.innerHTML=`<div class="tr-bar"><button type="button" id="rvAll">Tout sélectionner</button><button type="button" id="rvNone">Tout désélectionner</button></div>
+      <div class="tr-list">${CH.map(([c,full])=>{ return `<div class="rv-th" data-c="${c}">
+        <div class="rv-head"><button type="button" class="rv-exp" aria-expanded="false"><span class="rv-chev"></span><span class="rv-ttl"><b>${esc(full)}</b><small class="rv-sum"></small></span></button>
+          <span class="switch"><input type="checkbox" data-c="${c}" aria-label="Chapitre entier : ${esc(full)}"><i></i></span></div>
+        <div class="rv-body"><div class="rv-inner"><div class="rv-list">${themesOf(c).map(t=>{ return `<label class="rv-g"><span>${esc(t.label)}</span><span class="switch"><input type="checkbox" data-id="${t.key}"><i></i></span></label>`; }).join('')}</div></div></div></div>`; }).join('')}</div>
+      <div class="tr-foot"><div class="tr-count" id="rvCount"></div><button type="button" class="primary" id="rvGo">Commencer la révision</button></div>`;
+    const refresh=()=>{
+      CH.forEach(([c])=>{
+        const ks=themesOf(c).map(t=>t.key), n=ks.filter(k=>sel.has(k)).length, ch=menu.querySelector(`.rv-th[data-c="${c}"]`);
+        const box=ch.querySelector('input[data-c]');
+        box.checked=n===ks.length; box.parentNode.classList.toggle('part',n>0&&n<ks.length);
+        ch.classList.toggle('on',n>0);
+        ch.querySelector('.rv-sum').textContent=n===ks.length?`Chapitre entier · ${n} thèmes`:n?`${n} thème${n>1?'s':''} sur ${ks.length}`:`${ks.length} thèmes · aucun choisi`;
+      });
+      menu.querySelectorAll('input[data-id]').forEach(b=>{ b.checked=sel.has(b.dataset.id); b.closest('.rv-g').classList.toggle('on',b.checked); });
+      const n=sel.size;
+      $('rvCount').textContent=n?`${n} thème${n>1?'s':''} sélectionné${n>1?'s':''}`:'Sélectionne au moins un thème';
+      $('rvGo').disabled=!n; save([...sel]);
+    };
+    menu.querySelectorAll('.rv-exp').forEach(b=>b.onclick=()=>{
+      const ch=b.closest('.rv-th'), o=!ch.classList.contains('open');
+      ch.classList.toggle('open',o); b.setAttribute('aria-expanded',o);
+    });
+    menu.querySelectorAll('input[data-c]').forEach(b=>b.onchange=()=>{ themesOf(b.dataset.c).forEach(t=>b.checked?sel.add(t.key):sel.delete(t.key)); refresh(); });
+    menu.querySelectorAll('input[data-id]').forEach(b=>b.onchange=()=>{ b.checked?sel.add(b.dataset.id):sel.delete(b.dataset.id); refresh(); });
+    $('rvAll').onclick=()=>{ sel=new Set(keys); refresh(); };
+    $('rvNone').onclick=()=>{ sel=new Set(); refresh(); };
+    $('rvGo').onclick=()=>start(keys.filter(k=>sel.has(k)));
+    refresh();
+  }
+  function start(keys){
+    origGo(lv+'/qcours');
+    $('menu').hidden=true; $('exo').hidden=false;
+    $('litNote').hidden=true; $('exo').classList.remove('intro');
+    $('title').textContent='Révision · questions de cours';
+    $('back').hidden=false; $('back').onclick=()=>go(lv+'/qcours/revision');
+    /* un thème choisi = toutes ses questions */
+    cqRevG=new Set(); CQ_CASES.forEach(c=>{ const t=c.ch+'-'+c.th; if(keys.includes(t)) cqRevG.add(t+'|'+c.g); });
+    cqRev=keys; state.lvl=lv; state.theme='cq'; state.cat='rev';
+    renderTabs(); renderModes(); resetChrono(); newQuestion();
+  }
+}
+cqRevisionSetup('3e',[['eg1','EG 1 – Propriétés géométriques'],['eg2','EG 2 – Solides'],['nc1','NC 1 – Fractions'],['nc2','NC 2 – Puissances'],['nc3','NC 3 – Calcul littéral']],'');
+cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations']],'-6e');
+</script>
 <script>
 /* Menu latéral : accès direct à chaque page du site. */
 (function(){
@@ -3772,10 +5456,13 @@ go('home');
         const chs=t.chapters.map(c=>item(lv+'/cours/'+k+'/'+c[0],c[1])).join('');
         return det(t.title,item(lv+'/cours/'+k,'Vue d’ensemble')+chs,'nv-sub');
       }).join('');
+      /* un menu déroulant par chapitre (EG 1, EG 2…) qui contient ses thèmes ; les chapitres « bientôt disponibles » n'apparaissent pas */
+      const qchap=SCREENS[lv+'/qcours']?[].concat(...SCREENS[lv+'/qcours'].items.filter(d=>!/\/revision$/.test(d[0])).map(d=>(SCREENS[d[0]]&&SCREENS[d[0]].items||[]).filter(c=>c[3]!=='soon'&&SCREENS[c[0]]&&SCREENS[c[0]].items))):[];
+      const qc=SCREENS[lv+'/qcours']?det('Questions de cours',item(lv+'/qcours','Liste des chapitres')+item(lv+'/qcours/revision','Révisions personnalisées')+qchap.map(c=>det(c[1],item(c[0],'Liste des thèmes')+SCREENS[c[0]].items.map(t=>item(t[0],t[1])).join(''),'nv-sub')).join(''),'nv-sub'):'';
       h+=det('Niveau '+lv,
         item(lv,'Accueil '+lv)+
         det('Automatismes',item(lv+'/auto','Liste des automatismes')+auto,'nv-sub')+
-        det('Cours',cours,'nv-sub'),'nv-lv');
+        det('Cours',cours,'nv-sub')+qc,'nv-lv');
     });
     body.innerHTML=h;
     body.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{ close(); go(b.dataset.go); });
