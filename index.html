@@ -5,13 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1B7F79">
+<meta name="theme-color" content="#EEF3F7">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Maths.Boussonnière">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192-v2.png">
+<link rel="apple-touch-icon" href="icon-512-v2.png">
+<script>
+// Barres du haut/bas du téléphone : prennent la couleur du thème choisi sur le site
+(function () {
+  var TOP = { rainbow: '#FFB09A' }; // thème dégradé : couleur du haut du dégradé
+  function apply() {
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) return;
+    var t = document.documentElement.getAttribute('data-theme');
+    var c = TOP[t] || (getComputedStyle(document.documentElement).getPropertyValue('--bg') || '').trim();
+    if (c) meta.setAttribute('content', c);
+  }
+  apply();
+  document.addEventListener('DOMContentLoaded', apply);
+  new MutationObserver(apply).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  if (window.matchMedia) {
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    (mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply));
+  }
+})();
+</script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
