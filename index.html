@@ -4153,8 +4153,20 @@ const cqEqWrapDivs=h=>(h||'').replace(/(<div class="(?:question cq-q|cq-formula|
    Les signes < > ≤ ≥ restent des caractères du texte. */
 /* « mode maths » : toute expression littérale (au moins une lettre en <i>) est écrite avec la police des automatismes de calcul littéral
    (chiffres et signes en romain, lettres en italique, signes − + = légèrement abaissés). Les mots autour ne changent pas. */
+/* enveloppe : ne retraite jamais ce qui est déjà en « mode maths » (<span class="mx …">), donc on peut l'appliquer plusieurs fois sans empiler les styles */
 function mathRuns(h){
-  if(!h||!/<i[ >]/.test(h)) return h;
+  if(!h||h.indexOf('class="mx')<0) return mathRuns0(h);
+  const parts=h.split(/(<\/?[a-zA-Z][^>]*>)/); let out='', seg='', d=0;
+  parts.forEach((t,i)=>{
+    if(i%2===0){ if(d>0) out+=t; else seg+=t; return; }
+    if(d>0){ out+=t; if(/^<span\b/.test(t)) d++; else if(t==='</span>') d--; return; }
+    if(/^<span class="mx[ "]/.test(t)){ out+=mathRuns0(seg)+t; seg=''; d=1; return; }
+    seg+=t;
+  });
+  return out+mathRuns0(seg);
+}
+function mathRuns0(h){
+  if(!h||!(/<i[ >]/.test(h)||/\d/.test(h.replace(/<[^>]*>/g,'')))) return h;   /* une lettre en <i> OU un chiffre */
   const MINUS="<span class='mn'>\u2212</span>";
   const vs=[],ss=[],fs=[],bs=[]; let flat='',last=0,m;
   const re=/<i( class="ms")?>([^<]*)<\/i>|<(sup|sub)>([\s\S]*?)<\/\3>|<span class="frac">(?:<span>[\s\S]*?<\/span>){2}<\/span>|<\/?[a-zA-Z][^>]*>/g;
@@ -4166,7 +4178,7 @@ function mathRuns(h){
     else { bs.push(m[0]); flat+='\uE004'; }
   }
   flat+=h.slice(last);
-  const core='(?:[\\uE001-\\uE003]|\\d+(?:,\\d+)?|[()\\[\\]]|[\u2032\u2033]|\u2212(?=[\\uE001-\\uE003\\d(\\[])|\u2026)';
+  const core='(?:[\\uE001-\\uE003]|\\d+(?:[\\u00a0\\u202f]\\d{3})*(?:,\\d+)?|[()\\[\\]]|[\u2032\u2033]|\u2212(?=[\\uE001-\\uE003\\d(\\[])|\u2026)';
   const RUN=new RegExp(core+'+(?:(?: ?(?:[+\u2212\u00d7\u00f7=<>\u2264\u2265\u2260\u2208\u2209\u22a5\u2225]|\\/\\/) ?)'+core+'+)*','g');
   let vi=0,si=0,fi=0,bi=0;
   const inner=t=>t.replace(/<i>([^<]*)<\/i>/g,'$1').replace(/\u2212/g,MINUS);
@@ -4186,7 +4198,7 @@ function mathRuns(h){
     if(bal!==0) ok=false;
     out+=raw(flat.slice(i,start));
     let v2=vi,s2=si,f2=fi,has=false;
-    for(const c of r){ if(c==='\uE001'){ has=true; v2++; } else if(c==='\uE002'){ if(/<i>/.test(ss[s2].c)) has=true; s2++; } else if(c==='\uE003'){ if(/<i>/.test(fs[f2])) has=true; f2++; } }
+    for(const c of r){ if(/\d/.test(c)) has=true; else if(c==='\uE001'){ has=true; v2++; } else if(c==='\uE002'){ if(/<i>/.test(ss[s2].c)) has=true; s2++; } else if(c==='\uE003'){ if(/<i>/.test(fs[f2])) has=true; f2++; } }
     if(!has||!ok) out+=raw(r);
     else{
       let h2='';
@@ -4206,13 +4218,15 @@ function mathRuns(h){
   return out;
 }
 const cqM=h=>cqOps(mathRuns(h));
+/* signe d'opération entre des mots (diviseur × quotient + reste) : même « mode maths » que dans les expressions (police des automatismes, + = − légèrement abaissés) */
+const cqSym=c=>' <span class="mx cqm">'+((c==='+'||c==='='||c==='−')?"<span class='mn'>"+c+'</span>':c)+'</span> ';
 function cqOps(h){
   let mx=0;
   return cqEqWrap(h).split(/(<\/?[a-zA-Z][^>]*>)/).map((t,i)=>{
     if(i%2){ if(mx){ if(/^<span\b/.test(t)) mx++; else if(t==='</span>') mx--; } else if(t==='<span class="mx cqm">') mx=1; return t; }
     return mx?t:t
-    .replace(/ × /g,cqX).replace(/ ÷ /g,cqDiv).replace(/ = /g,cqEq).replace(/ \+ /g,cqPlus)
-    .replace(/ − /g,cqMinus).replace(/−/g,cqNeg); }).join('');
+    .replace(/ × /g,cqSym('×')).replace(/ ÷ /g,cqSym('÷')).replace(/ = /g,cqSym('=')).replace(/ \+ /g,cqSym('+'))
+    .replace(/ − /g,cqSym('−')).replace(/−/g,cqNeg); }).join('');
 }
 const CQ_FORM=[
  {name:'prisme droit', stemB:`Quelle est la formule du volume d’un prisme droit${cqQM}`,
@@ -5043,6 +5057,413 @@ Object.assign(CQ_GLAB,{droite:'Droite passant par deux points',align:'Points ali
   [['par','a'],['sec','b'],['perp','c']].forEach(([t,l])=>CQ_CASES.push({ch:'6eg1',th:2,pk:'p|fpos-'+l,make:()=>posMake(t)}));
 })();
 
+/* ===== Questions de cours 6e – NCRP 4 : Additions, soustractions et multiplications =====
+   Thèmes : 1 = I – Additions et soustractions · 2 = II – Multiplications · 3 = III – Multiplications par 0,1 ; 0,01…
+   Uniquement les méthodes et les remarques du cours (pas d'exemples de calcul). */
+Object.assign(CQ_GLAB,{'ncrp4-ali':'Aligner les virgules','ncrp4-zer':'Ajouter des zéros','ncrp4-mul':'Poser une multiplication','ncrp4-op':'Quand aligner les virgules ?',
+  'ncrp4-x01':'Multiplier par 0,1 ; 0,01 ; 0,001','ncrp4-rang':'Décalage de rangs','ncrp4-div':'Diviser par 10, 100, 1 000'});
+(function(){
+  const fx=cqM;
+  const N=(th,id,stem,ok,wrong,short)=>CQ_CASES.push({ch:'6ncrp4',th,pk:'p|'+id,make:()=>cqMakeProp({stem:fx(stem),ok:fx(ok),wrong:wrong.map(w=>({t:fx(w.t),why:fx(w.why)})),short})});
+  const cl='«\u00a0classique\u00a0»', z='«\u00a00\u00a0»', u='«\u00a01\u00a0»', K='1\u00a0000';
+  const colonne='il faut aligner les virgules, pour que les chiffres de même rang soient dans la même colonne.';
+  const compte='il faut compter les chiffres après la virgule des deux nombres, puis les additionner.';
+
+  /* I – Additions et soustractions */
+  N(1,'ncrp4-ali-a','Pour poser une addition ou une soustraction de deux nombres décimaux, il faut aligner…','les virgules',[
+    cqW('les derniers chiffres de chaque nombre','les nombres n’ont pas toujours autant de chiffres après la virgule : ce sont les virgules qu’il faut aligner.'),
+    cqW('les premiers chiffres de chaque nombre',colonne),
+    cqW('les zéros','il faut aligner les virgules ; les zéros servent seulement à avoir autant de chiffres dans les parties décimales.')],true);
+  N(1,'ncrp4-ali-b',cqPROP,'Pour poser une addition de deux nombres décimaux, on aligne les virgules.',[
+    cqW('Pour poser une soustraction de deux nombres décimaux, on aligne les derniers chiffres de chaque nombre.',colonne),
+    cqW('Pour poser une addition de deux nombres décimaux, on aligne les premiers chiffres de chaque nombre.',colonne),
+    cqW('Pour poser une addition de deux nombres décimaux, on supprime les virgules puis on les replace à la fin.','on aligne les virgules ; reporter le nombre de chiffres après la virgule, c’est la méthode de la multiplication.')]);
+  N(1,'ncrp4-zer-a','Pour poser une addition ou une soustraction de deux nombres décimaux, on peut avoir autant de chiffres dans les parties décimales en ajoutant des…','0',[
+    cqW('1','ajouter des 1 changerait la valeur du nombre ; on ajoute des 0.'),
+    cqW('9','ajouter des 9 changerait la valeur du nombre ; on ajoute des 0.'),
+    cqW('virgules','la virgule sépare la partie entière de la partie décimale ; on n’en ajoute pas, on ajoute des 0.')],true);
+  N(1,'ncrp4-zer-b',cqPROP,`Pour poser une addition ou une soustraction, on peut ajouter des ${z} pour avoir autant de chiffres dans les parties décimales.`,[
+    cqW(`Pour poser une addition ou une soustraction, on peut ajouter des ${u} pour avoir autant de chiffres dans les parties décimales.`,`ajouter des 1 changerait la valeur du nombre ; on ajoute des ${z}.`),
+    cqW('Pour poser une addition ou une soustraction, on peut ajouter des virgules pour avoir autant de chiffres dans les parties décimales.','la virgule sépare la partie entière de la partie décimale ; on ajoute des zéros, pas des virgules.'),
+    cqW(`Pour poser une addition ou une soustraction, on doit toujours ajouter un ${z} à chaque nombre.`,'on ajoute des zéros seulement quand c’est utile : pour avoir autant de chiffres dans les parties décimales.')]);
+
+  /* II – Multiplications */
+  N(2,'ncrp4-mul-a','Pour poser une multiplication de deux nombres décimaux, on commence par…',`poser une multiplication ${cl}`,[
+    cqW('aligner les virgules','aligner les virgules, c’est pour les additions et les soustractions.'),
+    cqW(`ajouter des ${z} pour avoir autant de chiffres dans les parties décimales`,'c’est une remarque pour les additions et les soustractions ; pour une multiplication, on pose une multiplication «\u00a0classique\u00a0».'),
+    cqW('diviser les deux nombres par 10','pour une multiplication de deux nombres décimaux, on commence par poser une multiplication «\u00a0classique\u00a0».')]);
+  N(2,'ncrp4-mul-b',`Une fois le résultat de la multiplication ${cl} obtenu, on place la virgule pour avoir autant de chiffres après la virgule que…`,'les deux nombres en ont, au total',[
+    cqW('le facteur qui en a le plus',compte),
+    cqW('le facteur qui en a le moins',compte),
+    cqW('le premier facteur seulement',compte)]);
+  N(2,'ncrp4-mul-c',cqPROP,`Pour multiplier deux nombres décimaux, on pose une multiplication ${cl}, puis on reporte le nombre de chiffres après la virgule.`,[
+    cqW('Pour multiplier deux nombres décimaux, on aligne les virgules, puis on multiplie.',`aligner les virgules, c’est pour les additions et les soustractions ; pour une multiplication, on pose une multiplication ${cl}.`),
+    cqW('Pour multiplier deux nombres décimaux, on multiplie les parties entières, puis les parties décimales.',`on pose une multiplication ${cl}, puis on reporte le nombre de chiffres après la virgule.`),
+    cqW(`Pour multiplier deux nombres décimaux, on pose une multiplication ${cl}, puis on place la virgule comme dans le premier nombre.`,'la virgule se place d’après le nombre total de chiffres après la virgule des deux nombres.')]);
+  N(2,'ncrp4-op-a','Il faut aligner les virgules pour poser…','une addition ou une soustraction',[
+    cqW('une multiplication',`pour une multiplication, on pose une multiplication ${cl}, puis on reporte le nombre de chiffres après la virgule.`),
+    cqW('une addition ou une multiplication','on n’aligne pas les virgules pour une multiplication.'),
+    cqW('toutes les opérations','on aligne les virgules pour une addition ou une soustraction, mais pas pour une multiplication.')],true);
+  CQ_CASES[CQ_CASES.length-1].req=['6ncrp4-1','6ncrp4-2'];   /* en révisions : seulement si Additions-soustractions ET Multiplications sont choisis */
+
+  /* III – Multiplications par 0,1 ; 0,01 etc. */
+  N(3,'ncrp4-x01-a','Multiplier par 0,1 revient à…','diviser par 10',[
+    cqW('multiplier par 10','c’est l’inverse : multiplier par 0,1 revient à diviser par 10.'),
+    cqW('diviser par 100','diviser par 100 revient à multiplier par 0,01.'),
+    cqW(`diviser par ${K}`,`diviser par ${K} revient à multiplier par 0,001.`)],true);
+  N(3,'ncrp4-x01-b','Multiplier par 0,01 revient à…','diviser par 100',[
+    cqW('multiplier par 100','c’est l’inverse : multiplier par 0,01 revient à diviser par 100.'),
+    cqW('diviser par 10','diviser par 10 revient à multiplier par 0,1.'),
+    cqW(`diviser par ${K}`,`diviser par ${K} revient à multiplier par 0,001.`)],true);
+  N(3,'ncrp4-x01-c','Multiplier par 0,001 revient à…',`diviser par ${K}`,[
+    cqW(`multiplier par ${K}`,`c’est l’inverse : multiplier par 0,001 revient à diviser par ${K}.`),
+    cqW('diviser par 10','diviser par 10 revient à multiplier par 0,1.'),
+    cqW('diviser par 100','diviser par 100 revient à multiplier par 0,01.')],true);
+  N(3,'ncrp4-rang-a','Pour multiplier un nombre par 0,1, on décale chaque chiffre de…','un rang',[
+    cqW('deux rangs','décaler de deux rangs, c’est multiplier par 0,01.'),
+    cqW('trois rangs','décaler de trois rangs, c’est multiplier par 0,001.'),
+    cqW('dix rangs','multiplier par 0,1 revient à diviser par 10 : on décale d’un seul rang, autant que de zéros dans 10.')],true);
+  N(3,'ncrp4-rang-b','Pour multiplier un nombre par 0,01, on décale chaque chiffre de…','deux rangs',[
+    cqW('un rang','décaler d’un rang, c’est multiplier par 0,1.'),
+    cqW('trois rangs','décaler de trois rangs, c’est multiplier par 0,001.'),
+    cqW('cent rangs','multiplier par 0,01 revient à diviser par 100 : on décale de deux rangs, autant que de zéros dans 100.')],true);
+  N(3,'ncrp4-rang-c','Pour multiplier un nombre par 0,001, on décale chaque chiffre de…','trois rangs',[
+    cqW('un rang','décaler d’un rang, c’est multiplier par 0,1.'),
+    cqW('deux rangs','décaler de deux rangs, c’est multiplier par 0,01.'),
+    cqW('mille rangs',`multiplier par 0,001 revient à diviser par ${K} : on décale de trois rangs, autant que de zéros dans ${K}.`)],true);
+  N(3,'ncrp4-div-a','Diviser par 10 revient à…','multiplier par 0,1',[
+    cqW('multiplier par 10','multiplier par 10 est l’opération inverse : diviser par 10 revient à multiplier par 0,1.'),
+    cqW('multiplier par 0,01','multiplier par 0,01 revient à diviser par 100.'),
+    cqW('multiplier par 0,001',`multiplier par 0,001 revient à diviser par ${K}.`)],true);
+  N(3,'ncrp4-div-b','Diviser par 100 revient à…','multiplier par 0,01',[
+    cqW('multiplier par 100','multiplier par 100 est l’opération inverse : diviser par 100 revient à multiplier par 0,01.'),
+    cqW('multiplier par 0,1','multiplier par 0,1 revient à diviser par 10.'),
+    cqW('multiplier par 0,001',`multiplier par 0,001 revient à diviser par ${K}.`)],true);
+  N(3,'ncrp4-div-c',`Diviser par ${K} revient à…`,'multiplier par 0,001',[
+    cqW(`multiplier par ${K}`,`multiplier par ${K} est l’opération inverse : diviser par ${K} revient à multiplier par 0,001.`),
+    cqW('multiplier par 0,1','multiplier par 0,1 revient à diviser par 10.'),
+    cqW('multiplier par 0,01','multiplier par 0,01 revient à diviser par 100.')],true);
+})();
+
+/* ===== Questions de cours 6e – NCRP 5 : Divisions =====
+   Thèmes : 1 = I – Multiples et diviseurs · 2 = II – Division euclidienne · 3 = III – Critères de divisibilité · 4 = IV – Division décimale
+   Les nombres et les signes passent automatiquement en « mode maths » (voir mathRuns). Uniquement les définitions, propriétés, méthodes et remarques du cours (pas d'exemples de calcul). */
+Object.assign(CQ_GLAB,{'ncrp5-mult':'Multiple et diviseur','ncrp5-dvis':'Divisible par','ncrp5-voc':'Vocabulaire de la division euclidienne',
+  'ncrp5-eq':'Dividende = diviseur × quotient + reste','ncrp5-rest':'Le reste et le diviseur','ncrp5-ent':'Nombres de la division euclidienne',
+  'ncrp5-c2':'Divisibilité par 2','ncrp5-c5':'Divisibilité par 5','ncrp5-c10':'Divisibilité par 10','ncrp5-cq':'Quels critères ?',
+  'ncrp5-fin':'Fin d’une division décimale','ncrp5-zer':'Ajouter des 0 inutiles','ncrp5-al':'Aligner les chiffres','ncrp5-rep':'Un chiffre qui se répète'});
+(function(){
+  const fx=cqM;
+  /* une lettre majuscule isolée (A, B…) est une variable : on la met automatiquement en « mode maths » */
+  const LT=t=>t.replace(/(^|[^A-Za-zÀ-ÿ0-9<>\/'’])([A-Z])(?![A-Za-zÀ-ÿ0-9])/g,(m,a,c)=>a+'<i>'+c+'</i>');
+  const F=t=>fx(LT(t));
+  const N=(th,id,stem,ok,wrong,short)=>CQ_CASES.push({ch:'6ncrp5',th,pk:'p|'+id,make:()=>cqMakeProp({stem:F(stem),ok:F(ok),wrong:wrong.map(w=>({t:F(w.t),why:F(w.why)})),short})});
+  const crit2='un nombre est divisible par 2 si son chiffre des unités est 0, 2, 4, 6 ou 8 (autrement dit, s’il est pair).';
+  const crit5='un nombre est divisible par 5 si son chiffre des unités est 0 ou 5.';
+  const crit10='un nombre est divisible par 10 si son chiffre des unités est 0.';
+  const fin='une division décimale est terminée quand une différence est nulle et que tous les chiffres ont été utilisés.';
+
+  /* I – Multiples et diviseurs */
+  N(1,'ncrp5-mult-a','Un nombre A est multiple d’un nombre B si l’on peut trouver A en…','multipliant B par un nombre entier',[
+    cqW('divisant B par un nombre entier','c’est en multipliant B par un nombre entier que l’on trouve A.'),
+    cqW('ajoutant un nombre entier à B','c’est en multipliant B par un nombre entier que l’on trouve A, pas en lui ajoutant un nombre.'),
+    cqW('multipliant B par un nombre décimal','le nombre par lequel on multiplie B doit être entier.')]);
+  N(1,'ncrp5-mult-b','Si A est un multiple de B, alors B est un… de A.','diviseur',[
+    cqW('multiple','c’est A qui est un multiple de B ; B est un diviseur de A.'),
+    cqW('quotient','le quotient est un des deux nombres que l’on cherche dans une division euclidienne ; ici, B est un diviseur de A.'),
+    cqW('reste','le reste est un des deux nombres que l’on cherche dans une division euclidienne ; ici, B est un diviseur de A.')],true);
+  N(1,'ncrp5-mult-c',cqPROP,'Si A est un multiple de B alors B est un diviseur de A.',[
+    cqW('Si A est un multiple de B alors A est un diviseur de B.','c’est B qui est un diviseur de A.'),
+    cqW('Si A est un multiple de B alors B est un multiple de A.','A est un multiple de B, et B est un diviseur de A.'),
+    cqW('Si A est un multiple de B alors B est divisible par A.','c’est A qui est divisible par B.')]);
+  N(1,'ncrp5-dvis-a',cqPROP,'Si A est divisible par B alors A est un multiple de B.',[
+    cqW('Si A est divisible par B alors A est un diviseur de B.','si A est divisible par B, alors A est un multiple de B et B est un diviseur de A.'),
+    cqW('Si A est divisible par B alors B est un multiple de A.','c’est A qui est un multiple de B.'),
+    cqW('Si A est divisible par B alors on trouve A en divisant B par un nombre entier.','on trouve A en multipliant B par un nombre entier.')]);
+  N(1,'ncrp5-dvis-b','Dire qu’un nombre A est un multiple d’un nombre B, c’est dire que A est… par B.','divisible',[
+    cqW('multiplicatif','un nombre A est un multiple de B quand il est divisible par B ; B est un diviseur de A.'),
+    cqW('un diviseur','c’est B qui est un diviseur de A : A est divisible par B.'),
+    cqW('un reste','un reste est un des deux nombres que l’on cherche dans une division euclidienne ; ici, A est divisible par B.')],true);
+
+  /* II – Division euclidienne */
+  N(2,'ncrp5-voc-a','Dans une division euclidienne, le nombre que l’on divise s’appelle le…','dividende',[
+    cqW('diviseur','le diviseur est le nombre par lequel on divise.'),
+    cqW('quotient','le quotient est un des deux nombres que l’on cherche ; le nombre que l’on divise est le dividende.'),
+    cqW('reste','le reste est un des deux nombres que l’on cherche ; le nombre que l’on divise est le dividende.')],true);
+  N(2,'ncrp5-voc-b','Dans une division euclidienne, le nombre par lequel on divise s’appelle le…','diviseur',[
+    cqW('dividende','le dividende est le nombre que l’on divise ; le diviseur est le nombre par lequel on divise.'),
+    cqW('quotient','le quotient est un des deux nombres que l’on cherche ; le nombre par lequel on divise est le diviseur.'),
+    cqW('reste','le reste est un des deux nombres que l’on cherche ; le nombre par lequel on divise est le diviseur.')],true);
+  N(2,'ncrp5-eq-a','Dans une division euclidienne, dividende = …','diviseur × quotient + reste',[
+    cqW('diviseur × reste + quotient','c’est le quotient que l’on multiplie par le diviseur, puis on ajoute le reste.'),
+    cqW('diviseur × quotient − reste','on ajoute le reste : dividende = diviseur × quotient + reste.'),
+    cqW('diviseur + quotient × reste','on multiplie le diviseur par le quotient, puis on ajoute le reste.')]);
+  N(2,'ncrp5-eq-b',cqPROP,'Dans une division euclidienne, dividende = diviseur × quotient + reste.',[
+    cqW('Dans une division euclidienne, diviseur = dividende × quotient + reste.','c’est le dividende qui est égal à diviseur × quotient + reste.'),
+    cqW('Dans une division euclidienne, dividende = quotient × reste + diviseur.','dividende = diviseur × quotient + reste.'),
+    cqW('Dans une division euclidienne, dividende = diviseur + quotient + reste.','il faut multiplier le diviseur par le quotient, puis ajouter le reste.')]);
+  N(2,'ncrp5-rest-a','Dans une division euclidienne, le reste est strictement inférieur…','au diviseur',[
+    cqW('au dividende','le reste est strictement inférieur au diviseur.'),
+    cqW('au quotient','le reste est strictement inférieur au diviseur, pas au quotient.'),
+    cqW('à 10','le reste est strictement inférieur au diviseur, quel que soit ce diviseur.')],true);
+  N(2,'ncrp5-rest-b',cqPROP,'Dans une division euclidienne, le reste est strictement inférieur au diviseur.',[
+    cqW('Dans une division euclidienne, le reste est strictement supérieur au diviseur.','le reste est strictement inférieur au diviseur.'),
+    cqW('Dans une division euclidienne, le reste peut être égal au diviseur.','le reste est strictement inférieur au diviseur : il ne peut jamais lui être égal.'),
+    cqW('Dans une division euclidienne, le reste est strictement inférieur au quotient.','le reste est strictement inférieur au diviseur, pas au quotient.')]);
+  N(2,'ncrp5-ent-a','Dans une division euclidienne, le dividende, le diviseur, le quotient et le reste sont des nombres…','entiers',[
+    cqW('décimaux','la division euclidienne se fait avec des nombres entiers ; ce sont les chiffres après la virgule qui font la division décimale.')],true);
+
+  /* III – Critères de divisibilité */
+  N(3,'ncrp5-c2-a','Un nombre est divisible par 2 si son chiffre des unités est…','0, 2, 4, 6 ou 8',[
+    cqW('1, 3, 5, 7 ou 9','ce sont les chiffres des unités des nombres impairs ; '+crit2),
+    cqW('0 ou 5','c’est le critère de divisibilité par 5 ; '+crit2),
+    cqW('0','c’est le critère de divisibilité par 10 ; '+crit2)],true);
+  N(3,'ncrp5-c2-b','Un nombre est divisible par 2 s’il est…','pair',[
+    cqW('impair','un nombre impair n’est pas divisible par 2 ; '+crit2),
+    cqW('terminé par 0 ou 5','c’est le critère de divisibilité par 5 ; '+crit2),
+    cqW('terminé par 0 seulement','c’est le critère de divisibilité par 10 ; '+crit2)],true);
+  N(3,'ncrp5-c2-c',cqPROP,'Un nombre est divisible par 2 si son chiffre des unités est 0, 2, 4, 6 ou 8.',[
+    cqW('Un nombre est divisible par 2 si son chiffre des unités est 1, 3, 5, 7 ou 9.','ce sont les chiffres des unités des nombres impairs ; '+crit2),
+    cqW('Un nombre est divisible par 2 si son chiffre des unités est 0 ou 5.','c’est le critère de divisibilité par 5 ; '+crit2),
+    cqW('Un nombre est divisible par 2 si son chiffre des dizaines est 0, 2, 4, 6 ou 8.','c’est le chiffre des unités qui compte, pas celui des dizaines.')]);
+  N(3,'ncrp5-c5-a','Un nombre est divisible par 5 si son chiffre des unités est…','0 ou 5',[
+    cqW('0, 2, 4, 6 ou 8','c’est le critère de divisibilité par 2 ; '+crit5),
+    cqW('0 seulement','c’est le critère de divisibilité par 10 ; '+crit5),
+    cqW('5 seulement','un nombre dont le chiffre des unités est 0 est aussi divisible par 5 ; '+crit5)],true);
+  N(3,'ncrp5-c5-b',cqPROP,'Un nombre est divisible par 5 si son chiffre des unités est 0 ou 5.',[
+    cqW('Un nombre est divisible par 5 si son chiffre des unités est 0, 2, 4, 6 ou 8.','c’est le critère de divisibilité par 2 ; '+crit5),
+    cqW('Un nombre est divisible par 5 si son chiffre des unités est 5 seulement.','un nombre dont le chiffre des unités est 0 est aussi divisible par 5 ; '+crit5),
+    cqW('Un nombre est divisible par 5 si son chiffre des dizaines est 0 ou 5.','c’est le chiffre des unités qui compte, pas celui des dizaines.')]);
+  N(3,'ncrp5-c10-a','Un nombre est divisible par 10 si son chiffre des unités est…','0',[
+    cqW('0 ou 5','c’est le critère de divisibilité par 5 ; '+crit10),
+    cqW('5','un nombre dont le chiffre des unités est 5 n’est pas divisible par 10 ; '+crit10),
+    cqW('0, 2, 4, 6 ou 8','c’est le critère de divisibilité par 2 ; '+crit10)],true);
+  N(3,'ncrp5-c10-b',cqPROP,'Un nombre est divisible par 10 si son chiffre des unités est 0.',[
+    cqW('Un nombre est divisible par 10 si son chiffre des unités est 0 ou 5.','c’est le critère de divisibilité par 5 ; '+crit10),
+    cqW('Un nombre est divisible par 10 si son chiffre des unités est 0, 2, 4, 6 ou 8.','c’est le critère de divisibilité par 2 ; '+crit10),
+    cqW('Un nombre est divisible par 10 si son chiffre des dizaines est 0.','c’est le chiffre des unités qui compte, pas celui des dizaines.')]);
+  N(3,'ncrp5-cq-a','Un nombre dont le chiffre des unités est 0 est divisible par…','2, 5 et 10',[
+    cqW('2 seulement','0 fait partie des chiffres des critères de divisibilité par 2, par 5 et par 10.'),
+    cqW('10 seulement','0 fait partie des chiffres des critères de divisibilité par 2, par 5 et par 10.'),
+    cqW('5 et 10 seulement','0 est aussi un des chiffres des unités d’un nombre divisible par 2.')],true);
+  N(3,'ncrp5-cq-b','Un nombre dont le chiffre des unités est 5 est divisible par…','5, mais pas par 2 ni par 10',[
+    cqW('2, 5 et 10','5 n’est ni dans la liste du critère de divisibilité par 2 (0, 2, 4, 6, 8), ni dans celle du critère par 10 (0).'),
+    cqW('2 et 5','5 n’est pas dans la liste du critère de divisibilité par 2 : ce nombre est impair.'),
+    cqW('5 et 10','pour être divisible par 10, le chiffre des unités doit être 0.')],true);
+
+  /* IV – Division décimale */
+  N(4,'ncrp5-fin-a','Une division décimale est terminée quand…','une différence est nulle et que tous les chiffres ont été utilisés',[
+    cqW('une différence est nulle','il faut aussi que tous les chiffres aient été utilisés.'),
+    cqW('le quotient est un nombre entier','le quotient peut avoir des chiffres après la virgule ; '+fin),
+    cqW('on a obtenu deux chiffres après la virgule',fin)]);
+  N(4,'ncrp5-fin-b',cqPROP,'Une division décimale est terminée quand une différence est nulle et que tous les chiffres ont été utilisés.',[
+    cqW('Une division décimale est terminée quand une différence est nulle.','il faut aussi que tous les chiffres aient été utilisés.'),
+    cqW('Une division décimale est terminée quand une différence est égale au diviseur.',fin),
+    cqW('Une division décimale est terminée quand le quotient a un chiffre après la virgule.',fin)]);
+  N(4,'ncrp5-zer-a','Pour poser une division décimale, on peut ajouter des… inutiles.','0',[
+    cqW('1','ajouter des 1 changerait la valeur du nombre ; on ajoute des 0 inutiles.'),
+    cqW('9','ajouter des 9 changerait la valeur du nombre ; on ajoute des 0 inutiles.'),
+    cqW('virgules','la virgule sépare la partie entière de la partie décimale ; on ajoute des 0 inutiles, pas des virgules.')],true);
+  N(4,'ncrp5-zer-b',cqPROP,'Pour poser une division décimale, on peut ajouter des 0 inutiles.',[
+    cqW('Pour poser une division décimale, on peut ajouter des 1 inutiles.','ajouter des 1 changerait la valeur du nombre ; on ajoute des 0 inutiles.'),
+    cqW('Pour poser une division décimale, on ne peut pas ajouter de 0.','pour poser une division décimale, on peut ajouter des 0 inutiles.'),
+    cqW('Pour poser une division décimale, on doit supprimer les 0 inutiles.','on peut au contraire ajouter des 0 inutiles.')]);
+  N(4,'ncrp5-al-a','Pour éviter les erreurs dans une division décimale posée, il est important d’…','aligner les chiffres',[
+    cqW('aligner les virgules','aligner les virgules, c’est pour les additions et les soustractions ; dans une division décimale posée, il est important d’aligner les chiffres.'),
+    cqW('ajouter des 9','pour éviter les erreurs, il est important d’aligner les chiffres ; on peut ajouter des 0 inutiles, pas des 9.'),
+    cqW('effacer les 0 inutiles','on peut ajouter des 0 inutiles ; pour éviter les erreurs, il est important d’aligner les chiffres.')]);
+  N(4,'ncrp5-rep-a','Si un même chiffre se répète indéfiniment dans une division décimale, on peut…','s’arrêter et arrondir le résultat',[
+    cqW('continuer la division sans jamais s’arrêter','si un même chiffre se répète indéfiniment, on peut s’arrêter et arrondir le résultat.'),
+    cqW('recommencer la division','si un même chiffre se répète indéfiniment, on peut s’arrêter et arrondir le résultat.'),
+    cqW('s’arrêter : le résultat est alors exact','si l’on s’arrête alors qu’un chiffre se répète, on arrondit le résultat : il n’est pas exact.')]);
+  N(4,'ncrp5-rep-b',cqPROP,'Si un même chiffre se répète indéfiniment, on peut s’arrêter et arrondir le résultat.',[
+    cqW('Si un même chiffre se répète indéfiniment, on ne peut pas s’arrêter.','on peut s’arrêter et arrondir le résultat.'),
+    cqW('Si un même chiffre se répète indéfiniment, on doit recommencer la division.','on peut s’arrêter et arrondir le résultat.'),
+    cqW('Si un même chiffre se répète indéfiniment, on peut s’arrêter et le résultat est exact.','quand on s’arrête, on arrondit le résultat : il n’est pas exact.')]);
+})();
+
+/* ===== Questions de cours 6e – EG 2 : Cercle et disque =====
+   Un seul thème : 1 = I – Vocabulaire (définitions et propriété du cours ; pas d'exemples). */
+Object.assign(CQ_GLAB,{'eg2-cer':'Cercle','eg2-dis':'Disque','eg2-ray':'Rayon','eg2-cord':'Corde','eg2-diam':'Diamètre','eg2-ctr':'Centre du cercle',
+  'eg2-dbl':'Le diamètre est le double du rayon','eg2-pos':'Cercle ou disque ? (position d’un point)'});
+(function(){
+  const fx=cqM;
+  const N=(id,stem,ok,wrong,short)=>CQ_CASES.push({ch:'6eg2',th:1,pk:'p|'+id,make:()=>cqMakeProp({stem:fx(stem),ok:fx(ok),wrong:wrong.map(w=>({t:fx(w.t),why:fx(w.why)})),short})});
+  const O=cqI('O'), c3='3\u00a0cm';
+  const cercle=`le cercle de centre ${O} et de rayon ${c3}`, disque=`le disque de centre ${O} et de rayon ${c3}`;
+  const dist=`Tous les points situés à une distance de ${c3}`;
+
+  /* cercle */
+  N('eg2-cer-a',`${dist} d’un point ${O} forment…`,cercle,[
+    cqW(disque,`le disque est formé des points situés à une distance de ${c3} ou moins du centre.`),
+    cqW(`le cercle de centre ${O} et de diamètre ${c3}`,`la distance de ${c3} au centre est le rayon, et non le diamètre.`),
+    cqW(`le cercle de centre ${O} et de rayon 6\u00a0cm`,`la distance de ${c3} au centre est le rayon du cercle.`)]);
+  N('eg2-cer-b',cqPROP,`${dist} d’un point ${O} forment ${cercle}.`,[
+    cqW(`${dist} d’un point ${O} forment ${disque}.`,`les points situés à une distance de ${c3} forment le cercle ; le disque est formé des points situés à ${c3} ou moins.`),
+    cqW(`${dist} d’un point ${O} forment le cercle de centre ${O} et de diamètre ${c3}.`,'la distance au centre est le rayon du cercle, et non son diamètre.'),
+    cqW(`${dist} ou moins d’un point ${O} forment ${cercle}.`,`les points situés à une distance de ${c3} ou moins forment un disque, pas un cercle.`)]);
+  /* disque */
+  N('eg2-dis-a',`${dist} ou moins d’un point ${O} forment…`,disque,[
+    cqW(cercle,`le cercle est formé des points situés à une distance de ${c3} exactement du centre.`),
+    cqW(`le disque de centre ${O} et de diamètre ${c3}`,`la distance de ${c3} au centre est le rayon du disque, et non son diamètre.`),
+    cqW(`le cercle de centre ${O} et de diamètre ${c3}`,`les points situés à ${c3} ou moins forment un disque, et ${c3} est le rayon.`)]);
+  N('eg2-dis-b',cqPROP,`Le disque de centre ${O} et de rayon ${c3} est formé des points situés à une distance de ${c3} ou moins de ${O}.`,[
+    cqW(`Le disque de centre ${O} et de rayon ${c3} est formé des points situés à une distance de ${c3} de ${O}.`,'ce sont les points du cercle ; le disque contient aussi les points plus proches du centre.'),
+    cqW(`Le disque de centre ${O} et de rayon ${c3} est formé des points situés à une distance de ${c3} ou plus de ${O}.`,'le disque est formé des points situés à une distance de 3\u00a0cm ou moins du centre.'),
+    cqW(`Le cercle de centre ${O} et de rayon ${c3} est formé des points situés à une distance de ${c3} ou moins de ${O}.`,'c’est la définition du disque ; le cercle est formé des points situés à 3\u00a0cm exactement du centre.')]);
+  /* rayon */
+  N('eg2-ray-a','Un rayon est un segment dont les extrémités sont…','le centre et un point du cercle',[
+    cqW('deux points du cercle','un segment dont les extrémités sont sur le cercle est une corde.'),
+    cqW('le centre et un point situé à l’intérieur du cercle','l’une des extrémités d’un rayon est un point du cercle.'),
+    cqW('deux points quelconques du disque','les extrémités d’un rayon sont le centre et un point du cercle.')]);
+  N('eg2-ray-b',cqPROP,'On appelle rayon un segment dont les extrémités sont le centre et un point du cercle.',[
+    cqW('On appelle rayon un segment dont les extrémités sont sur le cercle.','c’est la définition d’une corde.'),
+    cqW('On appelle rayon une corde passant par le centre du cercle.','c’est la définition d’un diamètre.'),
+    cqW('On appelle rayon un segment dont les extrémités sont le centre et un point extérieur au cercle.','l’une des extrémités d’un rayon est un point du cercle.')]);
+  /* corde */
+  N('eg2-cord-a','Une corde est un segment dont les extrémités sont…','sur le cercle',[
+    cqW('le centre et un point du cercle','un segment dont les extrémités sont le centre et un point du cercle est un rayon.'),
+    cqW('deux points quelconques','les deux extrémités d’une corde sont sur le cercle.'),
+    cqW('un point du cercle et un point extérieur au cercle','les deux extrémités d’une corde sont sur le cercle.')],true);
+  N('eg2-cord-b',cqPROP,'On appelle corde un segment dont les extrémités sont sur le cercle.',[
+    cqW('On appelle corde un segment dont les extrémités sont le centre et un point du cercle.','c’est la définition d’un rayon.'),
+    cqW('On appelle corde un segment dont les extrémités sont à l’intérieur du cercle.','les deux extrémités d’une corde sont sur le cercle.'),
+    cqW('On appelle corde un segment dont une seule extrémité est sur le cercle.','les deux extrémités d’une corde sont sur le cercle.')]);
+  /* diamètre */
+  N('eg2-diam-a','Un diamètre est une corde…','passant par le centre du cercle',[
+    cqW('ne passant pas par le centre du cercle','un diamètre passe par le centre du cercle.'),
+    cqW('dont une extrémité est le centre du cercle','les deux extrémités d’une corde sont sur le cercle ; un segment dont une extrémité est le centre est un rayon.'),
+    cqW('de même longueur que le rayon','le diamètre mesure le double du rayon.')]);
+  N('eg2-diam-b',cqPROP,'On appelle diamètre une corde passant par le centre du cercle.',[
+    cqW('On appelle diamètre une corde ne passant pas par le centre du cercle.','un diamètre passe par le centre du cercle.'),
+    cqW('On appelle diamètre un segment dont les extrémités sont le centre et un point du cercle.','c’est la définition d’un rayon.'),
+    cqW('On appelle diamètre un segment de même longueur que le rayon.','le diamètre mesure le double du rayon.')]);
+  /* centre et propriété */
+  N('eg2-ctr-a','Le centre du cercle est situé…','au milieu d’un diamètre',[
+    cqW('au milieu d’une corde quelconque','le centre n’est le milieu que d’un diamètre ; une corde quelconque ne passe pas forcément par le centre.'),
+    cqW('à l’une des extrémités d’un diamètre','les extrémités d’un diamètre sont sur le cercle, pas au centre.'),
+    cqW('sur le cercle','le centre est à une distance du cercle égale au rayon : il n’est pas sur le cercle.')],true);
+  N('eg2-dbl-a','Le diamètre d’un cercle mesure…','le double du rayon',[
+    cqW('la moitié du rayon','le diamètre est plus grand que le rayon : il mesure le double du rayon.'),
+    cqW('le triple du rayon','le diamètre mesure le double du rayon.'),
+    cqW('la même longueur que le rayon','le diamètre mesure le double du rayon.')],true);
+  N('eg2-dbl-b',cqPROP,'Le diamètre mesure le double du rayon.',[
+    cqW('Le rayon mesure le double du diamètre.','c’est l’inverse : le diamètre mesure le double du rayon.'),
+    cqW('Le diamètre mesure la moitié du rayon.','le diamètre mesure le double du rayon.'),
+    cqW('Le diamètre et le rayon ont la même longueur.','le diamètre mesure le double du rayon.')]);
+  /* cercle ou disque : position d'un point (remarque : il ne faut pas confondre cercle et disque) */
+  N('eg2-pos-a','Un point situé à une distance du centre plus petite que le rayon appartient…','au disque mais pas au cercle',[
+    cqW('au cercle mais pas au disque','le cercle est formé des points situés à une distance du centre égale au rayon.'),
+    cqW('au cercle et au disque','un point du cercle est à une distance du centre égale au rayon, et non plus petite.'),
+    cqW('ni au disque ni au cercle','le disque est formé des points situés à une distance du centre égale au rayon ou moins.')]);
+  N('eg2-pos-b','Un point situé à une distance du centre égale au rayon appartient…','au cercle et au disque',[
+    cqW('au cercle mais pas au disque','le disque est formé des points situés à une distance du centre égale au rayon ou moins : il contient aussi les points du cercle.'),
+    cqW('au disque mais pas au cercle','un point situé à une distance du centre égale au rayon est sur le cercle.'),
+    cqW('ni au disque ni au cercle','un point situé à une distance du centre égale au rayon est sur le cercle, donc dans le disque.')]);
+  N('eg2-pos-c','Un point situé à une distance du centre plus grande que le rayon appartient…','ni au disque ni au cercle',[
+    cqW('au cercle mais pas au disque','le cercle est formé des points situés à une distance du centre égale au rayon.'),
+    cqW('au disque mais pas au cercle','le disque est formé des points situés à une distance du centre égale au rayon ou moins.'),
+    cqW('au cercle et au disque','le cercle et le disque ne contiennent que des points situés à une distance du centre égale au rayon ou moins.')]);
+})();
+
+/* ===== Questions de cours 6e – EG 2 : figures avec un cercle, des points et des segments =====
+   nommer un rayon, un diamètre, une corde, le centre ; appartenance d'un point au disque et au cercle.
+   Chaque figure est tirée au hasard ; les noms des points sont placés automatiquement pour ne rien recouvrir. */
+Object.assign(CQ_GLAB,{'eg2-fseg':'Nommer un segment du cercle (figure)','eg2-fapp':'Disque et cercle : position d’un point (figure)'});
+(function(){
+  const CF={W:380,H:250,cx:190,cy:125,R:82}, O=[CF.cx,CF.cy];
+  const rnd=(a,b)=>a+Math.random()*(b-a), sgn=()=>Math.random()<.5?1:-1;
+  const pol=(r,deg)=>{ const t=deg*Math.PI/180; return [CF.cx+r*Math.cos(t),CF.cy-r*Math.sin(t)]; };
+  const onC=d=>pol(CF.R,d);
+  const lets=(n,excl=[])=>shuffle(['A','B','C','D','E','F','G','H','I','J','K','L','M','N','P','R','S','T'].filter(x=>!excl.includes(x))).slice(0,n);
+  const ps=(p,a,b)=>{ const dx=b[0]-a[0],dy=b[1]-a[1],l2=dx*dx+dy*dy||1; let t=((p[0]-a[0])*dx+(p[1]-a[1])*dy)/l2; t=Math.max(0,Math.min(1,t)); return Math.hypot(p[0]-(a[0]+t*dx),p[1]-(a[1]+t*dy)); };
+  const cross=(a,b,c,d)=>{ const o=(p,q,r)=>(q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]); return o(a,b,c)*o(a,b,d)<0&&o(c,d,a)*o(c,d,b)<0; };
+  const ss=(a,b,c,d)=>cross(a,b,c,d)?0:Math.min(ps(a,c,d),ps(b,c,d),ps(c,a,b),ps(d,a,b));
+  const dist=(p,q)=>Math.hypot(p[0]-q[0],p[1]-q[1]);
+  const nm=(a,b)=>`[${cqI(a)}${cqI(b)}]`, Oc=cqI('O');
+  const inBox=p=>p[0]>26&&p[0]<CF.W-26&&p[1]>26&&p[1]<CF.H-26;
+  /* un point extérieur au cercle, bien visible et dans le cadre */
+  const outPt=(avoid=[])=>{ for(let i=0;i<60;i++){ const p=pol(rnd(1.22,1.4)*CF.R,rnd(0,360)); if(inBox(p)&&avoid.every(q=>dist(p,q)>44)) return p; } return pol(1.22*CF.R,0); };
+
+  /* dessin + placement des noms (le meilleur emplacement parmi 24 directions × 3 distances) ; bad = nombre de recouvrements */
+  function draw(sc){
+    const f=v=>v.toFixed(1), obst=[];
+    for(let d=0;d<360;d+=3) obst.push(onC(d));
+    sc.segs.forEach(([a,b])=>{ const l=dist(a,b); for(let k=0;k<=l;k+=3) obst.push([a[0]+(b[0]-a[0])*k/l,a[1]+(b[1]-a[1])*k/l]); });
+    const HT=9*Math.SQRT2/2;   /* le trait a la même longueur (≈12,7) et la même épaisseur que chaque branche de la croix */
+    const tk=pt=>{ const t=pt.tick*Math.PI/180; return [Math.cos(t),-Math.sin(t)]; };   /* direction du rayon en un point sur le cercle */
+    sc.pts.forEach(pt=>{ if(pt.tick!==undefined){ const u=tk(pt); [-6.4,-3.2,0,3.2,6.4].forEach(k=>obst.push([pt.p[0]+u[0]*k,pt.p[1]+u[1]*k])); }
+      else (pt.kind==='center'||pt.cross?[[-4,-4],[4,4],[-4,4],[4,-4],[0,0]]:[[0,0]]).forEach(o=>obst.push([pt.p[0]+o[0],pt.p[1]+o[1]])); });
+    const HW=8,HH=11,placed=[]; let bad=0;
+    const labs=sc.pts.map(pt=>{
+      let best=null;
+      for(const d of (pt.kind==='center'||pt.cross||pt.tick!==undefined?[17,21,26]:[14,18,23])) for(let ang=0;ang<360;ang+=22.5){
+        const t=ang*Math.PI/180, c=[pt.p[0]+Math.cos(t)*d,pt.p[1]-Math.sin(t)*d];
+        let hit=0;
+        if(c[0]-HW<4||c[0]+HW>CF.W-4||c[1]-HH<4||c[1]+HH>CF.H-4) hit+=1000;
+        const x0=c[0]-HW-3,x1=c[0]+HW+3,y0=c[1]-HH-3,y1=c[1]+HH+3;
+        obst.forEach(o=>{ if(o[0]>x0&&o[0]<x1&&o[1]>y0&&o[1]<y1) hit++; });
+        placed.forEach(q=>{ if(Math.abs(q[0]-c[0])<2*HW+4&&Math.abs(q[1]-c[1])<2*HH+2) hit+=50; });
+        let pref=d/12;
+        if(pt.kind==='on'){ const rad=Math.atan2(CF.cy-pt.p[1],pt.p[0]-CF.cx)*180/Math.PI, dd=Math.abs(((ang-rad+540)%360)-180); pref+=dd/70; }
+        if(!best||hit+pref<best.s) best={s:hit+pref,hit,c};
+      }
+      placed.push(best.c); bad+=best.hit; return best.c;
+    });
+    const svg=`<svg class="cq-fig" viewBox="0 0 ${CF.W} ${CF.H}" role="img" aria-label="Un cercle avec des points et des segments" style="display:block;width:100%;max-width:450px;margin:6px auto 14px;color:var(--ink);">`
+      +`<circle cx="${CF.cx}" cy="${CF.cy}" r="${CF.R}" fill="none" stroke="currentColor" stroke-width="2.2"/>`
+      +sc.segs.map(([a,b])=>`<line x1="${f(a[0])}" y1="${f(a[1])}" x2="${f(b[0])}" y2="${f(b[1])}" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>`).join('')
+      +sc.pts.filter(pt=>pt.kind==='center'||pt.cross).map(pt=>`<path d="M${f(pt.p[0]-4.5)},${f(pt.p[1]-4.5)}l9,9m0,-9l-9,9" stroke="currentColor" stroke-width="2" fill="none"/>`).join('')
+      +sc.pts.filter(pt=>pt.tick!==undefined).map(pt=>{ const u=tk(pt); return `<line x1="${f(pt.p[0]-u[0]*HT)}" y1="${f(pt.p[1]-u[1]*HT)}" x2="${f(pt.p[0]+u[0]*HT)}" y2="${f(pt.p[1]+u[1]*HT)}" stroke="currentColor" stroke-width="2"/>`; }).join('')
+      +sc.pts.map((pt,i)=>`<text x="${f(labs[i][0])}" y="${f(labs[i][1])}" font-size="22" style="font-family:var(--mf);" text-anchor="middle" dominant-baseline="central" fill="currentColor">${pt.n}</text>`).join('')
+      +'</svg>';
+    return {svg,bad};
+  }
+  const attempt=(gen,n=60)=>{ let best=null; for(let i=0;i<n;i++){ const sc=gen(); if(!sc) continue; const d=draw(sc); sc.svg=d.svg; sc.bad=d.bad; if(!best||d.bad<best.bad) best=sc; if(d.bad===0) break; } return best; };
+
+  /* ---- scène : un seul segment à nommer (rayon, diamètre ou corde) ---- */
+  function segScene(type){
+    const L=lets(2,['O']), a=rnd(0,360), pts=[{n:'O',p:O,kind:'center'}]; let segs, names;
+    if(type==='ray'){ const P=onC(a); pts.push({n:L[0],p:P,kind:'on'}); segs=[[O,P]]; names=['O',L[0]]; }
+    else if(type==='dia'){ const P=onC(a),Q=onC(a+180); pts.push({n:L[0],p:P,kind:'on'},{n:L[1],p:Q,kind:'on'}); segs=[[P,Q]]; names=[L[0],L[1]]; }
+    else if(type==='cor'){ const P=onC(a),Q=onC(a+sgn()*rnd(55,135)); pts.push({n:L[0],p:P,kind:'on'},{n:L[1],p:Q,kind:'on'}); segs=[[P,Q]]; names=[L[0],L[1]]; }
+    return {pts,segs,names:shuffle(names.slice())};
+  }
+  /* ---- scène : un seul point (à l'intérieur, sur le cercle ou à l'extérieur) ---- */
+  function appScene(which){
+    const n=lets(1,['O'])[0], a=rnd(0,360);
+    const p=which==='in'?pol(rnd(.3,.7)*CF.R,a):which==='on'?onC(a):outPt([]);
+    return {pts:[{n:'O',p:O,kind:'center'},which==='on'?{n,p,kind:'on',tick:a}:{n,p,kind:'pt',cross:true}],segs:[],name:n};   /* point sur le cercle : petit trait perpendiculaire au cercle ; point intérieur ou extérieur : croix */
+  }
+
+  /* ---- questions ---- */
+  const SEGOPT=[['ray','un rayon'],['dia','un diamètre'],['cor','une corde qui n’est pas un diamètre']];
+  const WS={
+    ray:{dia:S=>`${S} a une extrémité au centre ${Oc} : c’est un rayon, pas un diamètre.`,cor:S=>`${S} a une extrémité au centre ${Oc}, qui n’est pas sur le cercle : c’est un rayon, pas une corde.`},
+    dia:{ray:S=>`${S} a ses deux extrémités sur le cercle et passe par le centre ${Oc} : c’est un diamètre, pas un rayon.`,cor:S=>`${S} passe par le centre ${Oc} : c’est un diamètre.`},
+    cor:{ray:S=>`${S} a ses deux extrémités sur le cercle : ce n’est pas un rayon, car une extrémité d’un rayon est le centre.`,dia:S=>`${S} ne passe pas par le centre ${Oc} : ce n’est pas un diamètre.`}};
+  function figSeg(type){
+    const sc=attempt(()=>segScene(type)), S=nm(sc.names[0],sc.names[1]);
+    const opts=SEGOPT.map(([k,t])=>({html:t,ok:k===type,why:k===type?'':cqCap(WS[type][k](S))}));
+    return cqFinish({kind:'fig',long:true,head:`<div class="question cq-q">Dans le cercle de centre ${Oc}, le segment ${S} est…</div>${sc.svg}`,ansHTML:SEGOPT.find(o=>o[0]===type)[1],expl:''},opts);
+  }
+  const APPOPT=[['dnc','au disque mais pas au cercle'],['cnd','au cercle mais pas au disque'],['dc','au disque et au cercle'],['non','à aucun des deux']];
+  const APPTRUE={in:'dnc',on:'dc',out:'non'};
+  const WA={
+    in:{cnd:X=>`${X} est à l’intérieur du cercle, pas sur le cercle ; et tous les points du cercle appartiennent aussi au disque.`,dc:X=>`${X} est à l’intérieur du cercle : il n’est pas sur le cercle.`,non:X=>`${X} est plus près du centre que les points du cercle : il appartient au disque.`},
+    on:{dnc:X=>`${X} est sur le cercle : il appartient donc aussi au cercle.`,cnd:X=>`${X} est sur le cercle, à une distance du centre égale au rayon : il appartient donc aussi au disque.`,non:X=>`${X} est sur le cercle : il appartient au cercle et au disque.`},
+    out:{dnc:X=>`${X} est à l’extérieur du cercle, plus loin du centre que le rayon : il n’appartient pas au disque.`,cnd:X=>`${X} n’est pas sur le cercle : il est à l’extérieur.`,dc:X=>`${X} est à l’extérieur du cercle : il n’est ni sur le cercle, ni dans le disque.`}};
+  function figApp(which){
+    const sc=attempt(()=>appScene(which)), X=cqI(sc.name), ok=APPTRUE[which];
+    const opts=APPOPT.map(([k,t])=>({html:t,ok:k===ok,why:k===ok?'':cqCap(WA[which][k](X))}));
+    return cqFinish({kind:'fig',long:true,head:`<div class="question cq-q">Le point ${X} appartient…</div>${sc.svg}`,ansHTML:APPOPT.find(o=>o[0]===ok)[1],expl:''},opts);
+  }
+  const add=(id,make)=>CQ_CASES.push({ch:'6eg2',th:1,pk:'p|'+id,make});
+  [['a','ray'],['b','dia'],['c','cor']].forEach(([l,t])=>add('eg2-fseg-'+l,()=>figSeg(t)));
+  [['a','in'],['b','on'],['c','out']].forEach(([l,t])=>add('eg2-fapp-'+l,()=>figApp(t)));
+  window.__cf={draw,segScene,appScene,attempt};   /* pour les tests */
+})();
+
 function cqGrpOf(c){
   const [kind,a]=c.pk.split('|');
   if(kind==='defB') return {k:'def:'+a,l:'Définition : '+a};
@@ -5068,6 +5489,7 @@ function cqPool(){
     const figT=CQ_ANGTH.filter(t=>cqRevG.has(t+'|fig')), multi=figT.length>=2;
     return CQ_CASES.filter(c=>{ const t=c.ch+'-'+c.th;
       if(!cqRevG.has(t+'|'+c.g)) return false;
+      if(c.req&&!c.req.every(k=>cqRev&&cqRev.includes(k))) return false;
       if(c.fig){ if(c.fig!==(multi?'multi':'solo')) return false; if(c.none&&t!==figT[0]) return false; }
       return true; });
   }
@@ -5156,8 +5578,11 @@ const SCREENS={
 /* Questions de cours 6e : toute la structure est prête (domaines → chapitres → thèmes).
    Un chapitre sans questions s'affiche « Bientôt disponible » ; pour en ouvrir un : l'ajouter dans CQ6_DONE (thèmes),
    écrire ses questions (ch:'6'+id, ex. '6eg2'), ajouter ses écrans dans go() (EXO) et son nom dans cqRevisionSetup('6e',…). */
-const CQ6_DONE={eg1:[['I \u2013 Vocabulaire','Droite, demi-droite, segment, milieu et notations'],['II \u2013 Position de deux droites','Parallèles, sécantes et perpendiculaires']]};
-const CQ6_DESC={eg1:'Droites, demi-droites, segments et position de deux droites'};
+const CQ6_DONE={eg2:[['I \u2013 Vocabulaire','Cercle, disque, rayon, corde et diamètre']],
+  eg1:[['I \u2013 Vocabulaire','Droite, demi-droite, segment, milieu et notations'],['II \u2013 Position de deux droites','Parallèles, sécantes et perpendiculaires']],
+  ncrp4:[['I \u2013 Additions et soustractions','Aligner les virgules, ajouter des zéros'],['II \u2013 Multiplications','Poser une multiplication de deux nombres décimaux'],['III \u2013 Multiplications par 0,1 ; 0,01…','Multiplier par 0,1 ; 0,01 ou 0,001 revient à diviser par 10, 100 ou 1\u00a0000']],
+  ncrp5:[['I – Multiples et diviseurs','Multiple, diviseur et divisible'],['II – Division euclidienne','Dividende, diviseur, quotient et reste'],['III – Critères de divisibilité','Divisibilité par 2, par 5 et par 10'],['IV – Division décimale','Fin de la division, 0 inutiles, chiffre qui se répète']]};
+const CQ6_DESC={eg2:'Cercle, disque, rayon, corde, diamètre',eg1:'Droites, demi-droites, segments et position de deux droites',ncrp4:'Aligner les virgules, multiplier des décimaux, multiplier par 0,1 ; 0,01…',ncrp5:'Multiples et diviseurs, division euclidienne, critères de divisibilité, division décimale'};
 (function(){
   const DOM=[['eg'],['ncrp'],['ogdp'],['gm'],['p']];
   SCREENS['6e/qcours']={title:'Questions de cours 6e',sub:'Choisis un thème',items:DOM.map(([k])=>['6e/qcours/'+k,THEMES6E[k].title])};
@@ -5223,7 +5648,15 @@ function go(s){
     '6e/auto/mult10':{theme:'mult10',title:'Multiplications par 10, 100 et 1 000',sub:'Automatismes 6e'},
     '6e/auto/fracheure':{theme:'fh',title:'Fractions d’heure',sub:'Automatismes 6e'},
     '6e/qcours/eg1/1':{theme:'cq',cat:'6eg1-1',title:'I \u2013 Vocabulaire',sub:'EG 1 \u2013 Questions de cours'},
-    '6e/qcours/eg1/2':{theme:'cq',cat:'6eg1-2',title:'II \u2013 Position de deux droites',sub:'EG 1 \u2013 Questions de cours'}
+    '6e/qcours/eg1/2':{theme:'cq',cat:'6eg1-2',title:'II \u2013 Position de deux droites',sub:'EG 1 \u2013 Questions de cours'},
+    '6e/qcours/eg2/1':{theme:'cq',cat:'6eg2-1',title:'I \u2013 Vocabulaire',sub:'EG 2 \u2013 Questions de cours'},
+    '6e/qcours/ncrp4/1':{theme:'cq',cat:'6ncrp4-1',title:'I \u2013 Additions et soustractions',sub:'NCRP 4 \u2013 Questions de cours'},
+    '6e/qcours/ncrp4/2':{theme:'cq',cat:'6ncrp4-2',title:'II \u2013 Multiplications',sub:'NCRP 4 \u2013 Questions de cours'},
+    '6e/qcours/ncrp4/3':{theme:'cq',cat:'6ncrp4-3',title:'III \u2013 Multiplications par 0,1 ; 0,01…',sub:'NCRP 4 \u2013 Questions de cours'},
+    '6e/qcours/ncrp5/1':{theme:'cq',cat:'6ncrp5-1',title:'I – Multiples et diviseurs',sub:'NCRP 5 – Questions de cours'},
+    '6e/qcours/ncrp5/2':{theme:'cq',cat:'6ncrp5-2',title:'II – Division euclidienne',sub:'NCRP 5 – Questions de cours'},
+    '6e/qcours/ncrp5/3':{theme:'cq',cat:'6ncrp5-3',title:'III – Critères de divisibilité',sub:'NCRP 5 – Questions de cours'},
+    '6e/qcours/ncrp5/4':{theme:'cq',cat:'6ncrp5-4',title:'IV – Division décimale',sub:'NCRP 5 – Questions de cours'}
   };
   const isExo=!!EXO[s];
   exo.hidden=!isExo; menu.hidden=isExo;
@@ -5455,7 +5888,7 @@ function cqRevisionSetup(lv,CH,SK){
   }
 }
 cqRevisionSetup('3e',[['eg1','EG 1 – Propriétés géométriques'],['eg2','EG 2 – Solides'],['nc1','NC 1 – Fractions'],['nc2','NC 2 – Puissances'],['nc3','NC 3 – Calcul littéral']],'');
-cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations']],'-6e');
+cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 – Cercle et disque'],['ncrp4','NCRP 4 – Additions, soustractions et multiplications'],['ncrp5','NCRP 5 – Divisions']],'-6e');
 </script>
 <script>
 /* Menu latéral : accès direct à chaque page du site. */
