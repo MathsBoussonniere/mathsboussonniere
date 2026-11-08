@@ -667,9 +667,9 @@ function revealCurrent(){
     fb.innerHTML=`Question passée.<br>Réponse : ${state.mode==='qcm'?pvAns(q):pvEq(q)+' ; '+pvAns(q)}.<span class="expl">${explainPyv(q)}</span>`;
     return;
   }
-  const opf=(state.theme==='opf'||state.theme==='mdf'), frac=state.theme==='frac', sci=state.theme==='sci', tab=state.theme==='tables', dur=state.theme==='durees', comp=state.theme==='comp', clock=state.theme==='clock', pyt=state.theme==='pyth', mld=state.theme==='mld', mul=state.theme==='mult10', div=state.theme==='div10';
-  const expl=div?explainDiv(q):mul?explainMul(q):mld?explainMld(q):pyt?explainPyth(q):opf?explainOps(q):frac?explainFrac(q):sci?explainSci(q):tab?explainTable(q):dur?explainDuree(q):comp?explainComp(q):clock?explainClock(q):explain(state.cat,q);
-  const ansTxt=div?`${divLabel(q)} = ${fmt(q.ans)}`:mul?`${mulLabel(q)} = ${fmt(q.ans)}`:mld?mldAns(q):pyt?pythEq(q):opf?`${exprHTML(q)} = ${sfrac(q.an,q.ad)}`:frac?`${fracHTML(q.a,q.b)} = ${q.d===1?q.p:fracHTML(q.p,q.d)}`:tab?`${q.a} × ${q.b} = ${q.ans}`:dur?q.full:comp?`${fmt(q.a)} + ${fmt(q.ans)} = ${fmt(q.target)}`:clock?clockLabel(q):sci?(q.dir==='toSci'?`${fmt(q.dec)} = ${sciStr(q.a,q.n)}`:`${sciStr(q.a,q.n)} = ${fmt(q.dec)}`):`${qLeft(q)} = ${fmt(q.ans)} ${q.to.n}`;
+  const opf=(state.theme==='opf'||state.theme==='mdf'), frac=state.theme==='frac', sci=state.theme==='sci', tab=state.theme==='tables', dur=state.theme==='durees', comp=state.theme==='comp', clock=state.theme==='clock', pyt=state.theme==='pyth', mld=state.theme==='mld', mul=state.theme==='mult10';
+  const expl=mul?explainMul(q):mld?explainMld(q):pyt?explainPyth(q):opf?explainOps(q):frac?explainFrac(q):sci?explainSci(q):tab?explainTable(q):dur?explainDuree(q):comp?explainComp(q):clock?explainClock(q):explain(state.cat,q);
+  const ansTxt=mul?`${mulLabel(q)} = ${fmt(q.ans)}`:mld?mldAns(q):pyt?pythEq(q):opf?`${exprHTML(q)} = ${sfrac(q.an,q.ad)}`:frac?`${fracHTML(q.a,q.b)} = ${q.d===1?q.p:fracHTML(q.p,q.d)}`:tab?`${q.a} × ${q.b} = ${q.ans}`:dur?q.full:comp?`${fmt(q.a)} + ${fmt(q.ans)} = ${fmt(q.target)}`:clock?clockLabel(q):sci?(q.dir==='toSci'?`${fmt(q.dec)} = ${sciStr(q.a,q.n)}`:`${sciStr(q.a,q.n)} = ${fmt(q.dec)}`):`${qLeft(q)} = ${fmt(q.ans)} ${q.to.n}`;
   if(state.mode==='qcm'){
     content.querySelectorAll('.opt-btn').forEach(b=>{
       b.onclick=null;
@@ -989,10 +989,6 @@ function _newQuestion(){
     if(state.mode==='qcm') renderMulQCM();
     else if(state.mode==='jeu') renderMulJeu();
     else renderMulTrou();
-  }else if(state.theme==='div10'){
-    if(state.mode==='qcm') renderDivQCM();
-    else if(state.mode==='jeu') renderDivJeu();
-    else renderDivTrou();
   }else if(state.theme==='comp'){
     if(state.mode==='qcm') renderCompQCM();
     else if(state.mode==='jeu') renderCompJeu();
@@ -2079,126 +2075,6 @@ function renderMulTrou(){
   };
 }
 /* ===== fin multiplications par 10, 100 et 1 000 ===== */
-/* ===== Divisions par 10, 100 et 1 000 ===== */
-function genDiv(){
-  let q,guard=0;
-  do{
-    const k=1+Math.floor(Math.random()*3), p=Math.pow(10,k);
-    const lastNZ=n=>{ if(n%10===0) n+=1+Math.floor(Math.random()*9); return n; };
-    const r=Math.random();
-    let aNum,d;
-    if(r<0.08){ d=0; aNum=1; }                                                   /* 1 ÷ 10 ; 1 ÷ 100 ; 1 ÷ 1 000 */
-    else if(r<0.36){ d=0; aNum=2+Math.floor(Math.random()*9998);                 /* entiers : 97 ; 1 450 ; 5 434 ; 8 915… */
-      if(Math.random()<0.25) aNum=Math.max(10,Math.round(aNum/10)*10); }         /* … et multiples de 10 : 780 ; 3 410 */
-    else if(r<0.66){ d=1; aNum=lastNZ(1+Math.floor(Math.random()*9999)); }       /* 0,5 ; 4,5 ; 65,4 ; 800,8 */
-    else if(r<0.86){ d=2; aNum=lastNZ(1+Math.floor(Math.random()*9999)); }       /* 0,87 ; 7,87 ; 1,78 ; 78,07 */
-    else{ d=3; aNum=lastNZ(1+Math.floor(Math.random()*99999)); }                 /* 0,087 ; 0,045 ; 97,512 */
-    const a=MUL_R9(aNum/Math.pow(10,d)), ans=MUL_R9(aNum/Math.pow(10,d+k));
-    q={pk:`${aNum}|${d}|${k}`,a,p,k,d,ans};
-  }while(q.ans<1e-5 && ++guard<30);
-  return q;
-}
-function divLabel(q){ return `${fmt(q.a)} ÷ ${fmt(q.p)}`; }
-function explainDiv(q){
-  /* La virgule ne bouge jamais : ce sont les chiffres qui changent de rang (valeur ÷10, ÷100, ÷1 000). */
-  const {a,p,k,ans}=q, s=k>1?'s':'';
-  const [ip,dp='']=String(fmtRaw(a)).split(',');
-  let e0,dig;
-  if(ip.replace(/^0+/,'')!==''){ const t=ip.replace(/^0+/,''); e0=t.length-1; dig=t[0]; }
-  else{ const idx=dp.search(/[1-9]/); e0=-(idx+1); dig=dp[idx]; }
-  let t=`${divLabel(q)} = ${fmt(ans)}. Diviser par ${fmt(p)}, c'est rendre chaque chiffre ${fmt(p)} fois plus petit : chaque chiffre se décale de ${k} rang${s} vers la droite.`;
-  if(MUL_RANGS[e0]&&MUL_RANGS[e0-k]) t+=` Ici, le chiffre ${dig} des ${MUL_RANGS[e0]} passe aux ${MUL_RANGS[e0-k]}.`;
-  if(ans<1) t+=` Les rangs libres à gauche de la virgule se remplissent avec des zéros.`;
-  return t;
-}
-function divOptions(q){
-  const {a,p,ans}=q;
-  const cands=[ans*10,ans/10,a*p,a,ans*100,ans/100].map(MUL_R9);   /* décalage de trop ou de moins, ou multiplication au lieu de division */
-  const ok=v=>v>0&&v!==ans&&v<1e7&&fmt(v)!=='0'&&String(fmtRaw(v)).length<=12;
-  let wr=shuffle([...new Set(cands.filter(ok))]).slice(0,3);
-  for(let k=1;wr.length<3&&k<50;k++){ const v=MUL_R9(ans+k*Math.pow(10,-(q.d+q.k))); if(ok(v)&&!wr.includes(v)) wr.push(v); }
-  return shuffle([ans,...wr.slice(0,3)]);
-}
-function renderDivQCM(){
-  const q=withHistory(genDiv); state.current=q;
-  const content=document.getElementById('content');
-  content.innerHTML=`
-    <div class="question">${divLabel(q)} = ?</div>
-    <div class="options">${divOptions(q).map(o=>`<button class="opt-btn" data-val="${o}">${fmt(o)}</button>`).join('')}</div>
-    <div class="feedback" id="fb"></div>`;
-  content.querySelectorAll('.opt-btn').forEach(btn=>{
-    btn.onclick=()=>{
-      content.querySelectorAll('.opt-btn').forEach(b=>b.onclick=null);
-      const fb=document.getElementById('fb');
-      if(Number(btn.dataset.val)===q.ans){
-        btn.classList.add('correct','anim-good');
-        bumpStreak(getStreak());
-        fb.textContent="Bravo, c'est correct !"; fb.className='feedback ok';
-        autoNext(450);
-      }else{
-        btn.classList.add('wrong','anim-bad');
-        failStreak();
-        fb.innerHTML=`Ce n'est pas ça. <span class="expl">${explainDiv(q)}</span>`;
-        fb.className='feedback ko';
-        content.querySelectorAll('.opt-btn').forEach(b=>{if(Number(b.dataset.val)===q.ans)b.classList.add('correct');});
-      }
-    };
-  });
-}
-/* Jeu d'association : les 4 questions partagent la même suite de chiffres (ex. 846 ÷ 10 ; 84,6 ÷ 100 ; 8,46 ÷ 1 000 ; 846 ÷ 1 000),
-   seule la place de la virgule change : il faut vraiment décaler chaque chiffre du bon nombre de rangs vers la droite. */
-function genDivGroup(){
-  const len=2+Math.floor(Math.random()*3);                       /* 2 à 4 chiffres */
-  let digs=String(1+Math.floor(Math.random()*9));
-  for(let i=1;i<len-1;i++) digs+=String(Math.floor(Math.random()*10));
-  digs+=String(1+Math.floor(Math.random()*9));                   /* dernier chiffre non nul */
-  const D=Number(digs), jmax=Math.min(3,len+1);
-  const pairs={};                                                /* s = j + k : décalage total de la virgule vers la gauche */
-  for(let k=1;k<=3;k++) for(let j=0;j<=jmax;j++) (pairs[j+k]=pairs[j+k]||[]).push([j,k]);
-  const ss=shuffle(Object.keys(pairs).map(Number)).slice(0,4);
-  return ss.map(sft=>{
-    const [j,k]=pick(pairs[sft]);
-    return {pk:`${D}|${j}|${k}`,a:MUL_R9(D/Math.pow(10,j)),p:Math.pow(10,k),k,d:j,ans:MUL_R9(D/Math.pow(10,sft))};
-  });
-}
-function renderDivJeu(){
-  renderMatch(genDivGroup(), q=>divLabel(q), q=>fmt(q.ans), explainDiv);
-}
-function renderDivTrou(){
-  const q=withHistory(genDiv); state.current=q;
-  const content=document.getElementById('content');
-  content.innerHTML=`
-    <div class="fill-row">${divLabel(q)} = <input type="text" id="ans" inputmode="decimal" placeholder="?" autocomplete="off" style="width:130px;"></div>
-    <div class="actions"><button class="primary" id="check">Valider</button></div>
-    <div class="feedback" id="fb"></div>`;
-  const inp=document.getElementById('ans');
-  inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ const c=document.getElementById('check'); if(c&&!c.disabled) c.click(); } });
-  document.getElementById('check').onclick=()=>{
-    const v=parseNum(inp.value);
-    const fb=document.getElementById('fb');
-    const rowEl=content.querySelector('.fill-row');
-    document.getElementById('check').disabled=true;
-    if(!isNaN(v) && Math.abs(v-q.ans)<1e-9 && !groupOK(inp.value)){
-      rowEl.classList.add('anim-bad'); failStreak();
-      document.getElementById('check').style.display='none';
-      fb.textContent=`Ta valeur est juste, mais elle ne compte pas : écris les nombres par groupes de 3 chiffres (${fmt(q.ans)}).`; fb.className='feedback ko';
-      return;
-    }
-    if(!isNaN(v) && Math.abs(v-q.ans)<1e-9){
-      rowEl.classList.add('anim-good');
-      bumpStreak(getStreak());
-      fb.textContent='Exact, bravo !'; fb.className='feedback ok';
-      autoNext(450);
-    }else{
-      rowEl.classList.add('anim-bad');
-      failStreak();
-      document.getElementById('check').style.display='none';
-      fb.innerHTML=`Pas tout à fait. <span class="expl">${explainDiv(q)}</span>`;
-      fb.className='feedback ko';
-    }
-  };
-}
-/* ===== fin divisions par 10, 100 et 1 000 ===== */
 function padHM(n){ return String(n).padStart(2,'0'); }
 function clockLabel(q){ return `${padHM(q.h)}h${padHM(q.m)}`; }
 function clockSVG(h,m,size){
@@ -6404,10 +6280,6 @@ Object.assign(CQ_GLAB,{'nc4-mul':'Multiple d’un nombre','nc4-div':'Diviseur et
     cqW('Pour rendre une fraction irréductible, on peut utiliser la décomposition en produit de facteurs premiers, puis simplifier par les facteurs premiers qui ne sont pas communs.','on ne peut simplifier que par un facteur présent à la fois au numérateur et au dénominateur.')]);
 })();
 
-/* ===== Questions de cours 6e – EG 9 : Droites perpendiculaires et parallèles =====
-   I – Rappel     = mêmes questions que EG 1 II (6e) : position de deux droites ;
-   II – Propriétés = mêmes questions que EG 1 I (3e) : deux perpendiculaires / deux parallèles à une même droite. */
-[['6eg1',2,1],['eg1',1,2]].forEach(([ch,th,n])=>CQ_CASES.filter(c=>c.ch===ch&&c.th===th).forEach(c=>CQ_CASES.push(Object.assign({},c,{ch:'6eg9',th:n}))));
 function cqGrpOf(c){
   const [kind,a]=c.pk.split('|');
   if(kind==='defB') return {k:'def:'+a,l:'Définition : '+a};
@@ -6485,7 +6357,7 @@ const SCREENS={
   '6e':{title:'Niveau 6e',sub:'Que veux-tu faire ?',items:[...LEVEL_ITEMS('6e'),['6e/qcours','Questions de cours','Tester ses connaissances du cours']]},
   '5e':{title:'Niveau 5e',sub:'Que veux-tu faire ?',items:[['5e/auto','Automatismes','S’entraîner']]},
   '5e/auto':{title:'Automatismes 5e',sub:'Choisis un thème',items:[
-    ['5e/auto/prio','* Priorités opératoires','Calculer en respectant les priorités : parenthèses, × et ÷, puis + et −']]},
+    ['5e/auto/prio','1. Priorités opératoires','Calculer en respectant les priorités : parenthèses, × et ÷, puis + et −']]},
   '3e':{title:'Niveau 3e',sub:'Que veux-tu faire ?',items:[...LEVEL_ITEMS('3e'),['3e/qcours','Questions de cours','Tester ses connaissances du cours']]},
   '3e/qcours':{title:'Questions de cours 3e',sub:'Choisis un thème',items:[['3e/qcours/eg','Espace et Géométrie'],['3e/qcours/nc','Nombres et Calcul']]},
   '3e/qcours/eg':{title:'Espace et Géométrie',sub:'Questions de cours 3e',items:[['3e/qcours/eg1','EG 1 \u2013 Propriétés géométriques','Droites, angles du triangle, angles et parallèles'],['3e/qcours/eg2','EG 2 \u2013 Solides','Définitions, représentations et volumes']]},
@@ -6522,8 +6394,7 @@ const SCREENS={
     ['6e/auto/multiples','5. Multiples et diviseurs','Multiple, diviseur, multiples et diviseurs communs'],
     ['6e/auto/hands','6. Placer les aiguilles','Placer les aiguilles pour afficher l’heure demandée'],
     ['6e/auto/mult10','7. Multiplications par 10, 100 et 1 000','Décaler les chiffres de 1, 2 ou 3 rangs : × 10, × 100, × 1 000'],
-    ['6e/auto/fracheure','8. Fractions d’heure','Quart d’heure, demi-heure, trois quarts d’heure et minutes'],
-    ['6e/auto/div10','9. Divisions par 10, 100 et 1 000','Décaler les chiffres de 1, 2 ou 3 rangs vers la droite : ÷ 10, ÷ 100, ÷ 1 000']]}
+    ['6e/auto/fracheure','8. Fractions d’heure','Quart d’heure, demi-heure, trois quarts d’heure et minutes']]}
 };
 /* Questions de cours 6e : toute la structure est prête (domaines → chapitres → thèmes).
    Un chapitre sans questions s'affiche « Bientôt disponible » ; pour en ouvrir un : l'ajouter dans CQ6_DONE (thèmes),
@@ -6537,8 +6408,6 @@ CQ6_DONE.ogdp1=[['I – Tableau simple','Organiser des données dans un tableau,
 CQ6_DESC.ogdp1='Tableaux, diagrammes en barres et circulaires, graphiques cartésiens';
 CQ6_DONE.eg6=[['I – Médiatrice','Définition, propriété des points de la médiatrice et tracé'],['II – Bissectrice','Définition, mesure des angles et tracé']];
 CQ6_DESC.eg6='Médiatrice d’un segment et bissectrice d’un angle';
-CQ6_DONE.eg9=[['I – Rappel','Position de deux droites : parallèles, sécantes, perpendiculaires'],['II – Propriétés','Deux droites perpendiculaires ou parallèles à une même droite']];
-CQ6_DESC.eg9='Position de deux droites et propriétés des perpendiculaires et des parallèles';
 (function(){
   const DOM=[['eg'],['ncrp'],['ogdp'],['gm'],['p']];
   SCREENS['6e/qcours']={title:'Questions de cours 6e',sub:'Choisis un thème',items:DOM.map(([k])=>['6e/qcours/'+k,THEMES6E[k].title])};
@@ -6610,14 +6479,11 @@ function go(s){
     '6e/auto/multiples':{theme:'mld',title:'Multiples et diviseurs',sub:'Automatismes 6e'},
     '6e/auto/mult10':{theme:'mult10',title:'Multiplications par 10, 100 et 1 000',sub:'Automatismes 6e'},
     '6e/auto/fracheure':{theme:'fh',title:'Fractions d’heure',sub:'Automatismes 6e'},
-    '6e/auto/div10':{theme:'div10',title:'Divisions par 10, 100 et 1 000',sub:'Automatismes 6e'},
     '6e/qcours/eg1/1':{theme:'cq',cat:'6eg1-1',title:'I \u2013 Vocabulaire',sub:'EG 1 \u2013 Questions de cours'},
     '6e/qcours/eg1/2':{theme:'cq',cat:'6eg1-2',title:'II \u2013 Position de deux droites',sub:'EG 1 \u2013 Questions de cours'},
     '6e/qcours/eg2/1':{theme:'cq',cat:'6eg2-1',title:'I \u2013 Vocabulaire',sub:'EG 2 \u2013 Questions de cours'},
     '6e/qcours/eg6/1':{theme:'cq',cat:'6eg6-1',title:'I – Médiatrice',sub:'EG 6 – Questions de cours'},
     '6e/qcours/eg6/2':{theme:'cq',cat:'6eg6-2',title:'II – Bissectrice',sub:'EG 6 – Questions de cours'},
-    '6e/qcours/eg9/1':{theme:'cq',cat:'6eg9-1',title:'I – Rappel',sub:'EG 9 – Questions de cours'},
-    '6e/qcours/eg9/2':{theme:'cq',cat:'6eg9-2',title:'II – Propriétés',sub:'EG 9 – Questions de cours'},
     '6e/qcours/ncrp4/1':{theme:'cq',cat:'6ncrp4-1',title:'I \u2013 Additions et soustractions',sub:'NCRP 4 \u2013 Questions de cours'},
     '6e/qcours/ncrp4/2':{theme:'cq',cat:'6ncrp4-2',title:'II \u2013 Multiplications',sub:'NCRP 4 \u2013 Questions de cours'},
     '6e/qcours/ncrp4/3':{theme:'cq',cat:'6ncrp4-3',title:'III \u2013 Multiplications par 0,1 ; 0,01…',sub:'NCRP 4 \u2013 Questions de cours'},
@@ -6716,7 +6582,7 @@ go('home');
     '3e/auto/conv-volume':{theme:'conversions',cat:'volume'},'3e/auto/conv-duree':{theme:'conversions',cat:'duree'},
     '3e/auto/lit-fact':{theme:'lit',cat:'fact'},'3e/auto/tableur':{theme:'tab'},
     '6e/auto/tables':{theme:'tables'},'6e/auto/durees':{theme:'durees'},'6e/auto/comp':{theme:'comp'},'6e/auto/clock':{theme:'clock'},
-    '6e/auto/multiples':{theme:'mld'},'6e/auto/hands':{theme:'hands'},'6e/auto/mult10':{theme:'mult10'},'6e/auto/fracheure':{theme:'fh'},'6e/auto/div10':{theme:'div10'},'5e/auto/prio':{theme:'prio'}
+    '6e/auto/multiples':{theme:'mld'},'6e/auto/hands':{theme:'hands'},'6e/auto/mult10':{theme:'mult10'},'6e/auto/fracheure':{theme:'fh'},'5e/auto/prio':{theme:'prio'}
   };
   ['3e','5e','6e'].forEach(lv=>SCREENS[lv+'/auto'].items.unshift([lv+'/auto/entrainement','Entraînement personnalisé','Choisis les automatismes sur lesquels travailler']));
   let training=null;
@@ -6861,7 +6727,7 @@ function cqRevisionSetup(lv,CH,SK){
   }
 }
 cqRevisionSetup('3e',[['eg1','EG 1 – Propriétés géométriques'],['eg2','EG 2 – Solides'],['nc1','NC 1 – Fractions'],['nc2','NC 2 – Puissances'],['nc3','NC 3 – Calcul littéral'],['nc4','NC 4 – Arithmétique']],'');
-cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 – Cercle et disque'],['eg6','EG 6 – Droites remarquables'],['eg9','EG 9 – Droites perpendiculaires et parallèles'],['ncrp4','NCRP 4 – Additions, soustractions et multiplications'],['ncrp5','NCRP 5 – Divisions'],['ogdp1','OGDP 1 – Lecture de données']],'-6e');
+cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 – Cercle et disque'],['eg6','EG 6 – Droites remarquables'],['ncrp4','NCRP 4 – Additions, soustractions et multiplications'],['ncrp5','NCRP 5 – Divisions'],['ogdp1','OGDP 1 – Lecture de données']],'-6e');
 </script>
 <script>
 /* Menu latéral : accès direct à chaque page du site. */
