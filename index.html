@@ -132,6 +132,14 @@ sup{font-size:.72em;line-height:0;vertical-align:super;}
 .sol-mini{max-height:36px;width:auto;vertical-align:middle;margin:0 2px;}
 .prio-expr{font-size:clamp(1.25rem,6.2vw,1.9rem);font-weight:700;text-align:center;margin:10px 0 20px;white-space:nowrap;overflow-x:auto;letter-spacing:.02em;}
 .prio-cell{font-weight:600;font-size:.95rem;}
+/* blocs façon Scratch (dessinés en SVG par le site, sans aucune image de Scratch) */
+.sc-wrap{display:flex;justify-content:center;margin:6px 0 14px;padding-bottom:8px;overflow-x:auto;}
+.sc-figbox{padding:0;border:none;line-height:0;}
+.sc-jeu{display:flex;flex-direction:column;align-items:center;gap:6px;padding-bottom:4px;}
+.opt-btn.opt-img{display:flex;align-items:center;justify-content:center;padding:6px;}
+.sc-fr{display:block;max-width:100%;height:auto;}
+.sc-prog{line-height:0;}
+.sc-svg{display:block;max-width:100%;height:auto;user-select:none;}
 :root[data-theme="dark"] .sol-big,:root[data-theme="dark"] .sol-cell,:root[data-theme="dark"] .sol-mini{filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff);}
 @media (prefers-color-scheme: dark){:root:not([data-theme]) .sol-big,:root:not([data-theme]) .sol-cell,:root:not([data-theme]) .sol-mini{filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff);}}
 .match-item.revealed{border-style:dashed;border-color:var(--accent);cursor:default;}
@@ -613,6 +621,12 @@ function revealCurrent(){
     fb.innerHTML=`Question passée.<br>Voici les bonnes associations :<div class="expl"><ul style="margin:6px 0 0;padding-left:0;">${lines.join('')}</ul></div>`;
     return;
   }
+  if(state.theme==='scr'){
+    if(state.mode==='qcm') content.querySelectorAll('.opt-btn').forEach(b=>{ b.onclick=null; if(b.dataset.k===scrKey(q)) b.classList.add('correct'); });
+    else{ const el=document.getElementById('ans'); if(el){ el.value=scrAnsTxt(q); el.disabled=true; } const c=document.getElementById('check'); if(c){ c.disabled=true; c.style.display='none'; } }
+    fb.innerHTML=`Question passée.<br>Réponse : ${scrAnsTxt(q)}.<span class="expl">${explainScr(q)}</span>`;
+    return;
+  }
   if(state.theme==='prio'){
     if(state.mode==='qcm') content.querySelectorAll('.opt-btn').forEach(b=>{ b.onclick=null; if(b.dataset.k===String(q.val)) b.classList.add('correct'); });
     else{ const el=document.getElementById('ans'); if(el){ el.value=q.val; el.disabled=true; } const c=document.getElementById('check'); if(c){ c.disabled=true; c.style.display='none'; } }
@@ -667,9 +681,9 @@ function revealCurrent(){
     fb.innerHTML=`Question passée.<br>Réponse : ${state.mode==='qcm'?pvAns(q):pvEq(q)+' ; '+pvAns(q)}.<span class="expl">${explainPyv(q)}</span>`;
     return;
   }
-  const opf=(state.theme==='opf'||state.theme==='mdf'), frac=state.theme==='frac', sci=state.theme==='sci', tab=state.theme==='tables', dur=state.theme==='durees', comp=state.theme==='comp', clock=state.theme==='clock', pyt=state.theme==='pyth', mld=state.theme==='mld', mul=state.theme==='mult10';
-  const expl=mul?explainMul(q):mld?explainMld(q):pyt?explainPyth(q):opf?explainOps(q):frac?explainFrac(q):sci?explainSci(q):tab?explainTable(q):dur?explainDuree(q):comp?explainComp(q):clock?explainClock(q):explain(state.cat,q);
-  const ansTxt=mul?`${mulLabel(q)} = ${fmt(q.ans)}`:mld?mldAns(q):pyt?pythEq(q):opf?`${exprHTML(q)} = ${sfrac(q.an,q.ad)}`:frac?`${fracHTML(q.a,q.b)} = ${q.d===1?q.p:fracHTML(q.p,q.d)}`:tab?`${q.a} × ${q.b} = ${q.ans}`:dur?q.full:comp?`${fmt(q.a)} + ${fmt(q.ans)} = ${fmt(q.target)}`:clock?clockLabel(q):sci?(q.dir==='toSci'?`${fmt(q.dec)} = ${sciStr(q.a,q.n)}`:`${sciStr(q.a,q.n)} = ${fmt(q.dec)}`):`${qLeft(q)} = ${fmt(q.ans)} ${q.to.n}`;
+  const opf=(state.theme==='opf'||state.theme==='mdf'), frac=state.theme==='frac', sci=state.theme==='sci', tab=state.theme==='tables', dur=state.theme==='durees', comp=state.theme==='comp', clock=state.theme==='clock', pyt=state.theme==='pyth', mld=state.theme==='mld', mul=state.theme==='mult10', dv=state.theme==='div10';
+  const expl=dv?explainDiv(q):mul?explainMul(q):mld?explainMld(q):pyt?explainPyth(q):opf?explainOps(q):frac?explainFrac(q):sci?explainSci(q):tab?explainTable(q):dur?explainDuree(q):comp?explainComp(q):clock?explainClock(q):explain(state.cat,q);
+  const ansTxt=dv?`${divLabel(q)} = ${fmt(q.ans)}`:mul?`${mulLabel(q)} = ${fmt(q.ans)}`:mld?mldAns(q):pyt?pythEq(q):opf?`${exprHTML(q)} = ${sfrac(q.an,q.ad)}`:frac?`${fracHTML(q.a,q.b)} = ${q.d===1?q.p:fracHTML(q.p,q.d)}`:tab?`${q.a} × ${q.b} = ${q.ans}`:dur?q.full:comp?`${fmt(q.a)} + ${fmt(q.ans)} = ${fmt(q.target)}`:clock?clockLabel(q):sci?(q.dir==='toSci'?`${fmt(q.dec)} = ${sciStr(q.a,q.n)}`:`${sciStr(q.a,q.n)} = ${fmt(q.dec)}`):`${qLeft(q)} = ${fmt(q.ans)} ${q.to.n}`;
   if(state.mode==='qcm'){
     content.querySelectorAll('.opt-btn').forEach(b=>{
       b.onclick=null;
@@ -708,6 +722,20 @@ function groupDigits(s){
   if(i.length>=4) i=i.replace(/\B(?=(\d{3})+(?!\d))/g,GSEP);
   if(d!==undefined && d.length>3) d=d.replace(/(\d{3})(?=\d)/g,'$1'+GSEP);
   return (neg?'-':'')+i+(d!==undefined?','+d:'');
+}
+/* « 0 inutiles » : un 0 de trop à gauche de la partie entière (007 ; 00,5) ou à droite de la partie décimale (0,50 ; 7,0) → la réponse ne compte pas */
+function zerosOK(s){
+  s=String(s).trim().replace(/[\u00a0\u202f]/g,' ').replace(/\s+/g,' ').replace('.',',').replace(/^[-−+]\s?/,'');
+  const [i,d]=s.split(',');
+  const ip=String(i||'').replace(/ /g,'');
+  if(ip.length>1&&ip[0]==='0') return false;
+  if(d!==undefined&&/0\s*$/.test(d)) return false;
+  return true;
+}
+function numOK(s){ return groupOK(s)&&zerosOK(s); }
+function numMsg(s,shown){
+  return groupOK(s)?`Ta valeur est juste, mais elle ne compte pas : enlève les 0 inutiles (${shown}).`
+                   :`Ta valeur est juste, mais elle ne compte pas : écris les nombres par groupes de 3 chiffres (${shown}).`;
 }
 function groupOK(s){
   s=String(s).trim().replace(/[\u00a0\u202f]/g,' ').replace(/\s+/g,' ').replace('.',',');
@@ -973,6 +1001,10 @@ function _newQuestion(){
     if(state.mode==='qcm') renderDureeQCM();
     else if(state.mode==='jeu') renderDureeJeu();
     else renderDureeTrou();
+  }else if(state.theme==='scr'){
+    if(state.mode==='qcm') renderScrQCM();
+    else if(state.mode==='jeu') renderScrJeu();
+    else renderScrTrou();
   }else if(state.theme==='prio'){
     if(state.mode==='qcm') renderPrioQCM();
     else if(state.mode==='jeu') renderPrioJeu();
@@ -989,6 +1021,10 @@ function _newQuestion(){
     if(state.mode==='qcm') renderMulQCM();
     else if(state.mode==='jeu') renderMulJeu();
     else renderMulTrou();
+  }else if(state.theme==='div10'){
+    if(state.mode==='qcm') renderDivQCM();
+    else if(state.mode==='jeu') renderDivJeu();
+    else renderDivTrou();
   }else if(state.theme==='comp'){
     if(state.mode==='qcm') renderCompQCM();
     else if(state.mode==='jeu') renderCompJeu();
@@ -1121,10 +1157,10 @@ function renderTrou(){
     const fb=document.getElementById('fb');
     const rowEl=content.querySelector('.fill-row');
     document.getElementById('check').disabled=true;
-    if(!isNaN(v) && Math.abs(v-q.ans)<1e-6 && !groupOK(document.getElementById('ans').value)){
+    if(!isNaN(v) && Math.abs(v-q.ans)<1e-6 && !numOK(document.getElementById('ans').value)){
       rowEl.classList.add('anim-bad'); failStreak();
       document.getElementById('check').style.display='none';
-      fb.textContent=`Ta valeur est juste, mais elle ne compte pas : écris les nombres par groupes de 3 chiffres (${fmt(q.ans)}).`; fb.className='feedback ko';
+      fb.textContent=numMsg(document.getElementById('ans').value,fmt(q.ans)); fb.className='feedback ko';
       return;
     }
     if(!isNaN(v) && Math.abs(v-q.ans)<1e-6){
@@ -1251,10 +1287,10 @@ function renderSciTrou(){
       const fb=document.getElementById('fb');
       const rowEl=content.querySelector('.fill-row');
       document.getElementById('check').disabled=true;
-      if(!isNaN(v)&&Math.abs(v-q.dec)<1e-6 && !groupOK(document.getElementById('ans').value)){
+      if(!isNaN(v)&&Math.abs(v-q.dec)<1e-6 && !numOK(document.getElementById('ans').value)){
         rowEl.classList.add('anim-bad'); failStreak();
         document.getElementById('check').style.display='none';
-        fb.textContent=`Ta valeur est juste, mais elle ne compte pas : écris les nombres par groupes de 3 chiffres (${fmt(q.dec)}).`; fb.className='feedback ko';
+        fb.textContent=numMsg(document.getElementById('ans').value,fmt(q.dec)); fb.className='feedback ko';
         return;
       }
       if(!isNaN(v)&&Math.abs(v-q.dec)<1e-6){
@@ -1865,6 +1901,330 @@ function renderPrioTrou(){
     }
   };
 }
+/* ===== Scratch : reconnaître une figure (3e) – Automatisme **** ===== */
+/* figures : seulement le triangle équilatéral et le carré ; frises : carrés / triangles espacés ou collés, alternance */
+const SCR_FIG={
+  tri:{k:'tri',name:'triangle équilatéral',n:3,a:120,short:'triangle'},
+  car:{k:'car',name:'carré',n:4,a:90,short:null}
+};
+const SCR_KEYS=['tri','car'];
+/* mauvais choix (jamais un nom qui serait aussi vrai : un triangle équilatéral est isocèle, un carré est un rectangle, un losange…) */
+const SCR_WRONG={tri:['Triangle rectangle','Carré','Losange','Pentagone régulier'],car:['Triangle équilatéral','Triangle rectangle','Pentagone régulier','Cercle']};
+const SCR_FR={
+  ce:{k:'ce',name:'frise de carrés espacés',shapes:['sq'],gap:true},
+  cc:{k:'cc',name:'frise de carrés collés',shapes:['sq'],gap:false},
+  te:{k:'te',name:'frise de triangles espacés',shapes:['tr'],gap:true},
+  tc:{k:'tc',name:'frise de triangles collés',shapes:['tr'],gap:false},
+  alt:{k:'alt',name:'frise qui alterne triangle et carré',shapes:['sq','tr'],gap:true}
+};
+const SCR_FR_KEYS=['ce','cc','te','tc','alt'];
+function scrCap(n){ return n.charAt(0).toUpperCase()+n.slice(1); }
+/* type A : reconnaître la figure ; B : angle caché, figure donnée par son nom ; C : figure dessinée + morceau de programme avec un nombre caché ;
+   F : reconnaître la frise tracée par un programme ; G : frise dessinée (avec cotes) + morceau de programme avec un nombre caché
+   (blank : 'a' angle, 'n' répétitions pour C ; 'move' déplacement, 'rep' répétitions, 'side' côté pour G) */
+function mkScr(type,fk,blank){
+  const f=SCR_FIG[fk], len=pick([50,60,80,100,120,150]), wait=Math.random()<0.6, cw=Math.random()<0.5;
+  blank=type==='C'?(blank||'a'):(type==='B'?'a':null);
+  return {type,f,blank,len,wait,cw,pk:`scr|${type}|${fk}|${blank||''}|${len}|${wait?1:0}|${cw?1:0}`};
+}
+function mkFr(type,k,blank){
+  const fr=SCR_FR[k], s=pick([40,50,60]), gv=pick([20,30]), N=fr.shapes.length>1?pick([2,3]):pick([4,5]), cw=Math.random()<0.5;
+  if(type==='G'){ if(!['move','rep','side'].includes(blank)||(blank==='rep'&&fr.shapes.length>1)) blank=pick(['move','side']); } else blank=null;
+  return {type,fr,s,gv,g:fr.gap?gv:0,N,cw,blank,pk:`scr|${type}|${k}|${blank||''}|${s}|${gv}|${N}|${cw?1:0}`};
+}
+function genScr(){
+  /* en « À compléter » on ne peut pas répondre à « quelle frise ? » en cliquant sur des images : pas de type F */
+  const type=pick(state.mode==='trou'?['A','B','C','G','G']:['A','B','C','F','F','G','G']);
+  if(type==='F'||type==='G') return mkFr(type,pick(SCR_FR_KEYS),pick(['move','rep','side']));
+  return mkScr(type,pick(SCR_KEYS),Math.random()<0.5?'a':'n');
+}
+const scrIsFr=q=>q.type==='F'||q.type==='G';
+const scrIsAngle=q=>q.type==='B'||(q.type==='C'&&q.blank==='a');
+const frMove=q=>q.fr.gap?q.s+q.gv:q.s;
+const frShapesCount=q=>q.fr.shapes.length>1?2*q.N:q.N;
+function frAns(q){ return q.blank==='move'?frMove(q):q.blank==='rep'?q.N:q.s; }
+function scrKey(q){
+  if(q.type==='F') return q.fr.k;
+  if(q.type==='G') return String(frAns(q));
+  return q.type==='A'?scrCap(q.f.name):String(scrIsAngle(q)?q.f.a:q.f.n);
+}
+function scrAnsTxt(q){ return q.type==='F'?q.fr.name:q.type==='A'?q.f.name:scrKey(q); }
+
+/* ---- blocs « façon Scratch 2 » dessinés en SVG : coins coupés, encoche en haut / ergot en bas, bloc de départ en dôme, blocs « répéter » en C (imbriquables) ---- */
+const SC_FONT="'Lucida Grande','Lucida Sans Unicode',Verdana,'DejaVu Sans',sans-serif";
+const SC_COL={ev:['#c88330','#9a5f1b'],pen:['#0e9a6c','#0a7653'],mo:['#4a6cd4','#3350aa'],ct:['#e1a91a','#b0820f']};
+let _scCtx;
+function scW(t,bold){
+  try{
+    if(_scCtx===undefined){ const c=document.createElement('canvas'); _scCtx=(c.getContext&&c.getContext('2d'))||null; }
+    if(_scCtx){ _scCtx.font=`${bold===false?600:700} 15px ${SC_FONT}`; return _scCtx.measureText(t).width; }
+  }catch(e){ _scCtx=null; }
+  return t.length*15*(bold===false?.58:.64);
+}
+function scSegW(g){
+  if(typeof g==='string') return scW(g);
+  if(g.n!==undefined||g.blank) return Math.max(30,scW(g.blank?'?':String(g.n),false)+20);
+  return 24;
+}
+const scBlockW=segs=>14+segs.reduce((a,g)=>a+scSegW(g),0)+8*(segs.length-1)+14;
+function scSegs(segs,x,y,h){
+  let cx=x+14, out='';
+  const cy=y+h/2;
+  segs.forEach(g=>{
+    const w=scSegW(g);
+    if(typeof g==='string') out+=`<text x="${cx}" y="${cy+5.5}" fill="#fff" style="font:700 15px ${SC_FONT}">${g}</text>`;
+    else if(g.n!==undefined||g.blank) out+=`<rect class="${g.blank?'sc-in sc-blank':'sc-in'}" x="${cx}" y="${cy-12}" width="${w}" height="24" rx="12" fill="${g.blank?'#fff3cd':'#fff'}" stroke="rgba(0,0,0,.3)"/><text x="${cx+w/2}" y="${cy+5.5}" text-anchor="middle" fill="${g.blank?'#8a8a8a':'#2b2b2b'}" style="font:600 15px ${SC_FONT}">${g.blank?'?':g.n}</text>`;
+    else if(g.turn) out+=`<circle cx="${cx+12}" cy="${cy}" r="11" fill="rgba(255,255,255,.3)"/><text x="${cx+12}" y="${cy+6}" text-anchor="middle" fill="#fff" style="font:700 17px ${SC_FONT}">${g.turn==='cw'?'↻':'↺'}</text>`;
+    else if(g.flag) out+=`<path d="M${cx+4} ${cy-9}v19" stroke="#2e7d32" stroke-width="2.6" fill="none"/><path d="M${cx+5} ${cy-8}c5-4 8 3 14 0v10c-6 3-9-3-14 0z" fill="#3cb043" stroke="#2e7d32" stroke-width="1.2"/>`;
+    cx+=w+8;
+  });
+  return out;
+}
+/* bloc empilable : coins coupés, encoche en haut (sauf bloc de départ), ergot en bas */
+function scStack(x,y,b){
+  const h=34, c=5, nx=14, nw=28, nd=5, w=scBlockW(b.segs), [fill,stroke]=SC_COL[b.col];
+  let top;
+  if(b.hat) top=`M${x},${y+26} C${x+28},${y-2} ${x+w*0.55},${y-8} ${x+w-c},${y+14} L${x+w},${y+19}`;
+  else top=`M${x+c},${y} L${x+nx},${y} L${x+nx+nd},${y+nd} L${x+nx+nw-nd},${y+nd} L${x+nx+nw},${y} L${x+w-c},${y} L${x+w},${y+c}`;
+  const yy=b.hat?y+26:y;
+  const d=`${top} L${x+w},${yy+h-c} L${x+w-c},${yy+h} L${x+nx+nw},${yy+h} L${x+nx+nw-nd},${yy+h+nd} L${x+nx+nd},${yy+h+nd} L${x+nx},${yy+h} L${x+c},${yy+h} L${x},${yy+h-c} ${b.hat?'':`L${x},${y+c}`} Z`;
+  return {svg:`<path class="${b.hat?'sc-hat':'sc-blk'}" d="${d}" fill="${fill}" stroke="${stroke}" stroke-width="1.3" stroke-linejoin="round"/>${scSegs(b.segs,x,yy,h)}`,w,y2:yy+h};
+}
+const scH=it=>it.c?34+it.kids.reduce((a,k)=>a+scH(k),0)+26:34;
+/* un bloc (empilable ou en C avec ses blocs intérieurs, récursivement) */
+function scItem(x,y,it){
+  if(!it.c){ const r=scStack(x,y,it); return {svg:r.svg,y2:r.y2,maxX:x+r.w}; }
+  const H=34, A=18, nx=14, nw=28, nd=5, c=5, ARM=26, hdr=it.segs, wo=scBlockW(hdr);
+  const Ih=it.kids.reduce((a,k)=>a+scH(k),0), yI=y+H+Ih, yB=yI+ARM, [fill,stroke]=SC_COL.ct;
+  const d=`M${x+c},${y} L${x+nx},${y} L${x+nx+nd},${y+nd} L${x+nx+nw-nd},${y+nd} L${x+nx+nw},${y} L${x+wo-c},${y} L${x+wo},${y+c} L${x+wo},${y+H-c} L${x+wo-c},${y+H}`
+    +` L${x+A+nx+nw},${y+H} L${x+A+nx+nw-nd},${y+H+nd} L${x+A+nx+nd},${y+H+nd} L${x+A+nx},${y+H} L${x+A},${y+H}`
+    +` L${x+A},${yI} L${x+A+nx},${yI} L${x+A+nx+nd},${yI+nd} L${x+A+nx+nw-nd},${yI+nd} L${x+A+nx+nw},${yI} L${x+wo-c},${yI} L${x+wo},${yI+c} L${x+wo},${yB-c} L${x+wo-c},${yB}`
+    +` L${x+nx+nw},${yB} L${x+nx+nw-nd},${yB+nd} L${x+nx+nd},${yB+nd} L${x+nx},${yB} L${x+c},${yB} L${x},${yB-c} L${x},${y+c} Z`;
+  let out=`<path class="sc-blk" d="${d}" fill="${fill}" stroke="${stroke}" stroke-width="1.3" stroke-linejoin="round"/>`+scSegs(hdr,x,y,H);
+  let maxX=x+wo, yi=y+H;
+  it.kids.forEach(k=>{ const r=scItem(x+A,yi,k); out+=r.svg; yi=r.y2; maxX=Math.max(maxX,r.maxX); });
+  const ax=x+wo-22, ay=yI+ARM-6;   /* flèche ↱ du bras du bas */
+  out+=`<path d="M${ax-12} ${ay}h12v-11" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M${ax-5} ${ay-10}l5-6 5 6z" fill="#fff"/>`;
+  return {svg:out,y2:yB,maxX};
+}
+function scRender(list,scale){
+  let out='', y=4, maxX=0;
+  list.forEach(it=>{ const r=scItem(4,y,it); out+=r.svg; y=r.y2; maxX=Math.max(maxX,r.maxX); });
+  const W=Math.ceil(maxX+6), Hh=Math.ceil(y+11);
+  return `<div class="sc-prog"><svg class="sc-svg" viewBox="0 0 ${W} ${Hh}" width="${Math.round(W*scale)}" height="${Math.round(Hh*scale)}" role="img" aria-label="programme en blocs Scratch">${out}</svg></div>`;
+}
+const SC_TOP=[{col:'ev',hat:true,segs:['quand',{flag:true},'est cliqué']},{col:'pen',segs:['effacer tout']},{col:'pen',segs:['stylo en position d’écriture']}];
+/* programme d'une figure (types A, B, C) */
+function scrFigProg(q,o){
+  const f=q.f;
+  const nSeg=o.blank==='n'?{blank:true}:{n:f.n}, aSeg=o.blank==='a'?{blank:true}:{n:f.a};
+  const kids=[{col:'mo',segs:['avancer de',{n:q.len}]}];
+  if(q.wait&&!o.compact) kids.push({col:'ct',segs:['attendre',{n:1},'secondes']});
+  kids.push({col:'mo',segs:['tourner',{turn:q.cw?'cw':'ccw'},'de',aSeg,o.compact?'°':'degrés']});
+  return [...((o.compact||o.loopOnly)?[]:SC_TOP),{c:true,segs:['répéter',nSeg,'fois'],kids}];
+}
+/* programme d'une frise (types F et G) : boucle extérieure = une figure (ou deux) puis un déplacement lutin-stylo levé */
+function frSpec(q,o){
+  const fr=q.fr, s=q.s, deg=o.compact?'°':'degrés', used={move:false,side:false};
+  const num=(v,kind)=>{ if(o.blank===kind&&!used[kind]){ used[kind]=true; return {blank:true}; } return {n:v}; };
+  const turn=a=>({col:'mo',segs:['tourner',{turn:q.cw?'cw':'ccw'},'de',{n:a},deg]});
+  const shape=sh=>({c:true,segs:['répéter',{n:sh==='sq'?4:3},'fois'],kids:[{col:'mo',segs:['avancer de',num(s,'side')]},turn(sh==='sq'?90:120)]});
+  const kids=[];
+  fr.shapes.forEach(sh=>kids.push(shape(sh),{col:'pen',segs:['relever le stylo']},{col:'mo',segs:['avancer de',num(frMove(q),'move')]},{col:'pen',segs:['stylo en position d’écriture']}));
+  return [...((o.compact||o.loopOnly)?[]:SC_TOP),{c:true,segs:['répéter',o.blank==='rep'?{blank:true}:{n:q.N},'fois'],kids}];
+}
+function scrProg(q,o){
+  o=o||{};
+  if(scrIsFr(q)) return scRender(frSpec(q,o),o.compact?0.5:1);
+  return scRender(scrFigProg(q,o),o.compact?0.58:1);
+}
+/* dessin de la figure comme Scratch la trace avec le stylo : contour bleu, sans remplissage, sur la scène blanche.
+   Le lutin part vers la droite : avec ↻ (rotation à droite) le triangle est sous le premier côté (pointe en bas), avec ↺ il est au-dessus (pointe en haut) */
+function scrFigSvg(f,h,cw){
+  const w=Math.round(h*1.15), pen='fill="none" stroke="#0000ff" stroke-width="4" stroke-linejoin="miter"';
+  const inner=f.k==='tri'
+    ?`<polygon points="${cw?'17,18 133,18 75,118':'75,18 133,118 17,118'}" ${pen}/>`
+    :`<rect x="27" y="17" width="96" height="96" ${pen}/>`;
+  return `<svg class="sc-fig" width="${w}" height="${h}" viewBox="0 0 150 130" role="img" aria-label="figure à tracer"><rect x="1" y="1" width="148" height="128" rx="6" fill="#fff" stroke="#c9ced6"/>${inner}</svg>`;
+}
+/* dessin d'une frise (sans lutin) ; si dims, les cotes (côté et espace) sont tracées dessous.
+   Les figures sont tracées sous la ligne de départ (rotation ↻) ou au-dessus (rotation ↺).
+   o.sc = pixels par unité : en passant la même échelle à plusieurs frises, les figures ont la même taille et seule la longueur change ;
+   la hauteur de l'image ne dépend que du côté, jamais du type de figure. */
+function frSpan(q,k){ const fr=SCR_FR[k||q.fr.k], M=frShapesCount(q); return M*q.s+(M-1)*(fr.gap?q.gv:0)+20; }
+function frSvg(q,o){
+  o=o||{};
+  const fr=SCR_FR[o.k||q.fr.k], s=q.s, g=fr.gap?q.gv:0, M=frShapesCount(q), cw=q.cw;
+  const th=Math.sqrt(3)/2*s, pad=10, tot=M*s+(M-1)*g, minX=-pad, span=tot+2*pad;
+  const sc=o.sc||((o.w||300)/span), px=v=>v/sc;
+  const yTop=cw?-pad:-(s+pad), yBase=cw?s+pad:pad, yBot=yBase+(o.dims?36/sc:0);
+  const sw=o.sw||(sc*span<200?2.6:3.6), ns=`style="stroke-width:${sw};vector-effect:non-scaling-stroke"`;
+  let out=`<rect x="${minX}" y="${yTop}" width="${span}" height="${yBot-yTop}" rx="${px(6)}" fill="#fff" stroke="#c9ced6" style="vector-effect:non-scaling-stroke"/>`;
+  for(let i=0;i<M;i++){
+    const sh=fr.shapes[i%fr.shapes.length], x=i*(s+g);
+    if(sh==='sq') out+=`<rect x="${x}" y="${cw?0:-s}" width="${s}" height="${s}" fill="none" stroke="#0000ff" ${ns}/>`;
+    else out+=`<polygon points="${x},0 ${x+s},0 ${x+s/2},${cw?th:-th}" fill="none" stroke="#0000ff" stroke-linejoin="miter" ${ns}/>`;
+  }
+  if(o.dims){
+    const ay=yBase+px(15), hd=px(5), fs=px(13), ls=`stroke="#222" style="stroke-width:1.2;vector-effect:non-scaling-stroke"`;
+    const arrow=(x0,x1,t)=>`<line x1="${x0}" y1="${ay}" x2="${x1}" y2="${ay}" ${ls}/><polygon points="${x0},${ay} ${x0+hd*1.7},${ay-hd*.7} ${x0+hd*1.7},${ay+hd*.7}" fill="#222"/><polygon points="${x1},${ay} ${x1-hd*1.7},${ay-hd*.7} ${x1-hd*1.7},${ay+hd*.7}" fill="#222"/><text x="${(x0+x1)/2}" y="${ay+px(17)}" text-anchor="middle" fill="#222" style="font:600 ${fs}px ${SC_FONT}">${t}</text>`;
+    out+=arrow(0,s,s)+(fr.gap?arrow(s,s+g,q.gv):'');
+  }
+  return `<svg class="sc-fr" viewBox="${minX} ${yTop} ${span} ${yBot-yTop}" width="${Math.round(span*sc)}" height="${Math.round((yBot-yTop)*sc)}" role="img" aria-label="frise à tracer">${out}</svg>`;
+}
+function scrBody(q){
+  if(q.type==='F') return `<div class="sc-wrap">${scrProg(q,{})}</div>`;
+  if(q.type==='G') return `<div class="sc-wrap"><div class="sc-figbox">${frSvg(q,{w:300,dims:true})}</div></div><div class="sc-wrap">${scrProg(q,{blank:q.blank,loopOnly:true})}</div>`;
+  const o=q.type==='A'?{}:q.type==='B'?{blank:'a'}:{blank:q.blank,loopOnly:true};
+  return (q.type==='C'?`<div class="sc-wrap"><div class="sc-figbox">${scrFigSvg(q.f,120,q.cw)}</div></div>`:'')
+    +`<div class="sc-wrap">${scrProg(q,o)}</div>`;
+}
+function scrQuestion(q){
+  if(q.type==='A') return 'Quelle figure ce programme trace-t-il ?';
+  if(q.type==='B') return `Quel nombre faut-il écrire à la place du <b>?</b> pour que ce programme trace un <b>${q.f.name}</b> ?`;
+  if(q.type==='F') return 'Quelle frise ce programme trace-t-il ?';
+  return `Quel nombre faut-il écrire à la place du <b>?</b> pour que le programme trace ${q.type==='G'?'cette frise':'cette figure'} ?`;
+}
+function explainScr(q){
+  if(q.type==='F'){
+    const d=q.fr.shapes.map(x=>x==='sq'?`un carré (4 côtés de ${q.s}, angles de 90°)`:`un triangle équilatéral (3 côtés de ${q.s}, angles de 120°)`).join(', puis ');
+    return `À chaque tour de boucle, le lutin trace ${d}, relève le stylo, avance de ${frMove(q)}${q.fr.gap?` (${q.s} + ${q.gv} : un espace de ${q.gv} sépare les figures)`:` (la largeur d’une figure : les figures sont collées)`} puis repose le stylo. C’est une <b>${q.fr.name}</b>.`;
+  }
+  if(q.type==='G'){
+    if(q.blank==='move') return q.fr.gap
+      ?`Entre le début de deux figures, le lutin avance de la largeur d’une figure (${q.s}) plus l’espace (${q.gv}) : ${q.s} + ${q.gv} = <b>${q.s+q.gv}</b>.`
+      :`Les figures sont collées : le lutin avance exactement de la largeur d’une figure, soit <b>${q.s}</b>.`;
+    if(q.blank==='rep') return `Il y a ${q.N} figures sur la frise : la boucle doit se répéter <b>${q.N}</b> fois.`;
+    return `Chaque figure mesure ${q.s} de large (cote indiquée sur la frise) : pour tracer un côté, le lutin avance de <b>${q.s}</b>.`;
+  }
+  const f=q.f;
+  if(q.type==='A') return `Le lutin répète ${f.n} fois : avancer de ${q.len}, puis tourner de ${f.a}°. ${f.n} × ${f.a} = 360° : c’est un tour complet, donc la figure se ferme. Les ${f.n} côtés mesurent ${q.len} et les angles sont égaux : c’est un <b>${f.name}</b>.`;
+  if(q.type==='C'&&q.blank==='n') return `À chaque répétition, le lutin avance puis tourne de ${f.a}°. Pour revenir à son point de départ, il doit faire un tour complet (360°) : 360 ÷ ${f.a} = <b>${f.n}</b> répétitions. Il trace ${f.n} côtés égaux : c’est un ${f.name}.`;
+  return `Pour fermer la figure, le lutin doit faire un tour complet (360°) en ${f.n} rotations égales : 360 ÷ ${f.n} = <b>${f.a}</b>.${f.n!==4?` C’est l’angle dont il tourne à chaque fois, pas l’angle intérieur de la figure (${180-f.a}°).`:''}`;
+}
+function scrHint(q,n){
+  if(scrIsAngle(q)&&n===180-q.f.a&&n!==q.f.a) return 'Attention : on cherche de combien le lutin tourne à chaque fois, pas l’angle de la figure. ';
+  if(q.type==='G'&&q.blank==='move'&&q.fr.gap&&n===q.s) return 'N’oublie pas l’espace entre deux figures : le lutin avance de la largeur d’une figure plus cet espace. ';
+  return '';
+}
+function scrOptions(q){
+  if(q.type==='A') return shuffle([scrCap(q.f.name),...shuffle(SCR_WRONG[q.f.k]).slice(0,3)]).map(t=>({k:t,t}));
+  if(q.type==='F'){
+    const keys=shuffle([q.fr.k,...shuffle(SCR_FR_KEYS.filter(k=>k!==q.fr.k)).slice(0,3)]);
+    const sc=Math.min(1.3,280/Math.max(...keys.map(k=>frSpan(q,k))));   /* même échelle pour les 4 : les frises espacées sont juste plus longues */
+    return keys.map(k=>({k,html:frSvg(q,{k,sc})}));
+  }
+  const ans=Number(scrKey(q));
+  let first=[], pool;
+  if(q.type==='G'){
+    if(q.blank==='move') pool=q.fr.gap?[q.s,q.gv,q.s+2*q.gv,2*q.s,q.s+q.gv+10]:[q.s+20,q.s+30,2*q.s,q.s-10,q.s/2];
+    else if(q.blank==='rep') pool=[q.N-1,q.N+1,q.N+2,q.N-2,2*q.N];
+    else pool=q.fr.gap?[q.s+q.gv,q.gv,q.s+10,q.s-10,2*q.s]:[q.s+10,q.s-10,2*q.s,q.s+20,q.s/2];
+  }else{
+    const nRep=q.type==='C'&&q.blank==='n';
+    first=nRep?[]:[180-q.f.a].filter(v=>v!==ans);
+    pool=nRep?[3,4,5,6,8,2]:[60,90,120,180,45,72,150,30];
+  }
+  const rest=shuffle([...new Set(pool)].filter(v=>Number.isInteger(v)&&v>0&&v!==ans&&!first.includes(v)));
+  return shuffle([ans,...[...first,...rest].slice(0,3)]).map(v=>({k:String(v),t:String(v)}));
+}
+function renderScrQCM(){
+  const q=withHistory(genScr); state.current=q;
+  const content=document.getElementById('content'), opts=scrOptions(q), img=q.type==='F';
+  content.innerHTML=`
+    <div class="question">${scrQuestion(q)}</div>
+    ${scrBody(q)}
+    <div class="options"${img?' style="display:grid;grid-template-columns:1fr;gap:10px;"':''}>${opts.map(o=>`<button class="opt-btn${o.html?' opt-img':''}" data-k="${o.k}">${o.html||o.t}</button>`).join('')}</div>
+    <div class="feedback" id="fb"></div>`;
+  content.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      content.querySelectorAll('.opt-btn').forEach(b=>b.onclick=null);
+      const fb=document.getElementById('fb');
+      if(btn.dataset.k===scrKey(q)){
+        btn.classList.add('correct','anim-good');
+        bumpStreak(getStreak());
+        fb.textContent="Bravo, c'est correct !"; fb.className='feedback ok';
+        autoNext(450);
+      }else{
+        btn.classList.add('wrong','anim-bad');
+        failStreak();
+        fb.innerHTML=`Ce n'est pas ça. ${scrHint(q,Number(btn.dataset.k))}<span class="expl">${explainScr(q)}</span>`;
+        fb.className='feedback ko';
+        content.querySelectorAll('.opt-btn').forEach(b=>{ if(b.dataset.k===scrKey(q)) b.classList.add('correct'); });
+      }
+    };
+  });
+}
+/* jeu : une manche sur deux avec les figures (4 morceaux de programme ↔ 120, 90, 3, 4), l'autre avec les frises (programme ↔ dessin de la frise) */
+function genScrRound(){ return shuffle([['tri','a'],['car','a'],['tri','n'],['car','n']]).map(([k,b])=>mkScr('C',k,b)); }
+function genScrFrRound(){
+  const cw=Math.random()<0.5, side=pick([40,50,60]), gv=pick([20,30]);
+  const qs=shuffle([...SCR_FR_KEYS]).slice(0,4).map(k=>{
+    const q=mkFr('F',k); q.cw=cw; q.s=side; q.gv=gv; q.g=q.fr.gap?gv:0; q.N=q.fr.shapes.length>1?2:4;   /* 4 figures dans chaque frise */
+    return q;
+  });
+  const sc=Math.min(1.3,140/Math.max(...qs.map(q=>frSpan(q))));
+  qs.forEach(q=>q.sc=sc);
+  return qs;
+}
+function renderScrJeu(){
+  if(Math.random()<0.5){
+    renderMatch(genScrRound(),
+      q=>`répéter ${q.blank==='n'?'?':q.f.n} fois, tourner de ${q.blank==='a'?'?':q.f.a}°`,
+      q=>scrKey(q), explainScr,
+      q=>`<div class="sc-jeu">${scrFigSvg(q.f,44,q.cw)}${scrProg(q,{blank:q.blank,compact:true,loopOnly:true})}</div>`);
+  }else{
+    renderMatch(genScrFrRound(),
+      q=>`le programme : ${q.fr.shapes.map(x=>x==='sq'?'carré':'triangle').join(' puis ')}, déplacement de ${frMove(q)}, ${q.N} fois`,
+      q=>q.fr.name, explainScr,
+      q=>`<div class="sc-jeu">${scrProg(q,{compact:true,loopOnly:true})}</div>`,
+      q=>frSvg(q,{sc:q.sc}));
+  }
+}
+function renderScrTrou(){
+  const q=withHistory(genScr); state.current=q;
+  const content=document.getElementById('content'), isA=q.type==='A';
+  content.innerHTML=`
+    <div class="question">${scrQuestion(q)}</div>
+    ${scrBody(q)}
+    <div class="fill-row" style="align-items:center;justify-content:center;"><input type="text" id="ans" ${isA?'':'inputmode="numeric"'} autocapitalize="off" spellcheck="false" autocomplete="off" placeholder="${isA?'nom de la figure':'nombre'}" style="width:${isA?230:130}px;text-align:center;"></div>
+    <div class="actions"><button class="primary" id="check">Valider</button></div>
+    <div class="feedback" id="fb"></div>`;
+  const rowEl=content.querySelector('.fill-row'), f=q.f;
+  document.getElementById('check').onclick=()=>{
+    const fb=document.getElementById('fb'), val=document.getElementById('ans').value, n=normW(val);
+    let ok=false, msg='', precise=false;
+    if(!isA){
+      const raw=val.replace(/\s/g,'');
+      if(!/^\d+$/.test(raw)){ fb.textContent='Écris un nombre entier.'; fb.className='feedback ko'; return; }
+      ok=Number(raw)===Number(scrKey(q)); msg=scrHint(q,Number(raw));
+    }else{
+      if(!n) return;
+      if(f.short&&(n===normW(f.short)||n===normW(f.short)+'s')) precise=true;
+      else{
+        const res=wordCheck(val,f.k==='tri'?[f.name,'équilatéral']:[f.name],1); ok=res.ok;
+        if(ok&&!res.exact) msg=`Bravo, c'est juste ! Attention à l'orthographe : on écrit « ${f.name} ».`;
+      }
+    }
+    document.getElementById('check').disabled=true;
+    if(ok){
+      rowEl.classList.add('anim-good');
+      bumpStreak(getStreak());
+      if(msg) fb.innerHTML=msg; else fb.textContent='Exact, bravo !';
+      fb.className='feedback ok';
+      autoNext(msg?2800:450);
+    }else{
+      rowEl.classList.add('anim-bad');
+      failStreak();
+      document.getElementById('check').style.display='none';
+      const head=precise
+        ?'Pas tout à fait. Il y a plusieurs sortes de triangles : ici les 3 côtés ont la même longueur. '
+        :`Ce n'est pas ça. ${msg}Réponse : ${scrAnsTxt(q)}.`;
+      fb.innerHTML=`${head}<span class="expl">${explainScr(q)}</span>`;
+      fb.className='feedback ko';
+    }
+  };
+}
 function genComp(){
   const types=['10','100','1000','dec'];
   const type=types[Math.floor(Math.random()*4)];
@@ -2054,10 +2414,10 @@ function renderMulTrou(){
     const fb=document.getElementById('fb');
     const rowEl=content.querySelector('.fill-row');
     document.getElementById('check').disabled=true;
-    if(!isNaN(v) && Math.abs(v-q.ans)<1e-9 && !groupOK(inp.value)){
+    if(!isNaN(v) && Math.abs(v-q.ans)<1e-9 && !numOK(inp.value)){
       rowEl.classList.add('anim-bad'); failStreak();
       document.getElementById('check').style.display='none';
-      fb.textContent=`Ta valeur est juste, mais elle ne compte pas : écris les nombres par groupes de 3 chiffres (${fmt(q.ans)}).`; fb.className='feedback ko';
+      fb.textContent=numMsg(inp.value,fmt(q.ans)); fb.className='feedback ko';
       return;
     }
     if(!isNaN(v) && Math.abs(v-q.ans)<1e-9){
@@ -2075,6 +2435,134 @@ function renderMulTrou(){
   };
 }
 /* ===== fin multiplications par 10, 100 et 1 000 ===== */
+/* ===== Divisions par 10, 100 et 1 000 ===== */
+function genDiv(){
+  const k0=1+Math.floor(Math.random()*3);
+  let aNum,d,k=k0;
+  const r=Math.random();
+  const lastNZ=n=>{ if(n%10===0) n+=1+Math.floor(Math.random()*9); return n; };
+  if(r<0.07){ d=0; aNum=1; }                                                   /* 1 ÷ 10 ; 1 ÷ 100 ; 1 ÷ 1 000 */
+  else if(r<0.31){ d=0; const len=1+Math.floor(Math.random()*4);                /* entiers : 7 ; 97 ; 744 ; 1 450 ; 5 434 */
+    aNum=len===1?2+Math.floor(Math.random()*8):Math.pow(10,len-1)+Math.floor(Math.random()*9*Math.pow(10,len-1)); }
+  else if(r<0.58){ d=1+Math.floor(Math.random()*2); aNum=lastNZ(11+Math.floor(Math.random()*(d===1?989:9989))); }   /* 4,5 ; 7,87 ; 65,4 ; 1,78 */
+  else if(r<0.84){ d=1+Math.floor(Math.random()*3); aNum=lastNZ(1+Math.floor(Math.random()*(Math.pow(10,d+1)-1))); }  /* 0,5 ; 0,087 ; 0,045 ; 5,4 ; 97,512 */
+  else{ /* zéro au milieu : 800,8 ; 78,07 ; 19,02 */
+    const ip=1+Math.floor(Math.random()*999);
+    d=2+Math.floor(Math.random()*2);
+    let fr=String(Math.floor(Math.random()*Math.pow(10,d))).padStart(d,'0').split('');
+    fr[Math.floor(Math.random()*(d-1))]='0';
+    if(fr[d-1]==='0') fr[d-1]=String(1+Math.floor(Math.random()*9));
+    aNum=ip*Math.pow(10,d)+Number(fr.join(''));
+  }
+  if(d+k>5) k=Math.max(1,5-d);                                                  /* résultat lisible : au plus 5 décimales */
+  const a=MUL_R9(aNum/Math.pow(10,d));
+  const ans=MUL_R9(aNum/Math.pow(10,d+k));
+  return {pk:`${aNum}|${d}|${k}`,aNum,a,p:Math.pow(10,k),k,d,ans};
+}
+function divLabel(q){ return `${fmt(q.a)} ÷ ${fmt(q.p)}`; }
+function explainDiv(q){
+  /* La virgule ne bouge jamais : ce sont les chiffres qui changent de rang (valeur ÷10, ÷100, ÷1 000). */
+  const {a,p,k,ans}=q, s=k>1?'s':'';
+  const [ip,dp='']=String(fmtRaw(a)).split(',');
+  let e0,dig;
+  if(ip.replace(/^0+/,'')!==''){ const t=ip.replace(/^0+/,''); e0=t.length-1; dig=t[0]; }
+  else{ const idx=dp.search(/[1-9]/); e0=-(idx+1); dig=dp[idx]; }
+  let t=`${divLabel(q)} = ${fmt(ans)}. Diviser par ${fmt(p)}, c'est rendre chaque chiffre ${fmt(p)} fois plus petit : chaque chiffre se décale de ${k} rang${s} vers la droite.`;
+  if(MUL_RANGS[e0]&&MUL_RANGS[e0-k]) t+=` Ici, le chiffre ${dig} des ${MUL_RANGS[e0]} passe aux ${MUL_RANGS[e0-k]}.`;
+  if(e0-k<0) t+=` Il n'y a plus de chiffre aux unités : on écrit 0.`;
+  if(e0-k<-1) t+=` Les rangs libres entre la virgule et ce chiffre se remplissent avec des zéros.`;
+  if(q.d===0&&q.aNum%10===0) t+=` Le dernier 0 est devenu inutile après la virgule : on ne l'écrit pas.`;
+  return t;
+}
+function divOptions(q){
+  const {a,p,ans}=q;
+  const cands=[a*p,ans*10,ans/10,ans*100,ans/100,a].map(MUL_R9);
+  const ok=v=>v>0&&v!==ans&&v<1e7&&fmt(v)!=='0'&&String(fmtRaw(v)).length<=12;
+  let wr=shuffle([...new Set(cands.filter(ok))]).slice(0,3);
+  for(let k=1;wr.length<3&&k<50;k++){ const v=MUL_R9(ans+k*Math.pow(10,-(q.d+q.k))); if(ok(v)&&!wr.includes(v)) wr.push(v); }
+  return shuffle([ans,...wr.slice(0,3)]);
+}
+function renderDivQCM(){
+  const q=withHistory(genDiv); state.current=q;
+  const content=document.getElementById('content');
+  content.innerHTML=`
+    <div class="question">${divLabel(q)} = ?</div>
+    <div class="options">${divOptions(q).map(o=>`<button class="opt-btn" data-val="${o}">${fmt(o)}</button>`).join('')}</div>
+    <div class="feedback" id="fb"></div>`;
+  content.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      content.querySelectorAll('.opt-btn').forEach(b=>b.onclick=null);
+      const fb=document.getElementById('fb');
+      if(Number(btn.dataset.val)===q.ans){
+        btn.classList.add('correct','anim-good');
+        bumpStreak(getStreak());
+        fb.textContent="Bravo, c'est correct !"; fb.className='feedback ok';
+        autoNext(450);
+      }else{
+        btn.classList.add('wrong','anim-bad');
+        failStreak();
+        fb.innerHTML=`Ce n'est pas ça. <span class="expl">${explainDiv(q)}</span>`;
+        fb.className='feedback ko';
+        content.querySelectorAll('.opt-btn').forEach(b=>{if(Number(b.dataset.val)===q.ans)b.classList.add('correct');});
+      }
+    };
+  });
+}
+/* Jeu d'association : les 4 divisions partagent la même suite de chiffres (ex. 846 ÷ 10 ; 84,6 ÷ 100 ; 8,46 ÷ 1 000 ; 0,846 ÷ 10),
+   seule la place de la virgule change : il faut vraiment décaler chaque chiffre du bon nombre de rangs. */
+function genDivGroup(){
+  const len=2+Math.floor(Math.random()*3);                       /* 2 à 4 chiffres */
+  let digs=String(1+Math.floor(Math.random()*9));
+  for(let i=1;i<len-1;i++) digs+=String(Math.floor(Math.random()*10));
+  digs+=String(1+Math.floor(Math.random()*9));                   /* dernier chiffre non nul */
+  const D=Number(digs), jmax=Math.min(3,len);
+  const pairs={};                                                /* s = j + k : décalage total de la virgule vers la gauche */
+  for(let k=1;k<=3;k++) for(let j=0;j<=jmax;j++) (pairs[j+k]=pairs[j+k]||[]).push([j,k]);
+  const ss=shuffle(Object.keys(pairs).map(Number)).slice(0,4);
+  return ss.map(sv=>{
+    const [j,k]=pick(pairs[sv]);
+    const a=MUL_R9(D/Math.pow(10,j)), ans=MUL_R9(D/Math.pow(10,sv));
+    return {pk:`${D}|${j}|${k}`,aNum:D,a,p:Math.pow(10,k),k,d:j,ans};
+  });
+}
+function renderDivJeu(){
+  renderMatch(genDivGroup(), q=>divLabel(q), q=>fmt(q.ans), explainDiv);
+}
+function renderDivTrou(){
+  const q=withHistory(genDiv); state.current=q;
+  const content=document.getElementById('content');
+  content.innerHTML=`
+    <div class="fill-row">${divLabel(q)} = <input type="text" id="ans" inputmode="decimal" placeholder="?" autocomplete="off" style="width:130px;"></div>
+    <div class="actions"><button class="primary" id="check">Valider</button></div>
+    <div class="feedback" id="fb"></div>`;
+  const inp=document.getElementById('ans');
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ const c=document.getElementById('check'); if(c&&!c.disabled) c.click(); } });
+  document.getElementById('check').onclick=()=>{
+    const v=parseNum(inp.value);
+    const fb=document.getElementById('fb');
+    const rowEl=content.querySelector('.fill-row');
+    document.getElementById('check').disabled=true;
+    if(!isNaN(v) && Math.abs(v-q.ans)<1e-9 && !numOK(inp.value)){
+      rowEl.classList.add('anim-bad'); failStreak();
+      document.getElementById('check').style.display='none';
+      fb.textContent=numMsg(inp.value,fmt(q.ans)); fb.className='feedback ko';
+      return;
+    }
+    if(!isNaN(v) && Math.abs(v-q.ans)<1e-9){
+      rowEl.classList.add('anim-good');
+      bumpStreak(getStreak());
+      fb.textContent='Exact, bravo !'; fb.className='feedback ok';
+      autoNext(450);
+    }else{
+      rowEl.classList.add('anim-bad');
+      failStreak();
+      document.getElementById('check').style.display='none';
+      fb.innerHTML=`Pas tout à fait. <span class="expl">${explainDiv(q)}</span>`;
+      fb.className='feedback ko';
+    }
+  };
+}
+/* ===== fin divisions par 10, 100 et 1 000 ===== */
 function padHM(n){ return String(n).padStart(2,'0'); }
 function clockLabel(q){ return `${padHM(q.h)}h${padHM(q.m)}`; }
 function clockSVG(h,m,size){
@@ -5419,6 +5907,195 @@ Object.assign(CQ_GLAB,{droite:'Droite passant par deux points',align:'Points ali
   [['par','a'],['sec','b'],['perp','c']].forEach(([t,l])=>CQ_CASES.push({ch:'6eg1',th:2,pk:'p|fpos-'+l,make:()=>posMake(t)}));
 })();
 
+/* ===== Questions de cours 6e – NCRP 1 : Nombres décimaux =====
+   Thèmes : 1 = I – Tableau de numération · 2 = II – « Chiffre des » et « nombre de » · 3 = III – Nombres décimaux · 4 = IV – Différentes écritures · 5 = V – Pourcentages
+   Uniquement les définitions, propriétés, méthodes et remarques du cours (pas d'exemples de calcul). Les nombres et les signes passent automatiquement en « mode maths » (voir mathRuns). */
+Object.assign(CQ_GLAB,{'ncrp1-chf':'Les dix chiffres','ncrp1-rgcl':'Rang et classe','ncrp1-grp':'Groupes de trois chiffres','ncrp1-vir':'Ordre des rangs après la virgule','ncrp1-loc':'Place des rangs : unités, centaines, milliers','ncrp1-lod':'Place des rangs : dixièmes, centièmes, millièmes',
+  'ncrp1-chd':'Chiffre des dizaines','ncrp1-nbd':'Nombre de dizaines',
+  'ncrp1-part':'Partie entière','ncrp1-som':'Somme des deux parties','ncrp1-inf':'La partie décimale est inférieure à 1','ncrp1-zer':'0 inutiles',
+  'ncrp1-fd':'Fraction décimale','ncrp1-nm':'Nombre mixte','ncrp1-dc':'Décomposition en fractions décimales','ncrp1-ef':'Écriture fractionnaire',
+  'ncrp1-pcd':'Définition d’un pourcentage','ncrp1-pcm':'Calculer un pourcentage','ncrp1-pfq':'Pourcentages fréquents et parts','ncrp1-pfz':'0\u00a0% et 100\u00a0%','ncrp1-pfc':'Calculer avec les pourcentages fréquents'});
+(function(){
+  const fx=cqM;
+  const N=(th,id,stem,ok,wrong,short)=>CQ_CASES.push({ch:'6ncrp1',th,pk:'p|'+id,make:()=>cqMakeProp({stem:fx(stem),ok:fx(ok),wrong:wrong.map(w=>({t:fx(w.t),why:fx(w.why)})),short})});
+  const K='1\u00a0000', P='\u00a0%';
+  const dix='le dénominateur d’une fraction décimale est 10, 100, '+K+', etc.';
+  const somme='un nombre est la somme de sa partie entière et de sa partie décimale.';
+  const zin='seuls sont inutiles les 0 situés à la droite de la partie décimale et à la gauche de la partie entière.';
+
+  /* I – Tableau de numération */
+  N(1,'ncrp1-chf-a','Pour écrire un nombre, on dispose de… chiffres.','dix',[
+    cqW('neuf','0 est aussi un chiffre : on dispose de dix chiffres, de 0 à 9.'),
+    cqW('huit','on dispose de dix chiffres : 0, 1, 2, 3, 4, 5, 6, 7, 8 et 9.'),
+    cqW('cent','on dispose seulement de dix chiffres : 0, 1, 2, 3, 4, 5, 6, 7, 8 et 9.')],true);
+  N(1,'ncrp1-rgcl-a','À chaque chiffre d’un nombre correspond un…','rang',[
+    cqW('classe','à chaque groupe de trois chiffres correspond une classe ; à chaque chiffre correspond un rang.'),
+    cqW('groupe','à chaque chiffre correspond un rang ; ce sont les chiffres que l’on regroupe par trois.'),
+    cqW('tableau','le tableau de numération sert à ranger les chiffres ; à chaque chiffre correspond un rang.')],true);
+  N(1,'ncrp1-rgcl-b','À chaque groupe de trois chiffres correspond une…','classe',[
+    cqW('rang','à chaque chiffre correspond un rang ; à chaque groupe de trois chiffres correspond une classe.'),
+    cqW('virgule','la virgule sépare la partie entière de la partie décimale ; à chaque groupe de trois chiffres correspond une classe.'),
+    cqW('dizaine','les dizaines forment un rang ; à chaque groupe de trois chiffres correspond une classe.')],true);
+  N(1,'ncrp1-grp-a','Pour écrire un nombre, on regroupe les chiffres par groupe de…','trois',[
+    cqW('deux','on regroupe les chiffres par groupe de trois.'),
+    cqW('quatre','on regroupe les chiffres par groupe de trois.'),
+    cqW('cinq','on regroupe les chiffres par groupe de trois.')],true);
+  N(1,'ncrp1-grp-b',cqPROP,'Pour écrire un nombre, on regroupe les chiffres par groupe de trois.',[
+    cqW('Pour écrire un nombre, on regroupe les chiffres par groupe de deux.','on regroupe les chiffres par groupe de trois.'),
+    cqW('Pour écrire un nombre, on regroupe les chiffres par groupe de quatre.','on regroupe les chiffres par groupe de trois.'),
+    cqW('Pour écrire un nombre, on regroupe les chiffres par groupe de cinq.','on regroupe les chiffres par groupe de trois.')]);
+  N(1,'ncrp1-vir-a','Le premier rang après la virgule est celui des…','dixièmes',[
+    cqW('unités','le rang des unités est situé juste avant la virgule.'),
+    cqW('centièmes','les centièmes forment le deuxième rang après la virgule.'),
+    cqW('millièmes','les millièmes forment le troisième rang après la virgule.')],true);
+  N(1,'ncrp1-vir-c','Le deuxième rang après la virgule est celui des…','centièmes',[
+    cqW('unités','le rang des unités est situé juste avant la virgule.'),
+    cqW('dixièmes','les dixièmes forment le premier rang après la virgule.'),
+    cqW('millièmes','les millièmes forment le troisième rang après la virgule.')],true);
+  N(1,'ncrp1-vir-d','Le troisième rang après la virgule est celui des…','millièmes',[
+    cqW('unités','le rang des unités est situé juste avant la virgule.'),
+    cqW('dixièmes','les dixièmes forment le premier rang après la virgule.'),
+    cqW('centièmes','les centièmes forment le deuxième rang après la virgule.')],true);
+  N(1,'ncrp1-vir-b',cqPROP,'Après la virgule, on trouve dans l’ordre les dixièmes, les centièmes et les millièmes.',[
+    cqW('Après la virgule, on trouve dans l’ordre les millièmes, les centièmes et les dixièmes.','c’est l’inverse : on trouve d’abord les dixièmes, puis les centièmes, puis les millièmes.'),
+    cqW('Après la virgule, on trouve dans l’ordre les centièmes, les dixièmes et les millièmes.','les dixièmes sont juste après la virgule, puis viennent les centièmes, puis les millièmes.'),
+    cqW('Après la virgule, on trouve dans l’ordre les dizaines, les centaines et les milliers.','les dizaines, les centaines et les milliers sont des rangs situés avant la virgule.')]);
+
+  [['loc','unités','avant'],['loc','centaines','avant'],['loc','milliers','avant'],['lod','dixièmes','après'],['lod','centièmes','après'],['lod','millièmes','après']].forEach(([b,r,w],i)=>{
+    const autre=w==='avant'?'après':'avant';
+    N(1,'ncrp1-'+b+'-'+'abc'[i%3],'Le rang des '+r+' est situé…',w+' la virgule',[
+      cqW(autre+' la virgule','le rang des '+r+' est situé '+w+' la virgule.')],true);
+  });
+
+  /* II – « Chiffre des » et « nombre de » */
+  N(2,'ncrp1-chd-a','Le chiffre des dizaines d’un nombre correspond…','au chiffre du rang des dizaines',[
+    cqW('au nombre de dizaines qu’il y a en tout','c’est le nombre de dizaines ; le chiffre des dizaines est le chiffre du rang des dizaines.'),
+    cqW('au chiffre du rang des unités','les unités et les dizaines sont deux rangs différents : le chiffre des dizaines est celui du rang des dizaines.'),
+    cqW('au chiffre du rang des dixièmes','les dixièmes se trouvent après la virgule : le chiffre des dizaines est celui du rang des dizaines.')]);
+  N(2,'ncrp1-chd-b',cqPROP,'Le chiffre des dizaines correspond au chiffre du rang des dizaines.',[
+    cqW('Le chiffre des dizaines correspond au nombre de dizaines qu’il y a en tout.','c’est le nombre de dizaines qui correspond au nombre de dizaines qu’il y a en tout.'),
+    cqW('Le chiffre des dizaines correspond au chiffre du rang des unités.','le chiffre des dizaines est le chiffre du rang des dizaines.'),
+    cqW('Le chiffre des dizaines correspond au chiffre du rang des centaines.','le chiffre des dizaines est le chiffre du rang des dizaines.')]);
+  N(2,'ncrp1-nbd-a','Le nombre de dizaines d’un nombre correspond…','au nombre de dizaines qu’il y a en tout',[
+    cqW('au chiffre du rang des dizaines','c’est le chiffre des dizaines ; le nombre de dizaines compte toutes les dizaines qu’il y a en tout.'),
+    cqW('au chiffre du rang des unités','le nombre de dizaines compte toutes les dizaines qu’il y a en tout.'),
+    cqW('à la partie entière du nombre','la partie entière contient aussi les unités ; le nombre de dizaines compte toutes les dizaines qu’il y a en tout.')]);
+  N(2,'ncrp1-nbd-b',cqPROP,'Le nombre de dizaines correspond au nombre de dizaines qu’il y a en tout.',[
+    cqW('Le nombre de dizaines correspond au chiffre du rang des dizaines.','c’est le chiffre des dizaines.'),
+    cqW('Le nombre de dizaines correspond toujours à un seul chiffre.','le nombre de dizaines compte toutes les dizaines qu’il y a en tout : il peut s’écrire avec plusieurs chiffres.'),
+    cqW('Le nombre de dizaines correspond au chiffre du rang des unités.','les unités ne sont pas des dizaines : le nombre de dizaines correspond au nombre de dizaines qu’il y a en tout.')]);
+
+  /* III – Nombres décimaux */
+  N(3,'ncrp1-part-a','La partie entière d’un nombre décimal est la partie située…','avant la virgule',[
+    cqW('après la virgule','la partie entière est la partie située avant la virgule.')],true);
+  N(3,'ncrp1-som-a',cqPROP,'Un nombre est la somme de sa partie entière et de sa partie décimale.',[
+    cqW('Un nombre est le produit de sa partie entière et de sa partie décimale.',somme),
+    cqW('Un nombre est la différence entre sa partie entière et sa partie décimale.',somme),
+    cqW('Un nombre est le quotient de sa partie entière par sa partie décimale.',somme)]);
+  N(3,'ncrp1-inf-a','La partie décimale d’un nombre décimal est un nombre…','inférieur à 1',[
+    cqW('supérieur à 1','la partie décimale est un nombre inférieur à 1.'),
+    cqW('égal à 1','la partie décimale est un nombre inférieur à 1.'),
+    cqW('supérieur à 10','la partie décimale est un nombre inférieur à 1.')],true);
+  N(3,'ncrp1-zer-a','Dans un nombre décimal, les 0 inutiles sont ceux situés…','à la droite de la partie décimale et à la gauche de la partie entière',[
+    cqW('à la gauche de la partie décimale et à la droite de la partie entière',zin),
+    cqW('à la droite de la partie décimale seulement','les 0 situés à la gauche de la partie entière sont aussi inutiles.'),
+    cqW('à la gauche de la partie entière seulement','les 0 situés à la droite de la partie décimale sont aussi inutiles.')]);
+  N(3,'ncrp1-zer-b',cqPROP,'Les 0 situés à la droite de la partie décimale sont inutiles.',[
+    cqW('Les 0 situés à la gauche de la partie décimale sont inutiles.','ce sont les 0 situés à la droite de la partie décimale qui sont inutiles.'),
+    cqW('Tous les 0 d’un nombre décimal sont inutiles.','certains 0 seulement sont inutiles : ceux situés à la droite de la partie décimale et à la gauche de la partie entière.'),
+    cqW('Les 0 situés au milieu de la partie entière sont inutiles.',zin)]);
+
+  /* IV – Différentes écritures */
+  N(4,'ncrp1-fd-a','Une fraction décimale est une fraction dont le numérateur est un nombre entier et dont le dénominateur est…','10, 100, '+K+', etc.',[
+    cqW('un nombre entier quelconque',dix),
+    cqW('un nombre décimal quelconque',dix),
+    cqW('2, 4, 8, 16, etc.',dix)]);
+  N(4,'ncrp1-fd-b',cqPROP,'Une fraction décimale est une fraction dont le numérateur est un nombre entier et dont le dénominateur est 10, 100, '+K+', etc.',[
+    cqW('Une fraction décimale est une fraction dont le numérateur est un nombre entier et dont le dénominateur est 2, 4, 8, 16, etc.',dix),
+    cqW('Une fraction décimale est une fraction dont le numérateur est 10, 100, '+K+', etc. et dont le dénominateur est un nombre entier.','c’est le dénominateur qui est égal à 10, 100, '+K+', etc.'),
+    cqW('Une fraction décimale est une fraction dont le numérateur et le dénominateur sont des nombres décimaux.','le numérateur est un nombre entier et le dénominateur est 10, 100, '+K+', etc.')]);
+  N(4,'ncrp1-nm-a','Un nombre mixte est un nombre qui s’écrit comme la somme d’un nombre entier et d’une fraction décimale…','inférieure à 1',[
+    cqW('supérieure à 1','la fraction décimale d’un nombre mixte est inférieure à 1 : c’est sa partie décimale.'),
+    cqW('égale à 1','la fraction décimale d’un nombre mixte est inférieure à 1.'),
+    cqW('quelconque','la fraction décimale d’un nombre mixte doit être inférieure à 1.')],true);
+  N(4,'ncrp1-nm-b',cqPROP,'Un nombre mixte est la somme de sa partie entière et d’une fraction décimale inférieure à 1.',[
+    cqW('Un nombre mixte est le produit de sa partie entière et d’une fraction décimale inférieure à 1.','un nombre mixte est une somme, pas un produit.'),
+    cqW('Un nombre mixte est la somme de sa partie entière et d’une fraction décimale supérieure à 1.','la fraction décimale d’un nombre mixte est inférieure à 1 : c’est sa partie décimale.'),
+    cqW('Un nombre mixte est la différence entre sa partie entière et une fraction décimale inférieure à 1.','un nombre mixte est une somme, pas une différence.')]);
+  N(4,'ncrp1-dc-a','Décomposer un nombre en fractions décimales, c’est le décomposer…','par rang',[
+    cqW('par classe','on décompose par rang : chaque chiffre est associé à son rang, et non chaque groupe de trois chiffres.'),
+    cqW('en sa partie entière et sa partie décimale','c’est l’écriture en nombre mixte ; décomposer en fractions décimales, c’est décomposer par rang.'),
+    cqW('en un produit','décomposer en fractions décimales, c’est décomposer le nombre par rang.')],true);
+  N(4,'ncrp1-ef-a','Pour écrire un nombre décimal sous forme fractionnaire, on regarde le rang de…','son dernier chiffre (sans 0 inutiles)',[
+    cqW('son premier chiffre','c’est le rang du dernier chiffre, sans 0 inutiles, qui donne le dénominateur.'),
+    cqW('son chiffre des unités','c’est le rang du dernier chiffre, sans 0 inutiles, qui donne le dénominateur.'),
+    cqW('sa partie entière','c’est le rang du dernier chiffre, sans 0 inutiles, qui donne le dénominateur.')]);
+  [['b','dixièmes',10],['c','centièmes',100],['d','millièmes',1000]].forEach(([sx,rk,den])=>{
+    const nom={10:'dixièmes',100:'centièmes',1000:'millièmes',10000:'dix-millièmes'};
+    const fm=v=>v>=1000?String(v).replace(/(\d)(\d{3})$/,'$1\u00a0$2'):String(v);
+    N(4,'ncrp1-ef-'+sx,'Si le dernier chiffre d’un nombre décimal (sans 0 inutiles) est son chiffre des '+rk+', le dénominateur de sa fraction décimale est…',fm(den),
+      [10,100,1000,10000].filter(v=>v!==den).map(v=>cqW(fm(v),'le dénominateur '+fm(v)+' correspond aux '+nom[v]+' ; ici ce sont des '+rk+' : le dénominateur est '+fm(den)+'.')),true);
+  });
+
+  /* V – Pourcentages */
+  N(5,'ncrp1-pcd-a','Un pourcentage (noté %) représente une fraction sur…','100',[
+    cqW('10','un pourcentage représente une fraction sur 100.'),
+    cqW(K,'un pourcentage représente une fraction sur 100.'),
+    cqW('50','un pourcentage représente une fraction sur 100.')],true);
+  N(5,'ncrp1-pcd-b',cqPROP,'Un pourcentage représente une fraction sur 100.',[
+    cqW('Un pourcentage représente une fraction sur 10.','un pourcentage représente une fraction sur 100.'),
+    cqW('Un pourcentage représente une fraction sur '+K+'.','un pourcentage représente une fraction sur 100.'),
+    cqW('Un pourcentage représente une fraction sur 50.','un pourcentage représente une fraction sur 100.')]);
+  N(5,'ncrp1-pcm-a','Pour calculer un pourcentage d’une quantité, on…','multiplie la quantité par la fraction sur 100 correspondante',[
+    cqW('divise la quantité par la fraction sur 100 correspondante','on multiplie la quantité par la fraction sur 100 correspondante.'),
+    cqW('ajoute la fraction sur 100 correspondante à la quantité','on multiplie la quantité par la fraction sur 100 correspondante.'),
+    cqW('soustrait le pourcentage à la quantité','on multiplie la quantité par la fraction sur 100 correspondante.')]);
+  N(5,'ncrp1-pcm-b',cqPROP,'Pour calculer un pourcentage d’une quantité, on multiplie la quantité par la fraction sur 100 correspondante.',[
+    cqW('Pour calculer un pourcentage d’une quantité, on divise la quantité par la fraction sur 100 correspondante.','on multiplie la quantité par la fraction sur 100 correspondante, on ne la divise pas.'),
+    cqW('Pour calculer un pourcentage d’une quantité, on ajoute la fraction sur 100 correspondante à la quantité.','on multiplie la quantité par la fraction sur 100 correspondante.'),
+    cqW('Pour calculer un pourcentage d’une quantité, on multiplie la quantité par 100.','on multiplie la quantité par la fraction sur 100 correspondante, pas par 100.')]);
+  N(5,'ncrp1-pfq-a','Prendre 50'+P+' d’une quantité revient à prendre…','la moitié de la quantité',[
+    cqW('le quart de la quantité','le quart de la quantité correspond à 25'+P+'.'),
+    cqW('un dixième de la quantité','un dixième de la quantité correspond à 10'+P+'.'),
+    cqW('les trois quarts de la quantité','les trois quarts de la quantité correspondent à 75'+P+'.')]);
+  N(5,'ncrp1-pfq-b','Prendre 25'+P+' d’une quantité revient à prendre…','le quart de la quantité',[
+    cqW('la moitié de la quantité','la moitié de la quantité correspond à 50'+P+'.'),
+    cqW('un dixième de la quantité','un dixième de la quantité correspond à 10'+P+'.'),
+    cqW('les trois quarts de la quantité','les trois quarts de la quantité correspondent à 75'+P+'.')]);
+  N(5,'ncrp1-pfq-c','Prendre 10'+P+' d’une quantité revient à prendre…','un dixième de la quantité',[
+    cqW('le quart de la quantité','le quart de la quantité correspond à 25'+P+'.'),
+    cqW('la moitié de la quantité','la moitié de la quantité correspond à 50'+P+'.'),
+    cqW('les trois quarts de la quantité','les trois quarts de la quantité correspondent à 75'+P+'.')]);
+  N(5,'ncrp1-pfq-d','Prendre 75'+P+' d’une quantité revient à prendre…','les trois quarts de la quantité',[
+    cqW('le quart de la quantité','le quart de la quantité correspond à 25'+P+'.'),
+    cqW('la moitié de la quantité','la moitié de la quantité correspond à 50'+P+'.'),
+    cqW('un dixième de la quantité','un dixième de la quantité correspond à 10'+P+'.')]);
+  N(5,'ncrp1-pfz-a','Prendre 100'+P+' d’une quantité revient à prendre…','toute la quantité',[
+    cqW('rien','ne rien prendre correspond à 0'+P+'.'),
+    cqW('la moitié de la quantité','la moitié de la quantité correspond à 50'+P+'.'),
+    cqW('le quart de la quantité','le quart de la quantité correspond à 25'+P+'.')]);
+  N(5,'ncrp1-pfz-b','Prendre 0'+P+' d’une quantité revient à prendre…','rien',[
+    cqW('toute la quantité','toute la quantité correspond à 100'+P+'.'),
+    cqW('la moitié de la quantité','la moitié de la quantité correspond à 50'+P+'.'),
+    cqW('le quart de la quantité','le quart de la quantité correspond à 25'+P+'.')],true);
+  N(5,'ncrp1-pfc-a',cqPROP,'Pour calculer 25'+P+' d’une quantité, on divise cette quantité par 4.',[
+    cqW('Pour calculer 25'+P+' d’une quantité, on divise cette quantité par 2.','diviser par 2, c’est prendre la moitié, soit 50'+P+'.'),
+    cqW('Pour calculer 25'+P+' d’une quantité, on divise cette quantité par 25.','25'+P+' correspond au quart : on divise par 4.'),
+    cqW('Pour calculer 25'+P+' d’une quantité, on multiplie cette quantité par 4.','prendre le quart, c’est diviser par 4.')]);
+  N(5,'ncrp1-pfc-b',cqPROP,'Pour calculer 75'+P+' d’une quantité, on peut diviser cette quantité par 4 puis multiplier par 3.',[
+    cqW('Pour calculer 75'+P+' d’une quantité, on peut diviser cette quantité par 3 puis multiplier par 4.','75'+P+' correspond aux trois quarts : on divise par 4 puis on multiplie par 3.'),
+    cqW('Pour calculer 75'+P+' d’une quantité, on peut multiplier cette quantité par 4 puis diviser par 3.','75'+P+' correspond aux trois quarts : on divise par 4 puis on multiplie par 3.'),
+    cqW('Pour calculer 75'+P+' d’une quantité, on peut diviser cette quantité par 4 puis multiplier par 4.','cela redonne la quantité de départ ; pour prendre les trois quarts, on divise par 4 puis on multiplie par 3.')]);
+  N(5,'ncrp1-pfc-c',cqPROP,'Pour calculer 50'+P+' d’une quantité, on peut multiplier cette quantité par 0,5.',[
+    cqW('Pour calculer 50'+P+' d’une quantité, on peut multiplier cette quantité par 5.','50'+P+' correspond à la moitié : on multiplie par 0,5 ou on divise par 2.'),
+    cqW('Pour calculer 50'+P+' d’une quantité, on peut multiplier cette quantité par 50.','50'+P+' correspond à la moitié : on multiplie par 0,5 ou on divise par 2.'),
+    cqW('Pour calculer 50'+P+' d’une quantité, on peut diviser cette quantité par 5.','50'+P+' correspond à la moitié : on divise par 2 ou on multiplie par 0,5.')]);
+  N(5,'ncrp1-pfc-d',cqPROP,'Pour calculer 10'+P+' d’une quantité, on peut multiplier cette quantité par 0,1.',[
+    cqW('Pour calculer 10'+P+' d’une quantité, on peut multiplier cette quantité par 10.','10'+P+' correspond à un dixième : on multiplie par 0,1 ou on divise par 10.'),
+    cqW('Pour calculer 10'+P+' d’une quantité, on peut diviser cette quantité par 100.','10'+P+' correspond à un dixième : on divise par 10 ou on multiplie par 0,1.'),
+    cqW('Pour calculer 10'+P+' d’une quantité, on peut diviser cette quantité par 4.','diviser par 4, c’est prendre le quart, soit 25'+P+'.')]);
+})();
+
 /* ===== Questions de cours 6e – NCRP 4 : Additions, soustractions et multiplications =====
    Thèmes : 1 = I – Additions et soustractions · 2 = II – Multiplications · 3 = III – Multiplications par 0,1 ; 0,01…
    Uniquement les méthodes et les remarques du cours (pas d'exemples de calcul). */
@@ -6385,7 +7062,8 @@ const SCREENS={
     ['3e/auto/conv-volume','33. Conversions de volumes','km\u00b3, hm\u00b3, dam\u00b3, m\u00b3, dm\u00b3, cm\u00b3, mm\u00b3 et litres'],
     ['3e/auto/conv-duree','* Dur\u00e9es','Heures, minutes, secondes'],
     ['3e/auto/lit-fact','** Factorisation','Mettre le facteur commun en \u00e9vidence'],
-    ['3e/auto/tableur','*** Tableur','Écrire une formule avec les quatre opérations']]},
+    ['3e/auto/tableur','*** Tableur','Écrire une formule avec les quatre opérations'],
+    ['3e/auto/scratch','**** Scratch','Reconnaître la figure tracée par un programme']]},
   '6e/auto':{title:'Automatismes 6e',sub:'Choisis un th\u00e8me',items:[
     ['6e/auto/tables','1. Tables de multiplication','Les tables de 0 \u00e0 12'],
     ['6e/auto/durees','2. Unit\u00e9s de dur\u00e9es','Secondes, minutes, heures, jours\u2026'],
@@ -6394,7 +7072,8 @@ const SCREENS={
     ['6e/auto/multiples','5. Multiples et diviseurs','Multiple, diviseur, multiples et diviseurs communs'],
     ['6e/auto/hands','6. Placer les aiguilles','Placer les aiguilles pour afficher l’heure demandée'],
     ['6e/auto/mult10','7. Multiplications par 10, 100 et 1 000','Décaler les chiffres de 1, 2 ou 3 rangs : × 10, × 100, × 1 000'],
-    ['6e/auto/fracheure','8. Fractions d’heure','Quart d’heure, demi-heure, trois quarts d’heure et minutes']]}
+    ['6e/auto/fracheure','8. Fractions d’heure','Quart d’heure, demi-heure, trois quarts d’heure et minutes'],
+    ['6e/auto/div10','9. Divisions par 10, 100 et 1 000','Décaler les chiffres de 1, 2 ou 3 rangs : ÷ 10, ÷ 100, ÷ 1 000']]}
 };
 /* Questions de cours 6e : toute la structure est prête (domaines → chapitres → thèmes).
    Un chapitre sans questions s'affiche « Bientôt disponible » ; pour en ouvrir un : l'ajouter dans CQ6_DONE (thèmes),
@@ -6408,6 +7087,8 @@ CQ6_DONE.ogdp1=[['I – Tableau simple','Organiser des données dans un tableau,
 CQ6_DESC.ogdp1='Tableaux, diagrammes en barres et circulaires, graphiques cartésiens';
 CQ6_DONE.eg6=[['I – Médiatrice','Définition, propriété des points de la médiatrice et tracé'],['II – Bissectrice','Définition, mesure des angles et tracé']];
 CQ6_DESC.eg6='Médiatrice d’un segment et bissectrice d’un angle';
+CQ6_DONE.ncrp1=[['I – Tableau de numération','Chiffres, rangs, classes et groupes de trois'],['II – « Chiffre des » et « nombre de »','Chiffre des dizaines et nombre de dizaines'],['III – Nombres décimaux','Partie entière, partie décimale et 0 inutiles'],['IV – Différentes écritures','Fraction décimale, nombre mixte et décomposition'],['V – Pourcentages','Définition, calcul et pourcentages fréquents']];
+CQ6_DESC.ncrp1='Tableau de numération, chiffre des et nombre de, partie décimale, fractions décimales, pourcentages';
 (function(){
   const DOM=[['eg'],['ncrp'],['ogdp'],['gm'],['p']];
   SCREENS['6e/qcours']={title:'Questions de cours 6e',sub:'Choisis un thème',items:DOM.map(([k])=>['6e/qcours/'+k,THEMES6E[k].title])};
@@ -6441,6 +7122,7 @@ function go(s){
     '3e/auto/sci':{theme:'sci',title:'\u00c9criture scientifique',sub:'Automatismes 3e'},
     '3e/auto/solides':{theme:'sol',title:'Reconnaître un solide',sub:'Automatismes 3e'},
     '5e/auto/prio':{theme:'prio',title:'Priorités opératoires',sub:'Automatismes 5e'},
+    '3e/auto/scratch':{theme:'scr',title:'Scratch : reconnaître une figure',sub:'Automatismes 3e'},
     '3e/auto/tables':{theme:'tables',title:'Tables de multiplication',sub:'Automatismes 3e'},
     '3e/auto/frac':{theme:'frac',title:'Fractions irr\u00e9ductibles',sub:'Automatismes 3e'},
     '3e/auto/opfrac':{theme:'opf',title:'Additions et soustractions de fractions',sub:'Automatismes 3e'},
@@ -6478,12 +7160,18 @@ function go(s){
     '6e/auto/clock':{theme:'clock',title:'Lecture d\u2019heure',sub:'Automatismes 6e'},
     '6e/auto/multiples':{theme:'mld',title:'Multiples et diviseurs',sub:'Automatismes 6e'},
     '6e/auto/mult10':{theme:'mult10',title:'Multiplications par 10, 100 et 1 000',sub:'Automatismes 6e'},
+    '6e/auto/div10':{theme:'div10',title:'Divisions par 10, 100 et 1 000',sub:'Automatismes 6e'},
     '6e/auto/fracheure':{theme:'fh',title:'Fractions d’heure',sub:'Automatismes 6e'},
     '6e/qcours/eg1/1':{theme:'cq',cat:'6eg1-1',title:'I \u2013 Vocabulaire',sub:'EG 1 \u2013 Questions de cours'},
     '6e/qcours/eg1/2':{theme:'cq',cat:'6eg1-2',title:'II \u2013 Position de deux droites',sub:'EG 1 \u2013 Questions de cours'},
     '6e/qcours/eg2/1':{theme:'cq',cat:'6eg2-1',title:'I \u2013 Vocabulaire',sub:'EG 2 \u2013 Questions de cours'},
     '6e/qcours/eg6/1':{theme:'cq',cat:'6eg6-1',title:'I – Médiatrice',sub:'EG 6 – Questions de cours'},
     '6e/qcours/eg6/2':{theme:'cq',cat:'6eg6-2',title:'II – Bissectrice',sub:'EG 6 – Questions de cours'},
+    '6e/qcours/ncrp1/1':{theme:'cq',cat:'6ncrp1-1',title:'I – Tableau de numération',sub:'NCRP 1 – Questions de cours'},
+    '6e/qcours/ncrp1/2':{theme:'cq',cat:'6ncrp1-2',title:'II – « Chiffre des » et « nombre de »',sub:'NCRP 1 – Questions de cours'},
+    '6e/qcours/ncrp1/3':{theme:'cq',cat:'6ncrp1-3',title:'III – Nombres décimaux',sub:'NCRP 1 – Questions de cours'},
+    '6e/qcours/ncrp1/4':{theme:'cq',cat:'6ncrp1-4',title:'IV – Différentes écritures',sub:'NCRP 1 – Questions de cours'},
+    '6e/qcours/ncrp1/5':{theme:'cq',cat:'6ncrp1-5',title:'V – Pourcentages',sub:'NCRP 1 – Questions de cours'},
     '6e/qcours/ncrp4/1':{theme:'cq',cat:'6ncrp4-1',title:'I \u2013 Additions et soustractions',sub:'NCRP 4 \u2013 Questions de cours'},
     '6e/qcours/ncrp4/2':{theme:'cq',cat:'6ncrp4-2',title:'II \u2013 Multiplications',sub:'NCRP 4 \u2013 Questions de cours'},
     '6e/qcours/ncrp4/3':{theme:'cq',cat:'6ncrp4-3',title:'III \u2013 Multiplications par 0,1 ; 0,01…',sub:'NCRP 4 \u2013 Questions de cours'},
@@ -6582,7 +7270,7 @@ go('home');
     '3e/auto/conv-volume':{theme:'conversions',cat:'volume'},'3e/auto/conv-duree':{theme:'conversions',cat:'duree'},
     '3e/auto/lit-fact':{theme:'lit',cat:'fact'},'3e/auto/tableur':{theme:'tab'},
     '6e/auto/tables':{theme:'tables'},'6e/auto/durees':{theme:'durees'},'6e/auto/comp':{theme:'comp'},'6e/auto/clock':{theme:'clock'},
-    '6e/auto/multiples':{theme:'mld'},'6e/auto/hands':{theme:'hands'},'6e/auto/mult10':{theme:'mult10'},'6e/auto/fracheure':{theme:'fh'},'5e/auto/prio':{theme:'prio'}
+    '6e/auto/multiples':{theme:'mld'},'6e/auto/hands':{theme:'hands'},'6e/auto/mult10':{theme:'mult10'},'6e/auto/div10':{theme:'div10'},'6e/auto/fracheure':{theme:'fh'},'5e/auto/prio':{theme:'prio'},'3e/auto/scratch':{theme:'scr'}
   };
   ['3e','5e','6e'].forEach(lv=>SCREENS[lv+'/auto'].items.unshift([lv+'/auto/entrainement','Entraînement personnalisé','Choisis les automatismes sur lesquels travailler']));
   let training=null;
@@ -6727,7 +7415,7 @@ function cqRevisionSetup(lv,CH,SK){
   }
 }
 cqRevisionSetup('3e',[['eg1','EG 1 – Propriétés géométriques'],['eg2','EG 2 – Solides'],['nc1','NC 1 – Fractions'],['nc2','NC 2 – Puissances'],['nc3','NC 3 – Calcul littéral'],['nc4','NC 4 – Arithmétique']],'');
-cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 – Cercle et disque'],['eg6','EG 6 – Droites remarquables'],['ncrp4','NCRP 4 – Additions, soustractions et multiplications'],['ncrp5','NCRP 5 – Divisions'],['ogdp1','OGDP 1 – Lecture de données']],'-6e');
+cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 – Cercle et disque'],['eg6','EG 6 – Droites remarquables'],['ncrp1','NCRP 1 – Nombres décimaux'],['ncrp4','NCRP 4 – Additions, soustractions et multiplications'],['ncrp5','NCRP 5 – Divisions'],['ogdp1','OGDP 1 – Lecture de données']],'-6e');
 </script>
 <script>
 /* Menu latéral : accès direct à chaque page du site. */
