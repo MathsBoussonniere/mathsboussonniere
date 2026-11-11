@@ -1459,7 +1459,7 @@ function renderDureeTrou(){
       if(res.exact){ fb.textContent='Exact, bravo !'; }
       else{ fb.innerHTML=`Bravo, c'est juste ! <span class="expl">Attention à l'orthographe : on écrit « ${res.canon} ».</span>`; }
       fb.className='feedback ok';
-      autoNext(res.exact?450:2800);
+      if(res.exact) autoNext(450); else resolve();
     }else{
       rowEl.classList.add('anim-bad');
       failStreak();
@@ -1569,7 +1569,7 @@ function renderFhTrou(){
       bumpStreak(getStreak());
       if(note) fb.innerHTML=note; else fb.textContent='Exact, bravo !';
       fb.className='feedback ok';
-      autoNext(note?2800:450);
+      if(note) resolve(); else autoNext(450);
     }else{
       rowEl.classList.add('anim-bad');
       failStreak();
@@ -1588,7 +1588,7 @@ const SOL=[
   {i:10,name:'pavé droit'},{i:11,name:'prisme droit',base:'octogone'},{i:12,name:'cylindre'},{i:13,name:'pavé droit'},{i:14,name:'cône'}
 ];
 const SOL_NAMES=['prisme droit','boule','pyramide','cylindre','cube','cône','pavé droit'];
-const SOL_ACC={'prisme droit':['prisme droit','prisme'],'pavé droit':['pavé droit','parallélépipède rectangle']};
+const SOL_ACC={'prisme droit':['prisme droit'],'pavé droit':['pavé droit','parallélépipède rectangle']};
 const SOL_DET={'prisme droit':'un','boule':'une','pyramide':'une','cylindre':'un','cube':'un','cône':'un','pavé droit':'un'};
 const SOL_TXT={
   'prisme droit':'il a deux bases polygonales identiques et parallèles, et des faces latérales rectangles.',
@@ -1648,6 +1648,7 @@ function renderSolJeu(){
   renderMatch(genSolRound(), q=>solImg(q.s,'sol-mini'), q=>solCap(q.s.name), explainSol, q=>solImg(q.s,'sol-cell'));
 }
 const SOL_BASE_W={triangle:['triangle','triangulaire'],carre:['carre','carree'],rectangle:['rectangle','rectangulaire'],pentagone:['pentagone','pentagonale','pentagonal'],hexagone:['hexagone','hexagonale','hexagonal'],octogone:['octogone','octogonale','octogonal']};
+const SOL_BASE_ADJ={triangle:'triangulaire',carre:'carrée',rectangle:'rectangulaire',pentagone:'pentagonale',hexagone:'hexagonale',octogone:'octogonale'};
 const SOL_BASE_LBL={triangle:'un triangle',carre:'un carré',rectangle:'un rectangle',pentagone:'un pentagone',hexagone:'un hexagone',octogone:'un octogone'};
 function solBaseKey(w){
   w=w.replace(/s$/,'');
@@ -1655,7 +1656,7 @@ function solBaseKey(w){
   return null;
 }
 /* « pyramide à base carrée », « prisme droit hexagonal »… : renvoie null si l'élève ne précise pas de base */
-function solParse(val,acc){
+function solParse(val,acc,part){
   const t=String(val).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]+/g,' ').trim();
   const words=t.split(' ').filter(Boolean);
   let main=null, rest=null;
@@ -1664,7 +1665,15 @@ function solParse(val,acc){
   else if(words.length>1&&solBaseKey(words[words.length-1])){ main=words.slice(0,-1); rest=[words[words.length-1]]; }
   if(!main||!main.length) return null;
   const mres=wordCheck(main.join(' '),acc,1);
-  return {mainOK:mres.ok, key:rest.map(solBaseKey).find(k=>k)||null};
+  return {mainOK:mres.ok, mainPart:!mres.ok&&!!part&&wordCheck(main.join(' '),part,1).ok, key:rest.map(solBaseKey).find(k=>k)||null};
+}
+const SOL_REV={'cône':'il est engendré par un triangle rectangle qui tourne autour d’un côté de l’angle droit.','cylindre':'il est engendré par un rectangle qui tourne autour d’un de ses côtés.'};
+function solRevSplit(val){
+  const ow=String(val).trim().split(/\s+/), nw=ow.map(normW);
+  const i=nw.findIndex(x=>x&&levDist(x,'revolution')<=2);
+  if(i<1) return {main:val,rev:false};
+  let end=i; if(end>1&&['de','du','d'].includes(nw[end-1])) end--;
+  return {main:ow.slice(0,end).join(' '),rev:true};
 }
 function renderSolTrou(){
   const q=withHistory(genSol); state.current=q;
@@ -1678,12 +1687,14 @@ function renderSolTrou(){
   const rowEl=content.querySelector('.fill-row'), name=q.s.name, acc=SOL_ACC[name]||[name];
   document.getElementById('check').onclick=()=>{
     const fb=document.getElementById('fb'), val=document.getElementById('ans').value, n=normW(val);
-    let ok=false, note='', cubeCase=false, baseMsg='';
-    const pb=q.s.base?solParse(val,acc):null;
+    let ok=false, note='', cubeCase=false, baseMsg='', prismCase=false, rev=false, inp=val;
+    if(SOL_REV[name]){ const r=solRevSplit(val); inp=r.main; rev=r.rev; }
+    const pb=q.s.base?solParse(val,acc,name==='prisme droit'?['prisme']:null):null;
     if(pb){
       const okBase=pb.key&&(pb.key===q.s.base||(q.s.base==='carre'&&pb.key==='rectangle'));
       ok=pb.mainOK&&!!okBase;
       if(ok) note=`Bravo ! Et tu as bien précisé la base : ${SOL_BASE_LBL[q.s.base]}.`;
+      else if(pb.mainPart) prismCase=true;
       else if(pb.mainOK) baseMsg=pb.key
         ?`C’est bien ${SOL_DET[name]} ${name}, mais sa base n’est pas ${SOL_BASE_LBL[pb.key]} : c’est ${SOL_BASE_LBL[q.s.base]}.`
         :`C’est bien ${SOL_DET[name]} ${name}, mais je ne reconnais pas la base indiquée : c’est ${SOL_BASE_LBL[q.s.base]}.`;
@@ -1691,13 +1702,16 @@ function renderSolTrou(){
     else if((name==='cube' && ['pavedroit','pave','parallelepipederectangle','prismedroit','prisme'].includes(n)) || (name==='pavé droit' && ['prismedroit','prisme'].includes(n))){ cubeCase=true; }
     else{
       const isAlt=acc.slice(1).some(a=>normW(a)===n||normW(a)+'s'===n);
-      const res=wordCheck(val,acc,1);
+      const res=wordCheck(inp,acc,1);
       ok=res.ok;
+      if(!ok&&name==='prisme droit'&&wordCheck(val,['prisme'],1).ok) prismCase=true;
       if(ok){
-        if(isAlt) note=name==='prisme droit'
-          ?`Bravo ! Ici on précise « prisme droit » : les faces latérales sont des rectangles.`
-          :`Bravo ! « Parallélépipède rectangle » est le nom savant du pavé droit.`;
+        if(isAlt) note=`Bravo ! « Parallélépipède rectangle » est le nom savant du pavé droit.`;
         else if(!res.exact) note=`Bravo, c'est juste ! Attention à l'orthographe : on écrit « ${name} ».`;
+        if(name==='pyramide'&&q.s.base) note=(note?note+' ':'Bravo ! ')+`Remarque : ici la base est ${SOL_BASE_LBL[q.s.base]}, on peut préciser « pyramide à base ${SOL_BASE_ADJ[q.s.base]} ».`;
+        if(SOL_REV[name]) note=(note?note+' ':'Bravo ! ')+(rev
+          ?`Tu as raison de préciser « de révolution » : c’est un solide de révolution, ${SOL_REV[name]}`
+          :`Remarque : on dit aussi « ${name} de révolution », car c’est un solide de révolution : ${SOL_REV[name]}`);
       }
     }
     document.getElementById('check').disabled=true;
@@ -1706,12 +1720,12 @@ function renderSolTrou(){
       bumpStreak(getStreak());
       if(note) fb.innerHTML=note; else fb.textContent='Exact, bravo !';
       fb.className='feedback ok';
-      autoNext(note?2800:450);
+      if(note) resolve(); else autoNext(450);
     }else{
       rowEl.classList.add('anim-bad');
       failStreak();
       document.getElementById('check').style.display='none';
-      fb.innerHTML=(baseMsg?`Pas tout à fait. ${baseMsg}`:cubeCase?(name==='cube'?`Pas tout à fait. Un cube est bien un pavé droit (et un prisme droit) particulier, mais on attend ici le nom le plus précis : « cube ».`:`Pas tout à fait. Un pavé droit est bien un prisme droit particulier, mais on attend ici le nom le plus précis : « pavé droit ».`):`Ce n'est pas ça. Réponse : ${name}.`)+`<span class="expl">${explainSol(q)}</span>`;
+      fb.innerHTML=(baseMsg?`Pas tout à fait. ${baseMsg}`:cubeCase?(name==='cube'?`Pas tout à fait. Un cube est bien un pavé droit (et un prisme droit) particulier, mais on attend ici le nom le plus précis : « cube ».`:`Pas tout à fait. Un pavé droit est bien un prisme droit particulier, mais on attend ici le nom le plus précis : « pavé droit ».`):prismCase?`Pas tout à fait. « Prisme » ne suffit pas : ici les faces latérales sont des rectangles, il faut écrire « prisme droit ».`:`Ce n'est pas ça. Réponse : ${name}.`)+`<span class="expl">${explainSol(q)}</span>`;
       fb.className='feedback ko';
     }
   };
@@ -2021,7 +2035,7 @@ function scrFigProg(q,o){
   const kids=[{col:'mo',segs:['avancer de',{n:q.len}]}];
   if(q.wait&&!o.compact) kids.push({col:'ct',segs:['attendre',{n:1},'secondes']});
   kids.push({col:'mo',segs:['tourner',{turn:q.cw?'cw':'ccw'},'de',aSeg,o.compact?'°':'degrés']});
-  return [...((o.compact||o.loopOnly)?[]:SC_TOP),{c:true,segs:['répéter',nSeg,'fois'],kids}];
+  return [...SC_TOP,{c:true,segs:['répéter',nSeg,'fois'],kids}];
 }
 /* programme d'une frise (types F et G) : boucle extérieure = une figure (ou deux) puis un déplacement lutin-stylo levé */
 function frSpec(q,o){
@@ -2031,7 +2045,7 @@ function frSpec(q,o){
   const shape=sh=>({c:true,segs:['répéter',{n:sh==='sq'?4:3},'fois'],kids:[{col:'mo',segs:['avancer de',num(s,'side')]},turn(sh==='sq'?90:120)]});
   const kids=[];
   fr.shapes.forEach(sh=>kids.push(shape(sh),{col:'pen',segs:['relever le stylo']},{col:'mo',segs:['avancer de',num(frMove(q),'move')]},{col:'pen',segs:['stylo en position d’écriture']}));
-  return [...((o.compact||o.loopOnly)?[]:SC_TOP),{c:true,segs:['répéter',o.blank==='rep'?{blank:true}:{n:q.N},'fois'],kids}];
+  return [...SC_TOP,{c:true,segs:['répéter',o.blank==='rep'?{blank:true}:{n:q.N},'fois'],kids}];
 }
 function scrProg(q,o){
   o=o||{};
@@ -2212,7 +2226,7 @@ function renderScrTrou(){
       bumpStreak(getStreak());
       if(msg) fb.innerHTML=msg; else fb.textContent='Exact, bravo !';
       fb.className='feedback ok';
-      autoNext(msg?2800:450);
+      if(msg) resolve(); else autoNext(450);
     }else{
       rowEl.classList.add('anim-bad');
       failStreak();
@@ -4220,7 +4234,7 @@ function renderTabTrou(){
       if(res.fn){ fb.innerHTML=`Bravo, c'est juste ! <span class="expl">Ici, on attendait ${q.formula} (avec les opérations).</span>`; }
       else fb.textContent='Exact, bravo !';
       fb.className='feedback ok';
-      autoNext(res.fn?2800:450);
+      if(res.fn) resolve(); else autoNext(450);
     }else{
       row.classList.add('anim-bad');
       failStreak();
@@ -6926,7 +6940,7 @@ Object.assign(CQ_GLAB,{'nc4-mul':'Multiple d’un nombre','nc4-div':'Diviseur et
     cqW('Seuls les nombres pairs peuvent s’écrire comme produit de facteurs premiers.','15 est impair et s’écrit comme produit de facteurs premiers : 15 = 3 × 5.'),
     cqW('Seuls les nombres qui ne sont pas premiers peuvent s’écrire comme produit de facteurs premiers.','un nombre premier s’écrit lui-même comme produit d’un seul facteur premier : 7 = 7.'),
     cqW('Tous les nombres entiers peuvent s’écrire comme produit de facteurs premiers.','0 et 1 ne s’écrivent pas ainsi : la propriété vaut pour les nombres entiers supérieurs ou égaux à 2.')]);
-  cqN(4,'nc4-meth-a','Pour décomposer un nombre en produit de facteurs premiers, on le divise par…','son plus petit diviseur premier, puis on recommence avec le quotient',[
+  cqN(4,'nc4-meth-a','Pour décomposer un nombre en produit de facteurs premiers, on le divise par…','un diviseur premier, puis on recommence avec le quotient',[
     cqW('un nombre quelconque, puis on recommence avec le quotient','les diviseurs utilisés doivent être des nombres premiers : 4, par exemple, n’est pas premier.'),
     cqW('1, puis on recommence avec le quotient','diviser par 1 ne change pas le nombre : on n’avance pas.'),
     cqW('lui-même, puis on recommence avec le quotient','on obtiendrait 1 tout de suite, sans aucune décomposition.')]);
@@ -7035,7 +7049,7 @@ const SCREENS={
   '5e':{title:'Niveau 5e',sub:'Que veux-tu faire ?',items:[['5e/auto','Automatismes','S’entraîner']]},
   '5e/auto':{title:'Automatismes 5e',sub:'Choisis un thème',items:[
     ['5e/auto/prio','1. Priorités opératoires','Calculer en respectant les priorités : parenthèses, × et ÷, puis + et −']]},
-  '3e':{title:'Niveau 3e',sub:'Que veux-tu faire ?',items:[...LEVEL_ITEMS('3e'),['3e/qcours','Questions de cours','Tester ses connaissances du cours']]},
+  '3e':{title:'Niveau 3e',sub:'Que veux-tu faire ?',items:[...LEVEL_ITEMS('3e'),['3e/qcours','Questions de cours','Tester ses connaissances du cours'],['3e/info','Informatique','Tableur et Scratch']]},
   '3e/qcours':{title:'Questions de cours 3e',sub:'Choisis un thème',items:[['3e/qcours/eg','Espace et Géométrie'],['3e/qcours/nc','Nombres et Calcul']]},
   '3e/qcours/eg':{title:'Espace et Géométrie',sub:'Questions de cours 3e',items:[['3e/qcours/eg1','EG 1 \u2013 Propriétés géométriques','Droites, angles du triangle, angles et parallèles'],['3e/qcours/eg2','EG 2 \u2013 Solides','Définitions, représentations et volumes']]},
   '3e/qcours/nc':{title:'Nombres et Calcul',sub:'Questions de cours 3e',items:[['3e/qcours/nc1','NC 1 \u2013 Fractions','Définitions, fractions égales, comparaisons et opérations'],['3e/qcours/nc2','NC 2 \u2013 Puissances','Puissances positives et négatives, règles de calcul, écriture scientifique'],['3e/qcours/nc3','NC 3 \u2013 Calcul littéral','Développer, factoriser et identités remarquables'],['3e/qcours/nc4','NC 4 \u2013 Arithmétique','Multiples, divisibilité, nombres premiers, décomposition et fractions irréductibles']]},
@@ -7061,9 +7075,10 @@ const SCREENS={
     ['3e/auto/conv-aire','32. Conversions d\u2019aires','km\u00b2, hm\u00b2, dam\u00b2, m\u00b2, dm\u00b2, cm\u00b2, mm\u00b2'],
     ['3e/auto/conv-volume','33. Conversions de volumes','km\u00b3, hm\u00b3, dam\u00b3, m\u00b3, dm\u00b3, cm\u00b3, mm\u00b3 et litres'],
     ['3e/auto/conv-duree','* Dur\u00e9es','Heures, minutes, secondes'],
-    ['3e/auto/lit-fact','** Factorisation','Mettre le facteur commun en \u00e9vidence'],
-    ['3e/auto/tableur','*** Tableur','Écrire une formule avec les quatre opérations'],
-    ['3e/auto/scratch','**** Scratch','Reconnaître la figure tracée par un programme']]},
+    ['3e/auto/lit-fact','** Factorisation','Mettre le facteur commun en \u00e9vidence']]},
+  '3e/info':{title:'Informatique 3e',sub:'Choisis un thème',items:[
+    ['3e/info/tableur','1. Tableur','Écrire une formule avec les quatre opérations'],
+    ['3e/info/scratch','2. Scratch (Géométrie)','Reconnaître la figure tracée par un programme']]},
   '6e/auto':{title:'Automatismes 6e',sub:'Choisis un th\u00e8me',items:[
     ['6e/auto/tables','1. Tables de multiplication','Les tables de 0 \u00e0 12'],
     ['6e/auto/durees','2. Unit\u00e9s de dur\u00e9es','Secondes, minutes, heures, jours\u2026'],
@@ -7118,11 +7133,11 @@ function go(s){
     '3e/auto/lit-nombre':{theme:'lit',cat:'nombre',title:'Simple distributivit\u00e9',sub:'Automatismes 3e'},
     '3e/auto/lit-double':{theme:'lit',cat:'double',title:'Double distributivit\u00e9',sub:'Automatismes 3e'},
     '3e/auto/lit-fact':{theme:'lit',cat:'fact',title:'Factorisation',sub:'Automatismes 3e'},
-    '3e/auto/tableur':{theme:'tab',title:'Tableur',sub:'Automatismes 3e'},
+    '3e/info/tableur':{theme:'tab',title:'Tableur',sub:'Informatique 3e'},
     '3e/auto/sci':{theme:'sci',title:'\u00c9criture scientifique',sub:'Automatismes 3e'},
     '3e/auto/solides':{theme:'sol',title:'Reconnaître un solide',sub:'Automatismes 3e'},
     '5e/auto/prio':{theme:'prio',title:'Priorités opératoires',sub:'Automatismes 5e'},
-    '3e/auto/scratch':{theme:'scr',title:'Scratch : reconnaître une figure',sub:'Automatismes 3e'},
+    '3e/info/scratch':{theme:'scr',title:'Scratch (Géométrie)',sub:'Informatique 3e'},
     '3e/auto/tables':{theme:'tables',title:'Tables de multiplication',sub:'Automatismes 3e'},
     '3e/auto/frac':{theme:'frac',title:'Fractions irr\u00e9ductibles',sub:'Automatismes 3e'},
     '3e/auto/opfrac':{theme:'opf',title:'Additions et soustractions de fractions',sub:'Automatismes 3e'},
@@ -7268,9 +7283,9 @@ go('home');
     '3e/auto/lit-nombre':{theme:'lit',cat:'nombre'},'3e/auto/lit-double':{theme:'lit',cat:'double'},
     '3e/auto/conv-longueur':{theme:'conversions',cat:'longueur'},'3e/auto/conv-aire':{theme:'conversions',cat:'aire'},
     '3e/auto/conv-volume':{theme:'conversions',cat:'volume'},'3e/auto/conv-duree':{theme:'conversions',cat:'duree'},
-    '3e/auto/lit-fact':{theme:'lit',cat:'fact'},'3e/auto/tableur':{theme:'tab'},
+    '3e/auto/lit-fact':{theme:'lit',cat:'fact'},
     '6e/auto/tables':{theme:'tables'},'6e/auto/durees':{theme:'durees'},'6e/auto/comp':{theme:'comp'},'6e/auto/clock':{theme:'clock'},
-    '6e/auto/multiples':{theme:'mld'},'6e/auto/hands':{theme:'hands'},'6e/auto/mult10':{theme:'mult10'},'6e/auto/div10':{theme:'div10'},'6e/auto/fracheure':{theme:'fh'},'5e/auto/prio':{theme:'prio'},'3e/auto/scratch':{theme:'scr'}
+    '6e/auto/multiples':{theme:'mld'},'6e/auto/hands':{theme:'hands'},'6e/auto/mult10':{theme:'mult10'},'6e/auto/div10':{theme:'div10'},'6e/auto/fracheure':{theme:'fh'},'5e/auto/prio':{theme:'prio'}
   };
   ['3e','5e','6e'].forEach(lv=>SCREENS[lv+'/auto'].items.unshift([lv+'/auto/entrainement','Entraînement personnalisé','Choisis les automatismes sur lesquels travailler']));
   let training=null;
@@ -7442,7 +7457,8 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
       h+=det('Niveau '+lv,
         item(lv,'Accueil '+lv)+
         det('Automatismes',item(lv+'/auto','Liste des automatismes')+auto,'nv-sub')+
-        (COURS[lv]?det('Cours',cours,'nv-sub'):'')+qc,'nv-lv');
+        (COURS[lv]?det('Cours',cours,'nv-sub'):'')+qc+
+        (SCREENS[lv+'/info']?det('Informatique',item(lv+'/info','Liste des thèmes')+SCREENS[lv+'/info'].items.map(i=>item(i[0],i[1])).join(''),'nv-sub'):''),'nv-lv');
     });
     body.innerHTML=h;
     body.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{ close(); go(b.dataset.go); });
