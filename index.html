@@ -522,6 +522,27 @@ h1,.subtitle{padding:0 46px;}
 .ss-pause{width:34px;height:34px;display:flex;align-items:center;justify-content:center;padding:0;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);cursor:pointer;}
 .ss-pause:hover{border-color:var(--accent);color:var(--accent);}
 .ss-pause[hidden]{display:none;}
+
+/* Séance en classe : plein écran pour le vidéoprojecteur */
+.ss-exit{display:none;}
+body.ss-full{overflow:hidden;}
+body.ss-full .burger,body.ss-full #back,body.ss-full h1,body.ss-full .subtitle,body.ss-full #litNote{display:none !important;}
+body.ss-full .wrap{max-width:none;padding:0;}
+#exo.session{position:fixed;inset:0;z-index:60;background:var(--bg);margin:0;}
+#exo.session .tabs{display:none !important;}
+#exo.session .card{position:absolute;inset:0;border:none;border-radius:0;padding:64px 48px 24px;display:flex;flex-direction:column;overflow:hidden;}
+#exo.session .card::before{display:none;}
+#exo.session #ssBar{margin:0 0 16px;flex:none;}
+#exo.session .ss-num{font-size:clamp(1.1rem,2vw,1.9rem);}
+#exo.session .ss-time{font-size:clamp(2rem,4.5vw,4.5rem);}
+#exo.session .ss-track{height:14px;border-radius:7px;margin-top:12px;}
+#exo.session .ss-pause{width:52px;height:52px;border-radius:12px;}
+#exo.session .ss-pause svg{width:26px;height:26px;}
+#exo.session #content{flex:none;width:760px;max-width:none;margin:0 auto;transform-origin:50% 0;}
+#exo.session .card > #ssNav{position:absolute;left:0;right:0;bottom:26px;margin:0;}
+#exo.session #ssNext{font-size:clamp(1.1rem,2vw,1.8rem);padding:14px 44px;}
+#exo.session .ss-exit{display:flex;align-items:center;justify-content:center;position:absolute;top:12px;left:12px;z-index:70;width:42px;height:42px;padding:0;font-size:1.2rem;line-height:1;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);cursor:pointer;opacity:.4;transition:opacity .15s;}
+#exo.session .ss-exit:hover,#exo.session .ss-exit:focus-visible{opacity:1;}
 </style>
 <script>try{var __t=localStorage.getItem('mb-theme');if(['light','dark','pink','jade','rainbow'].indexOf(__t)>-1)document.documentElement.setAttribute('data-theme',__t);}catch(e){}</script>
 <script>try{var __r=document.documentElement;if(localStorage.getItem('mb-show-score')==='0')__r.setAttribute('data-hide-score','');if(localStorage.getItem('mb-show-chrono')==='0')__r.setAttribute('data-hide-chrono','');}catch(e){}</script>
@@ -689,8 +710,8 @@ function revealCurrent(){
   }
   if(state.theme==='sol'){
     if(state.mode==='qcm') content.querySelectorAll('.opt-btn').forEach(b=>{ b.onclick=null; if(b.dataset.k===q.s.name) b.classList.add('correct'); });
-    else{ const el=document.getElementById('ans'); if(el){ el.value=q.s.name; el.disabled=true; } const c=document.getElementById('check'); if(c){ c.disabled=true; c.style.display='none'; } }
-    fb.innerHTML=`Question passée.<br>Réponse : ${q.s.name}.<span class="expl">${explainSol(q)}</span>`;
+    else{ const el=document.getElementById('ans'); if(el){ el.value=solFull(q.s); el.disabled=true; } const c=document.getElementById('check'); if(c){ c.disabled=true; c.style.display='none'; } }
+    fb.innerHTML=`Question passée.<br>Réponse : ${solFull(q.s)}.<span class="expl">${explainSol(q)}</span>`;
     return;
   }
   if(state.theme==='fh'){
@@ -1655,11 +1676,19 @@ const SOL_TXT={
 };
 function solImg(s,cls){ return `<img class="${cls}" src="data:image/svg+xml;base64,${SOL_IMG[s.i]}" alt="Solide à nommer" draggable="false">`; }
 function solCap(n){ return n.charAt(0).toUpperCase()+n.slice(1); }
+/* noms complets affichés : « cylindre de révolution », « cône de révolution » (les noms courts restent acceptés en réponse) */
+const SOL_LONG={'cylindre':'cylindre de révolution','cône':'cône de révolution'};
+const solNameLbl=n=>SOL_LONG[n]||n;
+/* nom précis d'un solide, avec sa base pour une pyramide : « pyramide à base carrée » */
+function solFull(s){
+  if(s.name==='pyramide'&&s.base) return 'pyramide à base '+SOL_BASE_ADJ[s.base];
+  return solNameLbl(s.name);
+}
 function mkSol(s){ return {s,pk:`sol|${s.i}`}; }
 function genSol(){ return mkSol(pick(SOL)); }
 function explainSol(q){
   const n=q.s.name;
-  return `C’est ${SOL_DET[n]} <b>${n}</b> : ${SOL_TXT[n]}`;
+  return `C’est ${SOL_DET[n]} <b>${solFull(q.s)}</b> : ${SOL_TXT[n]}`;
 }
 function solOptions(q){
   const n=q.s.name;
@@ -1673,7 +1702,7 @@ function renderSolQCM(){
   content.innerHTML=`
     <div class="question">Nomme ce solide.</div>
     <div class="sol-fig">${solImg(q.s,'sol-big')}</div>
-    <div class="options">${opts.map(o=>`<button class="opt-btn" data-k="${o}">${solCap(o)}</button>`).join('')}</div>
+    <div class="options">${opts.map(o=>`<button class="opt-btn" data-k="${o}">${solCap(solNameLbl(o))}</button>`).join('')}</div>
     <div class="feedback" id="fb"></div>`;
   content.querySelectorAll('.opt-btn').forEach(btn=>{
     btn.onclick=()=>{
@@ -1699,7 +1728,7 @@ function genSolRound(){
   return shuffle([...SOL_NAMES]).slice(0,4).map(n=>mkSol(pick(SOL.filter(s=>s.name===n))));
 }
 function renderSolJeu(){
-  renderMatch(genSolRound(), q=>solImg(q.s,'sol-mini'), q=>solCap(q.s.name), explainSol, q=>solImg(q.s,'sol-cell'));
+  renderMatch(genSolRound(), q=>solImg(q.s,'sol-mini'), q=>solCap(solNameLbl(q.s.name)), explainSol, q=>solImg(q.s,'sol-cell'));
 }
 const SOL_BASE_W={triangle:['triangle','triangulaire'],carre:['carre','carree'],rectangle:['rectangle','rectangulaire'],pentagone:['pentagone','pentagonale','pentagonal'],hexagone:['hexagone','hexagonale','hexagonal'],octogone:['octogone','octogonale','octogonal']};
 const SOL_BASE_ADJ={triangle:'triangulaire',carre:'carrée',rectangle:'rectangulaire',pentagone:'pentagonale',hexagone:'hexagonale',octogone:'octogonale'};
@@ -1762,10 +1791,10 @@ function renderSolTrou(){
       if(ok){
         if(isAlt) note=`Bravo ! « Parallélépipède rectangle » est le nom savant du pavé droit.`;
         else if(!res.exact) note=`Bravo, c'est juste ! Attention à l'orthographe : on écrit « ${name} ».`;
-        if(name==='pyramide'&&q.s.base) note=(note?note+' ':'Bravo ! ')+`Remarque : ici la base est ${SOL_BASE_LBL[q.s.base]}, on peut préciser « pyramide à base ${SOL_BASE_ADJ[q.s.base]} ».`;
+        if(name==='pyramide'&&q.s.base) note=(note?note+' ':'Bravo ! ')+`Pour être précis, on dit « pyramide à base ${SOL_BASE_ADJ[q.s.base]} » : ici la base est ${SOL_BASE_LBL[q.s.base]}.`;
         if(SOL_REV[name]) note=(note?note+' ':'Bravo ! ')+(rev
           ?`Tu as raison de préciser « de révolution » : c’est un solide de révolution, ${SOL_REV[name]}`
-          :`Remarque : on dit aussi « ${name} de révolution », car c’est un solide de révolution : ${SOL_REV[name]}`);
+          :`Pour être précis, on dit « ${solNameLbl(name)} », car c’est un solide de révolution : ${SOL_REV[name]}`);
       }
     }
     document.getElementById('check').disabled=true;
@@ -1779,7 +1808,7 @@ function renderSolTrou(){
       rowEl.classList.add('anim-bad');
       failStreak();
       document.getElementById('check').style.display='none';
-      fb.innerHTML=(baseMsg?`Pas tout à fait. ${baseMsg}`:cubeCase?(name==='cube'?`Pas tout à fait. Un cube est bien un pavé droit (et un prisme droit) particulier, mais on attend ici le nom le plus précis : « cube ».`:`Pas tout à fait. Un pavé droit est bien un prisme droit particulier, mais on attend ici le nom le plus précis : « pavé droit ».`):prismCase?`Pas tout à fait. « Prisme » ne suffit pas : ici les faces latérales sont des rectangles, il faut écrire « prisme droit ».`:`Ce n'est pas ça. Réponse : ${name}.`)+`<span class="expl">${explainSol(q)}</span>`;
+      fb.innerHTML=(baseMsg?`Pas tout à fait. ${baseMsg}`:cubeCase?(name==='cube'?`Pas tout à fait. Un cube est bien un pavé droit (et un prisme droit) particulier, mais on attend ici le nom le plus précis : « cube ».`:`Pas tout à fait. Un pavé droit est bien un prisme droit particulier, mais on attend ici le nom le plus précis : « pavé droit ».`):prismCase?`Pas tout à fait. « Prisme » ne suffit pas : ici les faces latérales sont des rectangles, il faut écrire « prisme droit ».`:`Ce n'est pas ça. Réponse : ${solFull(q.s)}.`)+`<span class="expl">${explainSol(q)}</span>`;
       fb.className='feedback ko';
     }
   };
@@ -7595,6 +7624,49 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
   navBox.innerHTML='<button type="button" class="primary" id="ssNext">Suivant</button>';
   card.insertBefore(navBox,card.querySelector(':scope > .actions'));
 
+  /* ---------- plein écran : la question est agrandie pour remplir l'écran projeté ---------- */
+  const exitBtn=document.createElement('button'); exitBtn.type='button'; exitBtn.className='ss-exit'; exitBtn.id='ssExit';
+  exitBtn.setAttribute('aria-label','Quitter la séance'); exitBtn.title='Quitter la séance'; exitBtn.textContent='✕';
+  $('exo').appendChild(exitBtn);
+  exitBtn.onclick=()=>{ if(ss) go(ss.lv+'/auto/classe'); };
+  function enterFS(){
+    try{ const de=document.documentElement; if(!document.fullscreenElement&&de.requestFullscreen){ const r=de.requestFullscreen(); if(r&&r.catch) r.catch(()=>{}); } }catch(e){}
+  }
+  function leaveFS(){
+    try{ if(document.fullscreenElement&&document.exitFullscreen){ const r=document.exitFullscreen(); if(r&&r.catch) r.catch(()=>{}); } }catch(e){}
+  }
+  /* Teste plusieurs largeurs de mise en page et garde celle qui permet le plus grand agrandissement, puis centre le contenu. */
+  function fit(){
+    if(!ss) return;
+    const c=content, cr=card.getBoundingClientRect(), cs=getComputedStyle(card);
+    const padL=parseFloat(cs.paddingLeft)||0, padR=parseFloat(cs.paddingRight)||0;
+    const availW=card.clientWidth-padL-padR;
+    const top=$('ssBar').getBoundingClientRect().bottom-cr.top+16;
+    const bottom=$('ssNav').hidden?24:120;
+    const availH=Math.max(50,card.clientHeight-top-bottom);
+    c.style.transform='none';
+    let best=null;
+    [220,300,400,520,680,860,1080,1350].forEach(W=>{
+      c.style.width=W+'px';
+      const w=Math.max(c.scrollWidth,W), h=Math.max(1,c.offsetHeight);
+      const k=Math.min(availW/w,availH/h,6);
+      if(!best||k>best.k*1.02) best={k,W,h};
+    });
+    c.style.width=best.W+'px';
+    const ty=top+availH/2-best.k*best.h/2-c.offsetTop;
+    c.style.transform='translateY('+Math.max(0,ty)+'px) scale('+best.k+')';
+  }
+  const fitSoon=()=>{ requestAnimationFrame(()=>{ fit(); setTimeout(fit,200); }); };
+  window.addEventListener('resize',()=>{ if(ss) fit(); });
+  document.addEventListener('fullscreenchange',()=>{ if(ss) fitSoon(); });
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ if(ss) fit(); });
+  /* flèches / télécommande de présentation pendant la correction */
+  document.addEventListener('keydown',e=>{
+    if(!ss||!$('exo').classList.contains('ss-review')) return;
+    if((e.key==='ArrowRight'||e.key==='PageDown')&&ss.k<ss.n-1){ e.preventDefault(); ss.k++; showAnswer(); }
+    else if((e.key==='ArrowLeft'||e.key==='PageUp')&&ss.k>0){ e.preventDefault(); ss.k--; showAnswer(); }
+  });
+
   /* ---------- « Séance en classe » : écran de réglage ---------- */
   const CLASSE=lv=>[lv+'/auto/classe','Séance en classe','Projeter des questions à la classe, puis les corriger ensemble'];
   const clamp=(v,a,b)=>Math.min(b,Math.max(a,Math.round(v)));
@@ -7640,6 +7712,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
     clearInterval(ss.timer);
     state.resolved=true; state.mode=ss.prevMode;
     $('exo').classList.remove('session','ss-review'); $('ssBar').hidden=true; $('ssNav').hidden=true;
+    document.body.classList.remove('ss-full'); content.style.transform=''; content.style.width=''; leaveFS();
     content.innerHTML='';
     ss=null;
   }
@@ -7665,6 +7738,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
     prevGo(lv+'/auto'); cur=lv+'/auto/classe';
     $('menu').hidden=true; exo.hidden=false; $('litNote').hidden=true; exo.classList.remove('intro');
     exo.classList.add('session'); exo.classList.toggle('cv-g',T.theme==='conversions');
+    document.body.classList.add('ss-full'); enterFS();
     $('title').textContent='Séance en classe';
     $('subtitle').textContent=item?item[1].replace(/^[*\d.\s]+/,''):'';
     const back=$('back'); back.hidden=false; back.onclick=()=>go(lv+'/auto/classe');
@@ -7693,6 +7767,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
       });
     });
     if(document.activeElement&&document.activeElement.blur) document.activeElement.blur();
+    fit(); fitSoon();
     ss.t0=Date.now(); clearInterval(ss.timer); ss.timer=setInterval(tick,100);
   }
   function tick(){
@@ -7738,6 +7813,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
     content.innerHTML=''; content.appendChild(ss.items[ss.k]);
     $('ssNum').textContent='Correction · question '+(ss.k+1)+' / '+ss.n;
     $('ssNext').textContent=ss.k<ss.n-1?'Suivant':'Terminer';
+    fit(); fitSoon();
   }
   $('ssNext').onclick=()=>{ if(!ss) return; if(ss.k<ss.n-1){ ss.k++; showAnswer(); } else go(ss.lv+'/auto/classe'); };
 
