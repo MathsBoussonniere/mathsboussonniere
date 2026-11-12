@@ -476,6 +476,52 @@ h1,.subtitle{padding:0 46px;}
 .switch input:checked + i::after{transform:translateX(18px);}
 .switch input:focus-visible + i{outline:2px solid var(--accent);outline-offset:2px;}
 .sw-rainbow{background:conic-gradient(#FF3B6B,#FF9A1F,#F5D000,#2FBF71,#1E9BFF,#7B3FE4,#FF3B6B);}
+
+/* Mode professeur et séance en classe */
+.settings{max-height:calc(100vh - 80px - env(safe-area-inset-top,0px));max-height:calc(100dvh - 80px - env(safe-area-inset-top,0px));overflow-y:auto;}
+.prof-btn{width:100%;}
+.prof-login{display:grid;gap:8px;margin-top:8px;}
+.prof-login[hidden],.prof-err[hidden],.prof-hint[hidden]{display:none;}
+.prof-login input{width:100%;font-size:1rem;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);}
+.prof-login input:focus{outline:none;border-color:var(--accent);}
+.prof-login button.primary{padding:10px 16px;}
+.prof-err{color:var(--bad-txt);font-size:.85rem;font-weight:600;}
+.prof-hint{margin-top:8px;font-size:.82rem;line-height:1.4;color:var(--muted);}
+.ss-form{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 18px;display:grid;gap:18px;}
+.ss-lbl{font-family:'Space Grotesk',system-ui,sans-serif;font-size:.85rem;font-weight:600;color:var(--muted);margin-bottom:8px;display:block;}
+.ss-sel{width:100%;padding:12px 14px;font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;font-size:1rem;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:8px;}
+.ss-sel:focus{outline:none;border-color:var(--accent);}
+.ss-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:480px){.ss-row{grid-template-columns:1fr;}}
+.ss-step{display:flex;align-items:stretch;border:1.5px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg);}
+.ss-step button{flex:none;width:46px;border:none;background:var(--card);color:var(--ink);font-size:1.4rem;cursor:pointer;}
+.ss-step button:hover{color:var(--accent);}
+.ss-step input{flex:1;min-width:0;border:none;border-left:1.5px solid var(--line);border-right:1.5px solid var(--line);text-align:center;font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;font-size:1.15rem;background:transparent;color:var(--ink);padding:10px 4px;-moz-appearance:textfield;appearance:textfield;}
+.ss-step input::-webkit-outer-spin-button,.ss-step input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.ss-step input:focus{outline:none;background:var(--accent-soft);}
+#ssBar{margin:-4px 0 18px;}
+#ssBar[hidden],.ss-actions[hidden],.ss-track[hidden]{display:none;}
+.ss-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;}
+.ss-num{color:var(--muted);font-size:.95rem;}
+.ss-time{font-size:1.7rem;font-variant-numeric:tabular-nums;line-height:1;}
+.ss-track{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:8px;}
+.ss-fill{height:100%;width:100%;background:var(--accent);transition:width .1s linear;}
+.ss-fill.low{background:var(--bad);}
+.ss-actions{display:flex;justify-content:center;gap:10px;margin-top:20px;}
+#exo.session #score,#exo.session #chrono,#exo.session #modes,#exo.session .card>.actions,#exo.session #content .actions,#exo.session #content .pykeys,#exo.session #pvCalcBtn,#exo.session #pvCalc{display:none !important;}
+#exo.session #content .hands-svg{pointer-events:none;}
+/* question : pas de zone de réponse (champs retirés ; « … » seulement si du texte suit le trou) */
+.ss-hide{display:none !important;}
+#exo.session:not(.ss-review) #content .ss-noans,#exo.session:not(.ss-review) #content #pvConc{display:none;}
+/* correction : toute la ligne en vert, réponse écrite dans la ligne, sans trou ni trait */
+#exo.ss-review #content .fill-row{color:var(--good-txt);gap:.3em;}
+#exo.ss-review #content .frac-in .ss-ans{text-align:center;padding:0 6px;}
+.ss-right{display:flex;align-items:center;gap:10px;}
+.ss-time{min-width:3.2em;text-align:right;}
+#ssBar.paused .ss-time{opacity:.45;}
+.ss-pause{width:34px;height:34px;display:flex;align-items:center;justify-content:center;padding:0;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);cursor:pointer;}
+.ss-pause:hover{border-color:var(--accent);color:var(--accent);}
+.ss-pause[hidden]{display:none;}
 </style>
 <script>try{var __t=localStorage.getItem('mb-theme');if(['light','dark','pink','jade','rainbow'].indexOf(__t)>-1)document.documentElement.setAttribute('data-theme',__t);}catch(e){}</script>
 <script>try{var __r=document.documentElement;if(localStorage.getItem('mb-show-score')==='0')__r.setAttribute('data-hide-score','');if(localStorage.getItem('mb-show-chrono')==='0')__r.setAttribute('data-hide-chrono','');}catch(e){}</script>
@@ -499,6 +545,14 @@ h1,.subtitle{padding:0 46px;}
   <div class="set-label sp">Affichage</div>
   <label class="opt-row">Série et record<span class="switch"><input type="checkbox" id="optScore" checked><i></i></span></label>
   <label class="opt-row">Temps<span class="switch"><input type="checkbox" id="optChrono" checked><i></i></span></label>
+  <div class="set-label sp">Espace enseignant</div>
+  <button type="button" class="swatch prof-btn" id="profBtn" aria-expanded="false" aria-controls="profLogin"><span aria-hidden="true">🎓</span><span id="profBtnTxt">Mode professeur</span></button>
+  <div class="prof-login" id="profLogin" hidden>
+    <input type="password" id="profPwd" placeholder="Mot de passe" aria-label="Mot de passe du mode professeur" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <button type="button" class="primary" id="profOk">Valider</button>
+    <div class="prof-err" id="profErr" role="alert" hidden>Mot de passe incorrect.</div>
+  </div>
+  <div class="prof-hint" id="profHint" hidden>Mode professeur activé : « Séance en classe » est disponible dans la liste des automatismes.</div>
 </div>
 <div class="wrap">
   <button class="back" id="back" hidden>← Retour</button>
@@ -869,7 +923,7 @@ function explainSci(q){
     return `${fmt(dec)} = ${eq} : le nombre est déjà compris entre 1 et 10, on ne déplace pas la virgule : la puissance est 0.`;
   }
   if(n<0) return `${eq} = ${fmt(dec)} : la puissance est négative (−${k}), donc il faut ${k} zéro${pl} avant le premier chiffre non nul : le 0 de la partie entière${k>1?` et ${k-1} zéro${k-1>1?'s':''} après la virgule`:''}. On obtient ${fmt(dec)}.`;
-  if(n>0) return `${eq} = ${fmt(dec)} : la puissance est positive (${k}), donc on décale la virgule de ${k} rang${pl} vers la droite (en ajoutant des zéros si besoin). On obtient ${fmt(dec)}.`;
+  if(n>0) return `${eq} = ${fmt(dec)} : la puissance est positive (${k}), donc on ne décale pas la virgule : c’est chaque chiffre qui se décale de ${k} rang${pl} vers la gauche (en ajoutant des zéros si besoin). On obtient ${fmt(dec)}.`;
   return `${eq} = ${fmt(dec)} : 10<sup>0</sup> = 1, donc le nombre ne change pas.`;
 }
 
@@ -7287,6 +7341,7 @@ go('home');
     '6e/auto/tables':{theme:'tables'},'6e/auto/durees':{theme:'durees'},'6e/auto/comp':{theme:'comp'},'6e/auto/clock':{theme:'clock'},
     '6e/auto/multiples':{theme:'mld'},'6e/auto/hands':{theme:'hands'},'6e/auto/mult10':{theme:'mult10'},'6e/auto/div10':{theme:'div10'},'6e/auto/fracheure':{theme:'fh'},'5e/auto/prio':{theme:'prio'}
   };
+  window.MB_TR=TR;
   ['3e','5e','6e'].forEach(lv=>SCREENS[lv+'/auto'].items.unshift([lv+'/auto/entrainement','Entraînement personnalisé','Choisis les automatismes sur lesquels travailler']));
   let training=null;
   const $=id=>document.getElementById(id);
@@ -7481,6 +7536,257 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
   const origGo=go;
   go=function(sc){ origGo(sc); cur=sc; sync(); };
   build(); sync();
+  window.mbNavBuild=function(){ build(); sync(); };
+})();
+</script>
+<script>
+/* Mode professeur + « Séance en classe » */
+(function(){
+  const $=id=>document.getElementById(id);
+  const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const LEVELS=['3e','5e','6e'];
+  const TR=window.MB_TR;
+  /* Le mot de passe n'est pas écrit en clair dans la page : seule son empreinte SHA-256 y figure. */
+  const PROF_HASH='961d75c79e083995f25435b5a60c783c50f10336c97f29cb4e35d55ed40bcea1';
+  function sha256(ascii){
+    function rr(v,a){return (v>>>a)|(v<<(32-a));}
+    const mp=Math.pow, mx=mp(2,32); let result='';
+    const words=[], bitLen=ascii.length*8;
+    const hash0=[], k=[]; let pc=0; const comp={};
+    for(let cand=2;pc<64;cand++){
+      if(!comp[cand]){
+        for(let i=0;i<313;i+=cand) comp[i]=cand;
+        hash0[pc]=(mp(cand,.5)*mx)|0;
+        k[pc++]=(mp(cand,1/3)*mx)|0;
+      }
+    }
+    let hash=hash0.slice(0,8);
+    ascii+='\x80';
+    while(ascii.length%64-56) ascii+='\x00';
+    for(let i=0;i<ascii.length;i++){ const j=ascii.charCodeAt(i); if(j>>8) return ''; words[i>>2]|=j<<((3-i)%4)*8; }
+    words[words.length]=((bitLen/mx)|0); words[words.length]=bitLen;
+    for(let j=0;j<words.length;){
+      const w=words.slice(j,j+=16), old=hash; hash=hash.slice(0,8);
+      for(let i=0;i<64;i++){
+        const w15=w[i-15], w2=w[i-2], a=hash[0], e=hash[4];
+        const t1=hash[7]+(rr(e,6)^rr(e,11)^rr(e,25))+((e&hash[5])^((~e)&hash[6]))+k[i]+(w[i]=(i<16)?w[i]:(w[i-16]+(rr(w15,7)^rr(w15,18)^(w15>>>3))+w[i-7]+(rr(w2,17)^rr(w2,19)^(w2>>>10)))|0);
+        const t2=(rr(a,2)^rr(a,13)^rr(a,22))+((a&hash[1])^(a&hash[2])^(hash[1]&hash[2]));
+        hash=[(t1+t2)|0].concat(hash); hash[4]=(hash[4]+t1)|0;
+      }
+      for(let i=0;i<8;i++) hash[i]=(hash[i]+old[i])|0;
+    }
+    for(let i=0;i<8;i++) for(let j=3;j+1;j--){ const b=(hash[i]>>(j*8))&255; result+=((b<16)?'0':'')+b.toString(16); }
+    return result;
+  }
+
+  /* ---------- état du mode professeur (gardé le temps de la session du navigateur) ---------- */
+  const PKEY='mb-prof';
+  let profOn=false;
+  try{ profOn=sessionStorage.getItem(PKEY)==='1'; }catch(e){}
+  const saveProf=()=>{ try{ sessionStorage.setItem(PKEY,profOn?'1':'0'); }catch(e){} };
+  let cur='home', ss=null;
+
+  /* ---------- barre de progression et bouton « Suivant » (dans la carte des exercices) ---------- */
+  const card=document.querySelector('#exo .card'), content=$('content');
+  const bar=document.createElement('div'); bar.id='ssBar'; bar.hidden=true;
+  bar.innerHTML='<div class="ss-top"><span class="ss-num" id="ssNum"></span><span class="ss-right"><button type="button" class="ss-pause" id="ssPause" aria-label="Pause"></button><span class="ss-time" id="ssTime"></span></span></div><div class="ss-track" id="ssTrack"><div class="ss-fill" id="ssFill"></div></div>';
+  card.insertBefore(bar,content);
+  const navBox=document.createElement('div'); navBox.className='ss-actions'; navBox.id='ssNav'; navBox.hidden=true;
+  navBox.innerHTML='<button type="button" class="primary" id="ssNext">Suivant</button>';
+  card.insertBefore(navBox,card.querySelector(':scope > .actions'));
+
+  /* ---------- « Séance en classe » : écran de réglage ---------- */
+  const CLASSE=lv=>[lv+'/auto/classe','Séance en classe','Projeter des questions à la classe, puis les corriger ensemble'];
+  const clamp=(v,a,b)=>Math.min(b,Math.max(a,Math.round(v)));
+  const loadCfg=()=>{ try{ return JSON.parse(localStorage.getItem('mb-seance'))||null; }catch(e){ return null; } };
+  const saveCfg=c=>{ try{ localStorage.setItem('mb-seance',JSON.stringify(c)); }catch(e){} };
+
+  function showSetup(lv){
+    prevGo(lv+'/auto');
+    const items=SCREENS[lv+'/auto'].items.filter(i=>TR[i[0]]);
+    const cfg=loadCfg();
+    const id0=cfg&&items.some(i=>i[0]===cfg.id)?cfg.id:items[0][0];
+    const n0=cfg?clamp(cfg.n,1,50):10, t0=cfg?clamp(cfg.t,5,600):20;
+    $('title').textContent='Séance en classe';
+    $('subtitle').textContent='Prépare la séance';
+    const back=$('back'); back.hidden=false; back.onclick=()=>go(lv+'/auto');
+    const menu=$('menu'); menu.hidden=false; $('exo').hidden=true;
+    menu.innerHTML=`<div class="ss-form">
+      <div><label class="ss-lbl" for="ssAuto">Automatisme</label>
+        <select class="ss-sel" id="ssAuto">${items.map(i=>`<option value="${i[0]}"${i[0]===id0?' selected':''}>${esc(i[1])}</option>`).join('')}</select></div>
+      <div class="ss-row">
+        <div><label class="ss-lbl" for="ssN">Nombre de questions</label>
+          <div class="ss-step" data-min="1" data-max="50" data-step="1"><button type="button" data-d="-1" aria-label="Moins">−</button><input type="number" id="ssN" inputmode="numeric" min="1" max="50" value="${n0}"><button type="button" data-d="1" aria-label="Plus">+</button></div></div>
+        <div><label class="ss-lbl" for="ssT">Temps par question (secondes)</label>
+          <div class="ss-step" data-min="5" data-max="600" data-step="5"><button type="button" data-d="-1" aria-label="Moins">−</button><input type="number" id="ssT" inputmode="numeric" min="5" max="600" value="${t0}"><button type="button" data-d="1" aria-label="Plus">+</button></div></div>
+      </div>
+      <div class="tr-foot" style="margin-top:0"><button type="button" class="primary" id="ssGo">Lancer la séance</button></div>
+      <p class="hint" style="margin:-4px 0 0">Chaque question reste affichée pendant le temps choisi. À la fin, tu reviens sur chaque question avec sa réponse, dans le même ordre.</p>
+    </div>`;
+    menu.querySelectorAll('.ss-step').forEach(st=>{
+      const inp=st.querySelector('input'), a=+st.dataset.min, b=+st.dataset.max, step=+st.dataset.step;
+      st.querySelectorAll('button').forEach(btn=>btn.onclick=()=>{ inp.value=clamp((+inp.value||a)+(+btn.dataset.d)*step,a,b); });
+      inp.onchange=()=>{ inp.value=clamp(+inp.value||a,a,b); };
+    });
+    $('ssGo').onclick=()=>{
+      const id=$('ssAuto').value, n=clamp(+$('ssN').value||10,1,50), t=clamp(+$('ssT').value||20,5,600);
+      saveCfg({id,n,t}); startSession(lv,id,n,t);
+    };
+  }
+
+  /* ---------- déroulement de la séance ---------- */
+  function endSession(){
+    if(!ss) return;
+    clearInterval(ss.timer);
+    state.resolved=true; state.mode=ss.prevMode;
+    $('exo').classList.remove('session','ss-review'); $('ssBar').hidden=true; $('ssNav').hidden=true;
+    content.innerHTML='';
+    ss=null;
+  }
+  const ICO_PAUSE='<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  const ICO_PLAY='<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+  function paintPause(){
+    const p=!!(ss&&ss.paused), b=$('ssPause');
+    b.innerHTML=p?ICO_PLAY:ICO_PAUSE; b.setAttribute('aria-label',p?'Reprendre':'Pause'); $('ssBar').classList.toggle('paused',p);
+  }
+  function setPaused(p){
+    if(!ss||p===!!ss.paused) return;
+    if(p){ ss.paused=true; ss.pausedAt=Date.now(); } else { ss.paused=false; ss.t0+=Date.now()-ss.pausedAt; }
+    paintPause();
+  }
+  $('ssPause').onclick=()=>setPaused(!(ss&&ss.paused));
+  const fmtT=s=>s>=60?Math.floor(s/60)+':'+String(s%60).padStart(2,'0'):s+' s';
+  function setLeft(left){
+    $('ssTime').textContent=fmtT(Math.max(0,Math.ceil(left-1e-6)));
+    const f=$('ssFill'); f.style.width=Math.max(0,left/ss.t*100)+'%'; f.classList.toggle('low',ss.t>5&&left<=5);
+  }
+  function startSession(lv,id,n,t){
+    const T=TR[id], item=SCREENS[lv+'/auto'].items.find(i=>i[0]===id), exo=$('exo');
+    prevGo(lv+'/auto'); cur=lv+'/auto/classe';
+    $('menu').hidden=true; exo.hidden=false; $('litNote').hidden=true; exo.classList.remove('intro');
+    exo.classList.add('session'); exo.classList.toggle('cv-g',T.theme==='conversions');
+    $('title').textContent='Séance en classe';
+    $('subtitle').textContent=item?item[1].replace(/^[*\d.\s]+/,''):'';
+    const back=$('back'); back.hidden=false; back.onclick=()=>go(lv+'/auto/classe');
+    ss={lv,id,n,t,i:0,items:[],timer:null,t0:0,k:0,prevMode:state.mode};
+    state.mode='trou'; state.theme=T.theme; if(T.cat) state.cat=T.cat; state.lvl=lv;
+    renderTabs();
+    $('ssBar').hidden=false; $('ssTrack').hidden=false; $('ssNav').hidden=true;
+    nextQ();
+  }
+  function nextQ(){
+    ss.i++; ss.paused=false; paintPause(); $('ssPause').hidden=false;
+    $('ssNum').textContent='Question '+ss.i+' / '+ss.n;
+    setLeft(ss.t);
+    _newQuestion();
+    content.querySelectorAll('input,textarea').forEach(x=>{ x.disabled=true; });
+    /* pas de zone de réponse : une ligne qui ne contient que la case disparaît ; sinon les champs sont retirés
+       (un « … » ne reste que si du texte suit le trou, ex. « 0,3 + … = 1 ») */
+    content.querySelectorAll('.fill-row').forEach(r=>{
+      const c=r.cloneNode(true); c.querySelectorAll('input,.lit-wrap,.frac-in').forEach(x=>x.remove());
+      if(!c.textContent.replace(/[\s=:h]/g,'')){ r.classList.add('ss-noans'); return; }
+      [...r.querySelectorAll('input,.lit-wrap,.frac-in')].filter(x=>!x.parentElement.closest('.lit-wrap,.frac-in')).forEach(el=>{
+        const rg=document.createRange(); rg.setStartAfter(el); rg.setEndAfter(r.lastChild);
+        const more=rg.toString().replace(/\s/g,'')!=='';
+        el.classList.add('ss-hide');
+        if(more){ const d=document.createElement('span'); d.className='ss-dots'; d.textContent='…'; el.before(d); }
+      });
+    });
+    if(document.activeElement&&document.activeElement.blur) document.activeElement.blur();
+    ss.t0=Date.now(); clearInterval(ss.timer); ss.timer=setInterval(tick,100);
+  }
+  function tick(){
+    if(!ss||ss.paused) return;
+    const left=ss.t-(Date.now()-ss.t0)/1000;
+    if(left<=0){ endQ(); return; }
+    setLeft(left);
+  }
+  /* Fin du temps : on fait afficher la réponse par le site (comme « Passer la question »), puis on met la question de côté. */
+  function endQ(){
+    clearInterval(ss.timer);
+    resolve(); revealCurrent();
+    content.querySelectorAll('input').forEach(i=>i.dispatchEvent(new Event('input',{bubbles:true})));   /* recopie la réponse dans les champs « calcul littéral » */
+    content.querySelectorAll('.ss-dots').forEach(x=>x.remove());
+    const filled=[...content.querySelectorAll('input')].some(i=>i.value!=='');
+    /* les champs deviennent du texte : la ligne se lit « 90 = 9 × 10¹ », sans trou ni trait */
+    const mk=(tag,html,txt)=>{ const e=document.createElement(tag); e.className='ss-ans'; if(html!==null) e.innerHTML=html; else e.textContent=txt; return e; };
+    content.querySelectorAll('.frac-in').forEach(f=>{
+      const ins=[...f.querySelectorAll('input')];
+      if(ins.some(i=>i.value==='')) f.replaceWith(mk('span',null,ins.map(i=>i.value).filter(Boolean).join('')));   /* entier : pas de barre de fraction */
+    });
+    content.querySelectorAll('.lit-wrap').forEach(wp=>wp.replaceWith(mk('span',wp.querySelector('.lit-ov').innerHTML)));
+    content.querySelectorAll('input').forEach(i=>i.replaceWith(mk(i.classList.contains('exp-input')?'sup':'span',null,i.value)));
+    /* la réponse est dans la ligne : on ne garde que l'explication. Sans réponse écrite (ex. aiguilles), on garde la ligne « Réponse ». */
+    const fb=$('fb');
+    if(fb){
+      const ex=fb.querySelector('.expl');
+      if(filled&&ex) fb.replaceChildren(ex); else fb.innerHTML=fb.innerHTML.replace(/^Question passée\.<br>/,'');
+      fb.className='feedback ok';
+    }
+    const frag=document.createDocumentFragment();
+    while(content.firstChild) frag.appendChild(content.firstChild);
+    ss.items.push(frag);
+    if(ss.i<ss.n) nextQ(); else review();
+  }
+  function review(){
+    ss.k=0; $('exo').classList.add('ss-review');
+    $('ssTrack').hidden=true; $('ssTime').textContent=''; $('ssPause').hidden=true;
+    $('ssNav').hidden=false;
+    showAnswer();
+  }
+  function showAnswer(){
+    content.innerHTML=''; content.appendChild(ss.items[ss.k]);
+    $('ssNum').textContent='Correction · question '+(ss.k+1)+' / '+ss.n;
+    $('ssNext').textContent=ss.k<ss.n-1?'Suivant':'Terminer';
+  }
+  $('ssNext').onclick=()=>{ if(!ss) return; if(ss.k<ss.n-1){ ss.k++; showAnswer(); } else go(ss.lv+'/auto/classe'); };
+
+  /* ---------- navigation ---------- */
+  const prevGo=go;
+  go=function(sc){
+    endSession();
+    cur=sc;
+    const m=/^(3e|5e|6e)\/auto\/classe$/.exec(sc);
+    if(m){ if(profOn) showSetup(m[1]); else prevGo(m[1]+'/auto'); return; }
+    prevGo(sc);
+  };
+
+  /* ---------- mode professeur : l'entrée « Séance en classe » apparaît / disparaît ---------- */
+  function applyProf(){
+    LEVELS.forEach(lv=>{
+      const it=SCREENS[lv+'/auto'].items, k=it.findIndex(i=>i[0]===lv+'/auto/classe');
+      if(k>-1) it.splice(k,1);
+      if(profOn) it.unshift(CLASSE(lv));
+    });
+    paintPanel();
+    if(window.mbNavBuild) window.mbNavBuild();
+    const m=/^(3e|5e|6e)\/auto\/classe$/.exec(cur);
+    if(!profOn&&m) go(m[1]+'/auto');
+    else if(/^(3e|5e|6e)\/auto$/.test(cur)) go(cur);
+  }
+  const btn=$('profBtn'), login=$('profLogin'), pwd=$('profPwd'), err=$('profErr');
+  function paintPanel(){
+    btn.classList.toggle('on',profOn);
+    $('profBtnTxt').textContent=profOn?'Quitter le mode professeur':'Mode professeur';
+    $('profHint').hidden=!profOn;
+    if(profOn) login.hidden=true;
+    btn.setAttribute('aria-expanded',String(!login.hidden));
+  }
+  btn.onclick=()=>{
+    if(profOn){ profOn=false; saveProf(); applyProf(); return; }
+    login.hidden=!login.hidden; err.hidden=true; pwd.value='';
+    btn.setAttribute('aria-expanded',String(!login.hidden));
+    if(!login.hidden) pwd.focus();
+  };
+  function tryLogin(){
+    if(sha256(pwd.value.trim())===PROF_HASH){
+      profOn=true; saveProf(); pwd.value=''; err.hidden=true; applyProf();
+    }else{ err.hidden=false; pwd.select(); }
+  }
+  $('profOk').onclick=tryLogin;
+  pwd.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); tryLogin(); } });
+
+  applyProf();
 })();
 </script>
 </body>
