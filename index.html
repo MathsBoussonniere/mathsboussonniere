@@ -235,6 +235,8 @@ sup .cq-neg{width:.45em;margin-right:.08em;}
 .frac.nest>:last-child{padding:6px 10px 0;}
 .frac.frac-in{align-items:stretch;}
 .frac.frac-in .bar{display:block;height:2px;background:currentColor;margin:5px 0;}
+/* fraction à compléter : la seule barre est .bar (le premier enfant, champ ou réponse écrite en correction, n'a pas de trait) */
+.frac.frac-in>:first-child{border-bottom:none;padding-bottom:0;}
 .fill-row .frac.frac-in input{width:84px;border:none;border-radius:6px;background:var(--bg);padding:6px 4px;margin:0;}
 .hint{text-align:center;color:var(--muted);font-size:.8rem;margin:-8px 0 12px;}
 .sf{display:inline-flex;align-items:center;gap:7px;vertical-align:middle;}
@@ -492,6 +494,13 @@ h1,.subtitle{padding:0 46px;}
 .ss-sel{width:100%;padding:12px 14px;font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;font-size:1rem;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:8px;}
 .ss-sel:focus{outline:none;border-color:var(--accent);}
 .ss-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.ss-arow{display:flex;gap:8px;margin-bottom:8px;}
+.ss-arow .ss-sel{flex:1;min-width:0;width:auto;}
+.ss-del{flex:none;width:46px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font-size:1.1rem;cursor:pointer;}
+.ss-del:hover{border-color:var(--bad);color:var(--bad-txt);}
+.ss-add{font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;font-size:.95rem;padding:10px 16px;border:1.5px dashed var(--line);border-radius:8px;background:none;color:var(--ink);cursor:pointer;}
+.ss-add:hover{border-color:var(--accent);color:var(--accent);}
+.ss-add[hidden]{display:none;}
 @media(max-width:480px){.ss-row{grid-template-columns:1fr;}}
 .ss-step{display:flex;align-items:stretch;border:1.5px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg);}
 .ss-step button{flex:none;width:46px;border:none;background:var(--card);color:var(--ink);font-size:1.4rem;cursor:pointer;}
@@ -512,9 +521,13 @@ h1,.subtitle{padding:0 46px;}
 #exo.session #content .hands-svg{pointer-events:none;}
 /* question : pas de zone de réponse (champs retirés ; « … » seulement si du texte suit le trou) */
 .ss-hide{display:none !important;}
-#exo.session:not(.ss-review) #content .ss-noans,#exo.session:not(.ss-review) #content #pvConc{display:none;}
-/* correction : toute la ligne en vert, réponse écrite dans la ligne, sans trou ni trait */
-#exo.ss-review #content .fill-row{color:var(--good-txt);gap:.3em;}
+#exo.session:not(.ss-review) #content .ss-noans{display:none;}
+/* automatisme « vérification de Pythagore » : la question est posée, sans les cases Oui / Non ; la réponse seule apparaît en correction */
+#exo.session #content #pvConc .pvck{display:none;}
+#exo.ss-review #content #pvConc>.ss-ans{font-size:1.15rem;line-height:1.2;font-weight:600;}
+/* correction : l'énoncé garde la couleur de la question, seule la réponse (écrite dans la ligne, sans trou ni trait) est en vert */
+#exo.ss-review #content .fill-row{gap:.3em;}
+#exo.ss-review #content .ss-ans,#exo.ss-review #content .frac-in{color:var(--good-txt);}
 #exo.ss-review #content .frac-in .ss-ans{text-align:center;padding:0 6px;}
 .ss-right{display:flex;align-items:center;gap:10px;}
 .ss-time{min-width:3.2em;text-align:right;}
@@ -541,6 +554,11 @@ body.ss-full .wrap{max-width:none;padding:0;}
 #exo.session #content{flex:none;width:760px;max-width:none;margin:0 auto;transform-origin:50% 0;}
 #exo.session .card > #ssNav{position:absolute;left:0;right:0;bottom:26px;margin:0;}
 #exo.session #ssNext{font-size:clamp(1.1rem,2vw,1.8rem);padding:14px 44px;}
+.ss-actions .ss-prev{font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;padding:11px 22px;border-radius:8px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;}
+.ss-actions .ss-prev:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
+.ss-actions .ss-prev:disabled{opacity:.4;cursor:default;}
+#exo.session .ss-actions{gap:16px;flex-wrap:wrap;}
+#exo.session #ssPrev{font-size:clamp(1.1rem,2vw,1.8rem);padding:14px 32px;}
 #exo.session .ss-exit{display:flex;align-items:center;justify-content:center;position:absolute;top:12px;left:12px;z-index:70;width:42px;height:42px;padding:0;font-size:1.2rem;line-height:1;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);cursor:pointer;opacity:.4;transition:opacity .15s;}
 #exo.session .ss-exit:hover,#exo.session .ss-exit:focus-visible{opacity:1;}
 </style>
@@ -7621,7 +7639,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
   bar.innerHTML='<div class="ss-top"><span class="ss-num" id="ssNum"></span><span class="ss-right"><button type="button" class="ss-pause" id="ssPause" aria-label="Pause"></button><span class="ss-time" id="ssTime"></span></span></div><div class="ss-track" id="ssTrack"><div class="ss-fill" id="ssFill"></div></div>';
   card.insertBefore(bar,content);
   const navBox=document.createElement('div'); navBox.className='ss-actions'; navBox.id='ssNav'; navBox.hidden=true;
-  navBox.innerHTML='<button type="button" class="primary" id="ssNext">Suivant</button>';
+  navBox.innerHTML='<button type="button" class="ss-prev" id="ssPrev">Question précédente</button><button type="button" class="primary" id="ssNext">Question suivante</button>';
   card.insertBefore(navBox,card.querySelector(':scope > .actions'));
 
   /* ---------- plein écran : la question est agrandie pour remplir l'écran projeté ---------- */
@@ -7678,31 +7696,44 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
     const items=SCREENS[lv+'/auto'].items.filter(i=>TR[i[0]]);
     const cfg=loadCfg();
     const id0=cfg&&items.some(i=>i[0]===cfg.id)?cfg.id:items[0][0];
-    const n0=cfg?clamp(cfg.n,1,50):10, t0=cfg?clamp(cfg.t,5,600):20;
+    let sel=cfg&&Array.isArray(cfg.ids)?[...new Set(cfg.ids.filter(x=>items.some(i=>i[0]===x)))]:[];
+    if(!sel.length){ sel=[id0]; if(cfg&&cfg.id2&&cfg.id2!==id0&&items.some(i=>i[0]===cfg.id2)) sel.push(cfg.id2); }
+    const n0=cfg?clamp(cfg.n,1,50):10, t0=cfg?clamp(cfg.t,1,600):20;
     $('title').textContent='Séance en classe';
     $('subtitle').textContent='Prépare la séance';
     const back=$('back'); back.hidden=false; back.onclick=()=>go(lv+'/auto');
     const menu=$('menu'); menu.hidden=false; $('exo').hidden=true;
     menu.innerHTML=`<div class="ss-form">
-      <div><label class="ss-lbl" for="ssAuto">Automatisme</label>
-        <select class="ss-sel" id="ssAuto">${items.map(i=>`<option value="${i[0]}"${i[0]===id0?' selected':''}>${esc(i[1])}</option>`).join('')}</select></div>
+      <div><span class="ss-lbl">Automatismes</span>
+        <div id="ssAutos"></div>
+        <button type="button" class="ss-add" id="ssAdd">+ Ajouter un automatisme</button></div>
       <div class="ss-row">
         <div><label class="ss-lbl" for="ssN">Nombre de questions</label>
           <div class="ss-step" data-min="1" data-max="50" data-step="1"><button type="button" data-d="-1" aria-label="Moins">−</button><input type="number" id="ssN" inputmode="numeric" min="1" max="50" value="${n0}"><button type="button" data-d="1" aria-label="Plus">+</button></div></div>
         <div><label class="ss-lbl" for="ssT">Temps par question (secondes)</label>
-          <div class="ss-step" data-min="5" data-max="600" data-step="5"><button type="button" data-d="-1" aria-label="Moins">−</button><input type="number" id="ssT" inputmode="numeric" min="5" max="600" value="${t0}"><button type="button" data-d="1" aria-label="Plus">+</button></div></div>
+          <div class="ss-step" data-min="1" data-max="600" data-step="1"><button type="button" data-d="-1" aria-label="Moins">−</button><input type="number" id="ssT" inputmode="numeric" min="1" max="600" value="${t0}"><button type="button" data-d="1" aria-label="Plus">+</button></div></div>
       </div>
       <div class="tr-foot" style="margin-top:0"><button type="button" class="primary" id="ssGo">Lancer la séance</button></div>
-      <p class="hint" style="margin:-4px 0 0">Chaque question reste affichée pendant le temps choisi. À la fin, tu reviens sur chaque question avec sa réponse, dans le même ordre.</p>
+      <p class="hint" style="margin:-4px 0 0">Chaque question reste affichée pendant le temps choisi. Avec plusieurs automatismes, les questions alternent entre eux. À la fin, tu reviens sur chaque question avec sa réponse, dans le même ordre.</p>
     </div>`;
     menu.querySelectorAll('.ss-step').forEach(st=>{
       const inp=st.querySelector('input'), a=+st.dataset.min, b=+st.dataset.max, step=+st.dataset.step;
       st.querySelectorAll('button').forEach(btn=>btn.onclick=()=>{ inp.value=clamp((+inp.value||a)+(+btn.dataset.d)*step,a,b); });
       inp.onchange=()=>{ inp.value=clamp(+inp.value||a,a,b); };
     });
+    /* liste d'automatismes : un menu par automatisme, jamais deux fois le même */
+    const box=$('ssAutos'), add=$('ssAdd');
+    const draw=()=>{
+      box.innerHTML=sel.map((cur,k)=>`<div class="ss-arow"><select class="ss-sel" data-k="${k}" aria-label="Automatisme ${k+1}">${items.filter(i=>i[0]===cur||!sel.includes(i[0])).map(i=>`<option value="${i[0]}"${i[0]===cur?' selected':''}>${esc(i[1])}</option>`).join('')}</select>${sel.length>1?`<button type="button" class="ss-del" data-k="${k}" aria-label="Retirer cet automatisme">✕</button>`:''}</div>`).join('');
+      box.querySelectorAll('select').forEach(se=>se.onchange=()=>{ sel[+se.dataset.k]=se.value; draw(); });
+      box.querySelectorAll('.ss-del').forEach(b=>b.onclick=()=>{ sel.splice(+b.dataset.k,1); draw(); });
+      add.hidden=sel.length>=items.length;
+    };
+    add.onclick=()=>{ const nx=items.find(i=>!sel.includes(i[0])); if(nx){ sel.push(nx[0]); draw(); } };
+    draw();
     $('ssGo').onclick=()=>{
-      const id=$('ssAuto').value, n=clamp(+$('ssN').value||10,1,50), t=clamp(+$('ssT').value||20,5,600);
-      saveCfg({id,n,t}); startSession(lv,id,n,t);
+      const n=clamp(+$('ssN').value||10,1,50), t=clamp(+$('ssT').value||20,1,600);
+      saveCfg({ids:sel.slice(),id:sel[0],n,t}); startSession(lv,sel.slice(),n,t);
     };
   }
 
@@ -7731,19 +7762,25 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
   const fmtT=s=>s>=60?Math.floor(s/60)+':'+String(s%60).padStart(2,'0'):s+' s';
   function setLeft(left){
     $('ssTime').textContent=fmtT(Math.max(0,Math.ceil(left-1e-6)));
-    const f=$('ssFill'); f.style.width=Math.max(0,left/ss.t*100)+'%'; f.classList.toggle('low',ss.t>5&&left<=5);
+    const f=$('ssFill'); f.style.width=Math.max(0,left/ss.t*100)+'%'; f.classList.toggle('low',left<=5);
   }
-  function startSession(lv,id,n,t){
-    const T=TR[id], item=SCREENS[lv+'/auto'].items.find(i=>i[0]===id), exo=$('exo');
+  /* applique l'automatisme d'une question (thème, catégorie, mise en page des conversions) */
+  function setTheme(id){
+    const T=TR[id]; state.theme=T.theme; if(T.cat) state.cat=T.cat;
+    $('exo').classList.toggle('cv-g',T.theme==='conversions');
+  }
+  function startSession(lv,ids,n,t){
+    const exo=$('exo'), A=SCREENS[lv+'/auto'].items;
+    const name=i=>{ const it=A.find(x=>x[0]===i); return it?it[1].replace(/^[*\d.\s]+/,''):''; };
     prevGo(lv+'/auto'); cur=lv+'/auto/classe';
     $('menu').hidden=true; exo.hidden=false; $('litNote').hidden=true; exo.classList.remove('intro');
-    exo.classList.add('session'); exo.classList.toggle('cv-g',T.theme==='conversions');
+    exo.classList.add('session');
     document.body.classList.add('ss-full'); enterFS();
     $('title').textContent='Séance en classe';
-    $('subtitle').textContent=item?item[1].replace(/^[*\d.\s]+/,''):'';
+    $('subtitle').textContent=ids.map(name).join(' · ');
     const back=$('back'); back.hidden=false; back.onclick=()=>go(lv+'/auto/classe');
-    ss={lv,id,n,t,i:0,items:[],timer:null,t0:0,k:0,prevMode:state.mode};
-    state.mode='trou'; state.theme=T.theme; if(T.cat) state.cat=T.cat; state.lvl=lv;
+    ss={lv,ids,n,t,i:0,items:[],timer:null,t0:0,k:0,prevMode:state.mode};
+    state.mode='trou'; state.lvl=lv; setTheme(ids[0]);
     renderTabs();
     $('ssBar').hidden=false; $('ssTrack').hidden=false; $('ssNav').hidden=true;
     nextQ();
@@ -7752,6 +7789,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
     ss.i++; ss.paused=false; paintPause(); $('ssPause').hidden=false;
     $('ssNum').textContent='Question '+ss.i+' / '+ss.n;
     setLeft(ss.t);
+    setTheme(ss.ids[(ss.i-1)%ss.ids.length]);   /* un seul automatisme : toujours le même ; deux : ils alternent */
     _newQuestion();
     content.querySelectorAll('input,textarea').forEach(x=>{ x.disabled=true; });
     /* pas de zone de réponse : une ligne qui ne contient que la case disparaît ; sinon les champs sont retirés
@@ -7782,21 +7820,30 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
     resolve(); revealCurrent();
     content.querySelectorAll('input').forEach(i=>i.dispatchEvent(new Event('input',{bubbles:true})));   /* recopie la réponse dans les champs « calcul littéral » */
     content.querySelectorAll('.ss-dots').forEach(x=>x.remove());
+    content.querySelectorAll('.ss-hide').forEach(x=>x.classList.remove('ss-hide'));   /* les cadres de réponse (fractions…) redeviennent visibles */
     const filled=[...content.querySelectorAll('input')].some(i=>i.value!=='');
     /* les champs deviennent du texte : la ligne se lit « 90 = 9 × 10¹ », sans trou ni trait */
     const mk=(tag,html,txt)=>{ const e=document.createElement(tag); e.className='ss-ans'; if(html!==null) e.innerHTML=html; else e.textContent=txt; return e; };
+    /* « le triangle est-il rectangle ? » : les deux cases sont remplacées par la seule bonne réponse */
+    const pc=content.querySelector('#pvConc'), okb=pc&&pc.querySelector('.pvck.correct span'), bx=pc&&pc.querySelector('.pvck');
+    if(bx) bx.parentElement.replaceWith(mk('span',null,okb?okb.textContent:''));
     content.querySelectorAll('.frac-in').forEach(f=>{
       const ins=[...f.querySelectorAll('input')];
       if(ins.some(i=>i.value==='')) f.replaceWith(mk('span',null,ins.map(i=>i.value).filter(Boolean).join('')));   /* entier : pas de barre de fraction */
     });
     content.querySelectorAll('.lit-wrap').forEach(wp=>wp.replaceWith(mk('span',wp.querySelector('.lit-ov').innerHTML)));
-    content.querySelectorAll('input').forEach(i=>i.replaceWith(mk(i.classList.contains('exp-input')?'sup':'span',null,i.value)));
-    /* la réponse est dans la ligne : on ne garde que l'explication. Sans réponse écrite (ex. aiguilles), on garde la ligne « Réponse ». */
+    content.querySelectorAll('input').forEach(i=>{
+      const e=mk(i.classList.contains('exp-input')?'sup':'span',null,i.value);
+      if(state.theme==='pyth') e.classList.add('mx','cqm');   /* Égalité de Pythagore : réponse écrite en « mode maths » comme l'énoncé */
+      i.replaceWith(e);
+    });
+    /* correction : l'énoncé et la réponse seulement, pas d'explication.
+       La réponse est déjà écrite dans la ligne : plus rien en dessous. Sans réponse écrite (ex. aiguilles), on garde la ligne « Réponse ». */
     const fb=$('fb');
     if(fb){
-      const ex=fb.querySelector('.expl');
-      if(filled&&ex) fb.replaceChildren(ex); else fb.innerHTML=fb.innerHTML.replace(/^Question passée\.<br>/,'');
-      fb.className='feedback ok';
+      fb.querySelectorAll('span.expl').forEach(x=>x.remove());
+      if(filled) fb.remove();
+      else{ fb.innerHTML=fb.innerHTML.replace(/^Question passée\.<br>/,''); fb.className='feedback ok'; }
     }
     const frag=document.createDocumentFragment();
     while(content.firstChild) frag.appendChild(content.firstChild);
@@ -7810,12 +7857,14 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
     showAnswer();
   }
   function showAnswer(){
-    content.innerHTML=''; content.appendChild(ss.items[ss.k]);
+    content.innerHTML=''; content.appendChild(ss.items[ss.k].cloneNode(true));   /* une copie : la question peut être revue autant de fois qu'on veut */
     $('ssNum').textContent='Correction · question '+(ss.k+1)+' / '+ss.n;
-    $('ssNext').textContent=ss.k<ss.n-1?'Suivant':'Terminer';
+    $('ssNext').textContent=ss.k<ss.n-1?'Question suivante':'Terminer';
+    $('ssPrev').disabled=ss.k===0;
     fit(); fitSoon();
   }
   $('ssNext').onclick=()=>{ if(!ss) return; if(ss.k<ss.n-1){ ss.k++; showAnswer(); } else go(ss.lv+'/auto/classe'); };
+  $('ssPrev').onclick=()=>{ if(ss&&ss.k>0){ ss.k--; showAnswer(); } };
 
   /* ---------- navigation ---------- */
   const prevGo=go;
