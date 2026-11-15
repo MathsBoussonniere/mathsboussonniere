@@ -167,7 +167,9 @@ button.primary:hover{background:var(--accent-dark);color:#fff;}
 .menu-btn span{color:var(--muted);}
 /* expressions littérales (police « maths » des automatismes) : une expression ne se coupe pas en fin de ligne */
 .cqm{white-space:nowrap;}
-.ms{font-family:'Cambria Math','STIX Two Math','STIXGeneral','Latin Modern Math','Noto Sans Math','Segoe UI Symbol','Apple Symbols','DejaVu Math TeX Gyre',serif;font-style:normal;font-weight:400;}
+/* lettres cursives (𝒱, 𝒜…) : Cambria Math si l'appareil l'a (PC), sinon Latin Modern Math, intégrée à la page : même rendu sur portable */
+@font-face{font-family:MathScript;font-style:normal;font-weight:400;unicode-range:U+1D49C-1D4CF,U+2110,U+2112,U+211B,U+212C,U+2130,U+2131,U+2133,U+210A,U+210B,U+2118,U+212F,U+2134;src:url(data:font/woff2;base64,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) format('woff2');}
+.ms{font-family:'Cambria Math',MathScript,'STIX Two Math','STIXGeneral','Latin Modern Math','Noto Sans Math','Segoe UI Symbol','Apple Symbols','DejaVu Math TeX Gyre',serif;font-style:normal;font-weight:400;}
 .mx sub{font-size:.72em;line-height:0;vertical-align:sub;}
 .soon{text-align:center;color:var(--muted);padding:44px 0;}
 .grp{font-family:'Space Grotesk',system-ui,sans-serif;font-size:1rem;color:var(--muted);margin:22px 0 8px;}
@@ -202,7 +204,8 @@ button.primary:hover{background:var(--accent-dark);color:#fff;}
 .cq-plus::before,.cq-plus::after,.cq-div::before{content:"";position:absolute;}
 .cq-plus::before,.cq-div::before{left:0;right:0;top:50%;height:0;border-top:2px solid currentColor;margin-top:-1px;}
 .cq-plus::after{top:0;bottom:0;left:50%;width:0;border-left:2px solid currentColor;margin-left:-1px;}
-.cq-div::after{content:"";position:absolute;left:50%;top:50%;width:3px;height:3px;margin:-1.5px 0 0 -1.5px;border-radius:50%;background:currentColor;box-shadow:0 -.26em 0 currentColor,0 .26em 0 currentColor;}
+.cq-div{width:.7em;}
+.cq-div::after{content:"";position:absolute;left:0;right:0;top:0;bottom:0;width:auto;height:auto;margin:0;border-radius:0;box-shadow:none;background:radial-gradient(circle .085em at 50% 15%,currentColor 96%,transparent 100%),radial-gradient(circle .085em at 50% 85%,currentColor 96%,transparent 100%);}   /* ÷ comme \div de LaTeX : barre + deux points ronds */
 .fneg,.cq-neg{display:inline-block;width:.6em;height:0;border-top:2px solid currentColor;vertical-align:middle;margin-right:.3em;}
 .cq-neg{width:.5em;margin-right:.12em;}
 .cq-q sup,.cq-formula sup,.cq-opts sup,.opt-btn sup,.expl sup{font-size:.72em;line-height:0;}
@@ -257,7 +260,13 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 .mv{font-family:var(--mf);font-style:normal;font-size:1.12em;}
 .mx{font-family:var(--mf);font-size:1.12em;}
 .mn{position:relative;top:.07em;}
+.gsp{display:inline-block;width:.17em;}
 #content.lit :is(.lq,.opt-btn,.match-item,.fill-row,.fill-row input){font-family:var(--mf);}
+/* nombres tapés dans les cases : mode maths partout (comme en calcul littéral) */
+#content :is(.fill-row,.frac-in) input:not(.lit-in){font-family:var(--mf);}
+#content :is(.fill-row,.frac-in) input:not(.lit-in):not(.exp-input){font-size:1.4rem;font-weight:600;}
+#content.nomath :is(.fill-row,.frac-in) input:not(.lit-in){font-family:'Space Grotesk',monospace;font-size:1.15rem;font-weight:400;}
+
 #content.lit :is(.lq,.opt-btn,.match-item,.fill-row) :is(.mx,.mv){font-size:1em;}
 #content.lit .lq{font-size:1.9rem!important;}
 #content.lit .opt-btn{font-size:1.35rem!important;}
@@ -397,6 +406,9 @@ h1,.subtitle{padding:0 46px;}
 .pvk.eq{background:var(--accent);border-color:var(--accent);color:#fff;}
 .pvk.span2{grid-column:span 2;}
 .tbwrap{overflow-x:auto;margin:6px 0 14px;}
+#exo.session #content .tbwrap{overflow:visible;}
+.tbwrap.tb-fit{overflow:hidden;}
+.tbwrap.tb-fit .tbsheet{margin:0;transform-origin:top left;}
 .tbsheet{border-collapse:collapse;margin:0 auto;font-family:'Space Grotesk',system-ui,sans-serif;font-size:.95rem;}
 .tbsheet th{background:var(--line);color:var(--muted);font-weight:500;font-size:.78rem;border:1px solid var(--line);padding:3px 10px;min-width:24px;}
 .tbsheet td{border:1px solid var(--line);background:var(--card);color:var(--ink);text-align:center;padding:5px 12px;min-width:58px;height:30px;}
@@ -1057,6 +1069,7 @@ function _newQuestion(){
   updateStreakDisplay();
   state.resolved=false; setNewBtn();
   document.getElementById('content').classList.toggle('lit',state.theme==='lit');
+  document.getElementById('content').classList.toggle('nomath',state.theme==='tab'||state.theme==='scr');
   document.getElementById('content').innerHTML='';
   if(state.theme==='cq'){
     renderCqQCM();   /* questions de cours : QCM uniquement pour l'instant */
@@ -1292,7 +1305,7 @@ function renderSciQCM(){
     arr=shuffle(arr).slice(0,3);
     const opts=shuffle([mk(q.a,q.n),...arr]);
     content.innerHTML=`
-      <div class="question">${fmt(q.dec)} = ? <span style="font-size:.8em;color:var(--muted);">(écriture scientifique)</span></div>
+      <div class="question">${fmt(q.dec)} = ?</div>
       <div class="options">${opts.map(o=>`<button class="opt-btn" data-k="${o.key}">${sciStr(o.a,o.n)}</button>`).join('')}</div>
       <div class="feedback" id="fb"></div>`;
     content.querySelectorAll('.opt-btn').forEach(btn=>{
@@ -2685,7 +2698,7 @@ function renderDivTrou(){
 }
 /* ===== fin divisions par 10, 100 et 1 000 ===== */
 function padHM(n){ return String(n).padStart(2,'0'); }
-function clockLabel(q){ return `${padHM(q.h)}h${padHM(q.m)}`; }
+function clockLabel(q){ return `<span class="mx cqm">${padHM(q.h)}h${padHM(q.m)}</span>`; }
 function clockSVG(h,m,size){
   size=size||140;
   const minuteAngle=m*6;
@@ -2713,7 +2726,7 @@ function clockSVG(h,m,size){
 function genClock(){ const h=Math.floor(Math.random()*24); return {h, m:Math.floor(Math.random()*60), alt:(h+12)%24}; }
 function explainClock(q){
   const alt=q.alt!==undefined?q.alt:(q.h+12)%24;
-  return `${clockLabel(q)} (ou ${padHM(alt)}h${padHM(q.m)} — une horloge à aiguilles ne dit pas si c'est le matin ou l'après-midi, les deux réponses sont acceptées). La petite aiguille (heures) est un peu après le ${q.h%12}, la grande aiguille (minutes) pointe vers la marque des ${q.m} minutes.`;
+  return `${clockLabel(q)} (ou <span class="mx cqm">${padHM(alt)}h${padHM(q.m)}</span> — une horloge à aiguilles ne dit pas si c'est le matin ou l'après-midi, les deux réponses sont acceptées). La petite aiguille (heures) est un peu après le ${q.h%12}, la grande aiguille (minutes) pointe vers la marque des ${q.m} minutes.`;
 }
 function renderClockQCM(){
   const q=withHistory(genClock); q.ans=q.h*60+q.m; state.current=q;
@@ -2761,7 +2774,7 @@ function renderClockTrou(){
   const content=document.getElementById('content');
   content.innerHTML=`
     <div class="clock-wrap">${clockSVG(q.h,q.m)}</div>
-    <div class="fill-row hm-row"><input type="text" id="ansH" inputmode="numeric" maxlength="2" placeholder="?" autocomplete="off">h<input type="text" id="ansM" inputmode="numeric" maxlength="2" placeholder="?" autocomplete="off"></div>
+    <div class="fill-row hm-row"><input type="text" id="ansH" inputmode="numeric" maxlength="2" placeholder="?" autocomplete="off"><span class="mx cqm">h</span><input type="text" id="ansM" inputmode="numeric" maxlength="2" placeholder="?" autocomplete="off"></div>
     <div class="actions"><button class="primary" id="check">Valider</button></div>
     <div class="feedback" id="fb"></div>`;
   const check=()=>{
@@ -3244,8 +3257,8 @@ function renderFracTrou(){
 function lcm2(a,b){ return a/fgcd(a,b)*b; }
 function tf(n,d){ const neg=n<0, m=Math.abs(n); return (neg?'−':'')+(d===1?`${m}`:`${m}/${d}`); }
 function tOperand(n,d){ return d===1?String(n):fracHTML(n,d); }
-function sfrac(n,d){ return n<0?`<span class="sf"><span>−</span>${tOperand(-n,d)}</span>`:tOperand(n,d); }
-function exprHTML(q){ if(q.nested) return `<span class="frac nest"><span>${fracHTML(q.n1,q.d1)}</span><span>${fracHTML(q.n2,q.d2)}</span></span>`; return `<span class="sf">${tOperand(q.n1,q.d1)}<span>${q.op}</span>${tOperand(q.n2,q.d2)}</span>`; }
+function sfrac(n,d){ return n<0?`<span class="sf" style="gap:.3em;"><span class="cq-neg" role="img" aria-label="moins"></span>${tOperand(-n,d)}</span>`:tOperand(n,d); }
+function exprHTML(q){ if(q.nested) return `<span class="frac nest"><span>${fracHTML(q.n1,q.d1)}</span><span>${fracHTML(q.n2,q.d2)}</span></span>`; return `<span class="sf">${tOperand(q.n1,q.d1)}${({'+':cqPlus,'−':cqMinus,'×':cqX,'÷':cqDiv})[q.op]||`<span>${q.op}</span>`}${tOperand(q.n2,q.d2)}</span>`; }
 function opsText(q){ return `${tf(q.n1,q.d1)} ${q.op} ${tf(q.n2,q.d2)}`; }
 function opsKey(q){ return `${q.an}/${q.ad}`; }
 function opsVal(q){ return `${q.rn}/${q.rd}`; }
@@ -3344,8 +3357,8 @@ function renderOpsQCM(){
   const content=document.getElementById('content');
   const options=shuffle([{n:q.an,d:q.ad},...opsDistractors(q)]);
   content.innerHTML=`
-    <div class="question">${exprHTML(q)} = ?</div>
-    <div class="options">${options.map(o=>`<button class="opt-btn" data-k="${o.n}/${o.d}">${sfrac(o.n,o.d)}</button>`).join('')}</div>
+    <div class="question"><span class="mx cqm sf">${exprHTML(q)}${cqEq}<span>?</span></span></div>
+    <div class="options">${options.map(o=>`<button class="opt-btn" data-k="${o.n}/${o.d}"><span class="mx cqm">${sfrac(o.n,o.d)}</span></button>`).join('')}</div>
     <div class="feedback" id="fb"></div>`;
   content.querySelectorAll('.opt-btn').forEach(btn=>{
     btn.onclick=()=>{
@@ -3379,14 +3392,14 @@ function opsRound(){
   return qs;
 }
 function renderOpsJeu(){
-  renderMatch(opsRound(), exprHTML, x=>sfrac(x.an,x.ad), explainOps);
+  renderMatch(opsRound(), q=>'<span class="mx cqm">'+exprHTML(q)+'</span>', x=>'<span class="mx cqm">'+sfrac(x.an,x.ad)+'</span>', explainOps);
 }
 function renderOpsTrou(){
   const q=nextOps(); state.current=q;
   const content=document.getElementById('content');
   content.innerHTML=`
     <div class="question" style="font-size:1rem;">Écris le résultat sous forme de fraction (réponses non simplifiées acceptées).</div>
-    <div class="fill-row" style="align-items:center;">${exprHTML(q)} = <span class="frac frac-in"><input type="text" id="ansN" inputmode="text" placeholder="?" autocomplete="off"><span class="bar"></span><input type="text" id="ansD" inputmode="numeric" placeholder="?" autocomplete="off"></span></div>
+    <div class="fill-row" style="align-items:center;"><span class="mx cqm sf">${exprHTML(q)}${cqEq}</span><span class="frac frac-in mx"><input type="text" id="ansN" inputmode="text" placeholder="?" autocomplete="off"><span class="bar"></span><input type="text" id="ansD" inputmode="numeric" placeholder="?" autocomplete="off"></span></div>
     <div class="actions"><button class="primary" id="check">Valider</button></div>
     <div class="feedback" id="fb"></div>`;
   document.getElementById('check').onclick=()=>{
@@ -3452,21 +3465,25 @@ function genMdf(kind){
 }
 function nextMdf(){ return withHistory(()=>genMdf(nextMdfKind())); }
 function explainMdf(q){
-  const {n1,d1,n2,d2,op,an,ad}=q, fr=fracHTML, t=exprHTML(q);
-  const g=fgcd(an,ad);
-  const lhs=q.nested?`${fr(n1,d1)} ÷ ${fr(n2,d2)}`:t;
+  /* « mode maths » comme les questions de cours : chaque calcul est dans <span class="mx cqm"> (police des automatismes), signes × ÷ = abaissés (.mn) */
+  const {n1,d1,n2,d2,op,an,ad}=q, fr=fracHTML, g=fgcd(an,ad);
+  const M=x=>`<span class="mx cqm">${x}</span>`;
+  const S=c=>`<span class='mn'>${c}</span>`;
+  const e1=tOperand(n1,d1), e2=tOperand(n2,d2);
+  const flat=`${e1} ${S(op)} ${e2}`;                                   // l'expression écrite sur une ligne
+  const lhs=q.nested?`${fr(n1,d1)} ${S('÷')} ${fr(n2,d2)}`:flat;
   let txt='';
-  if(q.nested) txt+=`La grande barre de fraction signifie « divisé par » : ${t} = ${lhs}. `;
+  if(q.nested) txt+=`La grande barre de fraction signifie « divisé par » : ${M(`${exprHTML(q)} ${S('=')} ${lhs}`)}. `;
   if(d1===1||d2===1){
     const k=d1===1?n1:n2;
-    txt+=`Un entier s'écrit comme une fraction de dénominateur 1 : ${k} = ${fr(k,1)}. `;
+    txt+=`Un entier s'écrit comme une fraction de dénominateur ${M(1)} : ${M(`${k} ${S('=')} ${fr(k,1)}`)}. `;
   }
   if(op==='×'){
-    txt+=`Pour multiplier deux fractions, on multiplie les numérateurs entre eux et les dénominateurs entre eux : ${t} = ${fr(n1,d1)} × ${fr(n2,d2)} = ${fr(`${n1} × ${n2}`,`${d1} × ${d2}`)} = ${fr(an,ad)}.`;
+    txt+=`Pour multiplier deux fractions, on multiplie les numérateurs entre eux et les dénominateurs entre eux : ${M(`${flat} ${S('=')} ${(d1===1||d2===1)?`${fr(n1,d1)} ${S('×')} ${fr(n2,d2)} ${S('=')} `:''}${fr(`${n1} ${S('×')} ${n2}`,`${d1} ${S('×')} ${d2}`)} ${S('=')} ${fr(an,ad)}`)}.`;
   }else{
-    txt+=`Diviser par ${d2===1?`${n2}`:fr(n2,d2)}, c'est multiplier par son inverse (${fr(d2,n2)}) : ${lhs} = ${fr(n1,d1)} × ${fr(d2,n2)} = ${fr(`${n1} × ${d2}`,`${d1} × ${n2}`)} = ${fr(an,ad)}.`;
+    txt+=`Diviser par ${M(d2===1?`${n2}`:fr(n2,d2))}, c'est multiplier par son inverse (${M(fr(d2,n2))}) : ${M(`${lhs} ${S('=')} ${fr(n1,d1)} ${S('×')} ${fr(d2,n2)} ${S('=')} ${fr(`${n1} ${S('×')} ${d2}`,`${d1} ${S('×')} ${n2}`)} ${S('=')} ${fr(an,ad)}`)}.`;
   }
-  if(g>1) txt+=` On peut ensuite simplifier : la fraction irréductible est ${fr(q.rn,q.rd)} (en divisant par ${g}).`;
+  if(g>1) txt+=` On peut ensuite simplifier : la fraction irréductible est ${M(fr(q.rn,q.rd))} (en divisant par ${M(g)}).`;
   return txt;
 }
 function mdfDistractors(q){
@@ -3486,8 +3503,8 @@ function renderMdfQCM(){
   const content=document.getElementById('content');
   const options=shuffle([{n:q.an,d:q.ad},...mdfDistractors(q)]);
   content.innerHTML=`
-    <div class="question">${exprHTML(q)} = ?</div>
-    <div class="options">${options.map(o=>`<button class="opt-btn" data-k="${o.n}/${o.d}">${sfrac(o.n,o.d)}</button>`).join('')}</div>
+    <div class="question"><span class="mx cqm sf">${exprHTML(q)}${cqEq}<span>?</span></span></div>
+    <div class="options">${options.map(o=>`<button class="opt-btn" data-k="${o.n}/${o.d}"><span class="mx cqm">${sfrac(o.n,o.d)}</span></button>`).join('')}</div>
     <div class="feedback" id="fb"></div>`;
   content.querySelectorAll('.opt-btn').forEach(btn=>{
     btn.onclick=()=>{
@@ -3521,14 +3538,14 @@ function mdfRound(){
   return qs;
 }
 function renderMdfJeu(){
-  renderMatch(mdfRound(), exprHTML, x=>sfrac(x.an,x.ad), explainMdf);
+  renderMatch(mdfRound(), q=>'<span class="mx cqm">'+exprHTML(q)+'</span>', x=>'<span class="mx cqm">'+sfrac(x.an,x.ad)+'</span>', explainMdf);
 }
 function renderMdfTrou(){
   const q=nextMdf(); state.current=q;
   const content=document.getElementById('content');
   content.innerHTML=`
     <div class="question" style="font-size:1rem;">Écris le résultat sous forme de fraction (réponses non simplifiées acceptées).</div>
-    <div class="fill-row" style="align-items:center;">${exprHTML(q)} = <span class="frac frac-in"><input type="text" id="ansN" inputmode="numeric" placeholder="?" autocomplete="off"><span class="bar"></span><input type="text" id="ansD" inputmode="numeric" placeholder="?" autocomplete="off"></span></div>
+    <div class="fill-row" style="align-items:center;"><span class="mx cqm sf">${exprHTML(q)}${cqEq}</span><span class="frac frac-in mx"><input type="text" id="ansN" inputmode="numeric" placeholder="?" autocomplete="off"><span class="bar"></span><input type="text" id="ansD" inputmode="numeric" placeholder="?" autocomplete="off"></span></div>
     <div class="actions"><button class="primary" id="check">Valider</button></div>
     <div class="feedback" id="fb"></div>`;
   document.getElementById('check').onclick=()=>{
@@ -3551,7 +3568,7 @@ function renderMdfTrou(){
     }else if(equiv){
       rowEl.classList.add('anim-good');
       bumpStreak(getStreak());
-      fb.innerHTML=`Exact, bravo ! Info : le résultat non simplifié est ${sfrac(q.an,q.ad)} et la fraction irréductible ${sfrac(q.rn,q.rd)}.`;
+      fb.innerHTML=`Exact, bravo ! Info : le résultat non simplifié est <span class="mx cqm">${sfrac(q.an,q.ad)}</span> et la fraction irréductible <span class="mx cqm">${sfrac(q.rn,q.rd)}</span>.`;
       fb.className='feedback ok';
       document.getElementById('check').style.display='none'; content.querySelectorAll('input').forEach(i=>i.disabled=true);
     }else{
@@ -5124,8 +5141,30 @@ const cqEqWrapDivs=h=>(h||'').replace(/(<div class="(?:question cq-q|cq-formula|
    Les signes < > ≤ ≥ restent des caractères du texte. */
 /* « mode maths » : toute expression littérale (au moins une lettre en <i>) est écrite avec la police des automatismes de calcul littéral
    (chiffres et signes en romain, lettres en italique, signes − + = légèrement abaissés). Les mots autour ne changent pas. */
+/* unités en « mode maths » : les symboles (km, h, min, g, mL, L, s…) passent en lettres de la police maths (italique, comme les variables) ;
+   écrites en toutes lettres (heure, minutes, mètres) elles restent en texte normal. Ne touche ni aux variables <i>, ni aux exposants, ni à ce qui est déjà en mode maths. */
+const MU_UL='km|hm|dam|dm|cm|mm|kg|hg|dag|dg|cg|mg|kL|hL|daL|dL|cL|mL|min|ms|m|g|L|h|s';
+const MU_NB='[\\p{L}\\d\'\u2019\\-]';
+const MU_UNIT='(?:'+MU_UL+')[\u00b2\u00b3]?(?:\\/(?:'+MU_UL+')[\u00b2\u00b3]?)?';
+const MU_RB=new RegExp('(^|[^\\p{L}\\d\'\u2019\\-])('+MU_UNIT+')(?!'+MU_NB+')','gu');
+const MU_RT=new RegExp('(\\d[ \u00a0\u202f]*)(t|l)(?!'+MU_NB+')','gu');
+function mathUnits(h){
+  if(!h||h.indexOf('<')<0&&!/[a-zA-Z]/.test(h)) return h;
+  const parts=h.split(/(<\/?[a-zA-Z][^>]*>)/), stack=[]; let skip=0;
+  return parts.map((t,i)=>{
+    if(i%2===0) return skip>0?t:t.replace(MU_RB,(m,pre,u)=>pre+'<i>'+u+'</i>').replace(MU_RT,(m,d,u)=>d+'<i>'+u+'</i>');
+    const open=/^<([a-zA-Z][a-zA-Z0-9]*)\b/.exec(t);
+    if(t[1]==='/'){ if(stack.pop()) skip--; }
+    else if(open&&!/^(br|input|img|hr|wbr)$/i.test(open[1])&&!/\/>$/.test(t)){
+      const sk=/^(i|sup|sub|svg|script|style|textarea|option)$/i.test(open[1])||/class="[^"]*\b(mx|mv|ms)\b/.test(t);
+      stack.push(sk); if(sk) skip++;
+    }
+    return t;
+  }).join('');
+}
 /* enveloppe : ne retraite jamais ce qui est déjà en « mode maths » (<span class="mx …">), donc on peut l'appliquer plusieurs fois sans empiler les styles */
 function mathRuns(h){
+  h=mathUnits(h);
   if(!h||h.indexOf('class="mx')<0) return mathRuns0(h);
   const parts=h.split(/(<\/?[a-zA-Z][^>]*>)/); let out='', seg='', d=0;
   parts.forEach((t,i)=>{
@@ -5149,10 +5188,11 @@ function mathRuns0(h){
     else { bs.push(m[0]); flat+='\uE004'; }
   }
   flat+=h.slice(last);
-  const core='(?:[\\uE001-\\uE003]|\\d+(?:[\\u00a0\\u202f]\\d{3})*(?:,\\d+)?|[()\\[\\]]|[\u2032\u2033]|\u2212(?=[\\uE001-\\uE003\\d(\\[])|\u2026)';
+  const core='(?:[\\uE001-\\uE003]|\\d+(?:[\\u00a0\\u202f]\\d{3})*(?:,\\d+(?:[\\u00a0\\u202f]\\d{1,3})*)?|[()\\[\\]]|[\u2032\u2033]|\u2212(?=[\\uE001-\\uE003\\d(\\[])|\u2026)';
   const RUN=new RegExp(core+'+(?:(?: ?(?:[+\u2212\u00d7\u00f7=<>\u2264\u2265\u2260\u2208\u2209\u22a5\u2225]|\\/\\/) ?)'+core+'+)*','g');
   let vi=0,si=0,fi=0,bi=0;
-  const inner=t=>t.replace(/<i>([^<]*)<\/i>/g,'$1').replace(/\u2212/g,MINUS);
+  const TS='<span class="gsp"></span>';
+  const inner=t=>t.replace(/<i>([^<]*)<\/i>/g,'$1').replace(/\u2212/g,MINUS).replace(/[\u00a0\u202f]/g,TS);
   const raw=seg=>seg.replace(/[\uE001-\uE004]/g,c=>c==='\uE001'?(v=>'<i'+(v.ms?' class="ms"':'')+'>'+v.t+'</i>')(vs[vi++]):c==='\uE002'?(x=>'<'+x.g+'>'+x.c+'</'+x.g+'>')(ss[si++]):c==='\uE003'?fs[fi++]:bs[bi++]);
   let out='',i=0;
   while((m=RUN.exec(flat))){
@@ -5178,7 +5218,8 @@ function mathRuns0(h){
         else if(c==='\uE002'){ const x=ss[si++]; h2+='<'+x.g+'>'+inner(x.c)+'</'+x.g+'>'; }
         else if(c==='\uE003') h2+=inner(fs[fi++]);
         else if(c==='\u2212') h2+=MINUS;
-        else if(c==='+'||c==='=') h2+="<span class='mn'>"+c+"</span>";
+        else if(c==='+'||c==='='||c==='\u00d7'||c==='\u00f7') h2+="<span class='mn'>"+c+"</span>";   /* × et ÷ abaissés comme + − = : alignés sur le = */
+        else if(c==='\u00a0'||c==='\u202f') h2+=TS;   /* séparateur de groupes de 3 chiffres : fine espace, toujours de la même largeur */
         else h2+=c;
       }
       out+='<span class="mx cqm">'+h2+'</span>';
@@ -5190,7 +5231,7 @@ function mathRuns0(h){
 }
 const cqM=h=>cqOps(mathRuns(h));
 /* signe d'opération entre des mots (diviseur × quotient + reste) : même « mode maths » que dans les expressions (police des automatismes, + = − légèrement abaissés) */
-const cqSym=c=>' <span class="mx cqm">'+((c==='+'||c==='='||c==='−')?"<span class='mn'>"+c+'</span>':c)+'</span> ';
+const cqSym=c=>' <span class="mx cqm">'+((c==='+'||c==='='||c==='−'||c==='×'||c==='÷')?"<span class='mn'>"+c+'</span>':c)+'</span> ';
 function cqOps(h){
   let mx=0;
   return cqEqWrap(h).split(/(<\/?[a-zA-Z][^>]*>)/).map((t,i)=>{
@@ -7382,6 +7423,96 @@ const startLit=()=>{ document.getElementById('litNote').hidden=true; document.ge
 go('home');
 </script>
 <script>
+/* MATHMODE-AUTO : met automatiquement en « mode maths » (police des automatismes, signes abaissés) les nombres et formules
+   affichés dans les exercices (#content) : questions, réponses, explications, messages. Réutilise mathRuns() du site. */
+(function(){
+  const content=document.getElementById('content');
+  if(!content||typeof mathRuns!=='function') return;
+  const SAFE=/^(SPAN|I|B|STRONG|EM|SUB|SUP|U|SMALL|BR)$/;
+  const BAD='input,textarea,select,button,svg,canvas,img,video,audio,iframe,a,[id],[contenteditable]';
+  const SKIP='svg,canvas,script,style,input,textarea,select,[contenteditable],.pvcalc,.pykeys,.pdf-pages,.cq-q,.cq-def,.cq-formula,.cq-opts';
+  const hasHandler=el=>!!(el.onclick||el.oninput||el.onkeydown||el.onchange||el.onpointerdown||el.onmousedown||el.ontouchstart);
+  const hasData=el=>{ for(const at of el.attributes) if(at.name.startsWith('data-')) return true; return false; };
+  function unsafe(el){
+    if(!SAFE.test(el.tagName)||hasHandler(el)||hasData(el)) return true;
+    if(el.matches(BAD)||el.querySelector(BAD)) return true;
+    for(const d of el.querySelectorAll('*')) if(hasHandler(d)||hasData(d)) return true;
+    return false;
+  }
+  /* « 3e », « 6e », « 1er » : on laisse ces écritures en texte normal */
+  function protect(html){
+    const keep=[];
+    const out=html.split(/(<[^>]*>)/).map((seg,i)=>i%2?seg:seg.replace(/\b(\d+)(e|er|re|nde)\b/g,m=>'\uE010'+String.fromCharCode(0xE100+keep.push(m)-1)+'\uE011')).join('');
+    return {out,keep};
+  }
+  /* parcourt le HTML en ignorant ce qui est déjà en mode maths (mx), les variables <i>, les exposants, les figures */
+  function textOnly(html,fn){
+    const parts=html.split(/(<\/?[a-zA-Z][^>]*>)/), stack=[]; let skip=0;
+    return parts.map((t,i)=>{
+      if(i%2===0) return skip>0?t:fn(t);
+      const open=/^<([a-zA-Z][a-zA-Z0-9]*)\b/.exec(t);
+      if(t[1]==='/'){ if(stack.pop()) skip--; }
+      else if(open&&!/^(br|input|img|hr|wbr)$/i.test(open[1])&&!/\/>$/.test(t)){
+        const sk=/^(i|sup|sub|svg|script|style)$/i.test(open[1])||/class="[^"]*\b(mx|mv)\b/.test(t);
+        stack.push(sk); if(sk) skip++;
+      }
+      return t;
+    }).join('');
+  }
+  /* signes « + − × ÷ = » (avec leur « ? » éventuel : « ? + 3 = », « 3 + ? ») restés isolés entre deux morceaux de texte */
+  const SIGN_RE=/(^|[\s\u00a0])((?:\?[ \u00a0])?)([+=\u2212\u00d7\u00f7])((?:[ \u00a0]\?)?)(?=[\s\u00a0]|$)/g;
+  const signs=html=>textOnly(html,t=>t.replace(SIGN_RE,(m,pre,q1,c,q2)=>pre+'<span class="mx cqm">'+q1+"<span class='mn'>"+c+'</span>'+q2+'</span>'));
+  function math(html){
+    const {out,keep}=protect(html);
+    return signs(mathRuns(out).replace(/\uE010([\uE100-\uE1FF])\uE011/g,(m,c)=>keep[c.charCodeAt(0)-0xE100]));
+  }
+  function flush(parent,group){
+    if(!group.length) return;
+    const tmp=document.createElement('div');
+    group.forEach(n=>tmp.appendChild(n.cloneNode(true)));
+    const before=tmp.innerHTML;
+    const after=math(before);
+    if(after===before) return;
+    const t=document.createElement('template'); t.innerHTML=after;
+    parent.insertBefore(t.content,group[0]);
+    group.forEach(n=>n.remove());
+  }
+  function walk(parent){
+    let group=[];
+    for(const n of [...parent.childNodes]){
+      if(n.nodeType===3||(n.nodeType===1&&!unsafe(n))) group.push(n);
+      else{
+        flush(parent,group); group=[];
+        if(n.nodeType===1&&!n.matches(SKIP)&&(n.tagName!=='BUTTON'||n.matches('.opt-btn,.match-item'))) walk(n);
+      }
+    }
+    flush(parent,group);
+  }
+  /* séparateur de groupes de 3 chiffres dans du mode maths déjà construit à la main (mx) : fine espace de largeur fixe */
+  function thin(root){
+    const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>/\d[\u00a0\u202f]\d/.test(n.nodeValue)&&n.parentElement&&n.parentElement.closest('.mx,.mv')&&!n.parentElement.closest('input,textarea,script,style')?1:2});
+    const list=[]; while(w.nextNode()) list.push(w.currentNode);
+    list.forEach(n=>{
+      const parts=n.nodeValue.replace(/(\d)[\u00a0\u202f](?=\d)/g,'$1\uE020').split('\uE020');
+      if(parts.length<2) return;
+      const f=document.createDocumentFragment();
+      parts.forEach((t,i)=>{ if(i){ const sp=document.createElement('span'); sp.className='gsp'; f.appendChild(sp); } f.appendChild(document.createTextNode(t)); });
+      n.replaceWith(f);
+    });
+  }
+  const obs=new MutationObserver(recs=>{
+    if(typeof state!=='undefined'&&state&&(state.theme==='cq'||state.theme==='tab'||state.theme==='scr')) return;     // cours : déjà géré à part ; informatique (tableur, Scratch) : pas de mode maths
+    const targets=new Set(recs.filter(r=>r.type==='childList').map(r=>r.target));
+    obs.disconnect();
+    try{
+      targets.forEach(t=>{ if(t.nodeType===1&&content.contains(t)&&!t.closest(SKIP)){ walk(t); thin(t); } });
+    }catch(e){ console.error('mode maths auto',e); }
+    obs.observe(content,{childList:true,subtree:true});
+  });
+  obs.observe(content,{childList:true,subtree:true});
+})();
+</script>
+<script>
 /* Entraînement personnalisé : on choisit les automatismes, les questions sont tirées au hasard parmi eux. */
 (function(){
   const TR={
@@ -7980,6 +8111,28 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
   pwd.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); tryLogin(); } });
 
   applyProf();
+})();
+
+/* Tableur : si le tableau est plus large que l'écran, on le réduit pour qu'il y tienne en entier (au lieu d'une barre de défilement). */
+(function(){
+  const c=document.getElementById('content'); if(!c) return;
+  function fitSheets(){
+    const inSession=document.getElementById('exo')&&document.getElementById('exo').classList.contains('session');
+    c.querySelectorAll('.tbwrap').forEach(w=>{
+      const t=w.querySelector('.tbsheet'); if(!t) return;
+      w.classList.remove('tb-fit'); t.style.transform=''; w.style.height='';
+      if(inSession) return;   /* en séance, fit() met déjà tout à l'échelle */
+      const avail=w.clientWidth, need=t.offsetWidth;
+      if(avail>0&&need>avail+1){
+        const k=avail/need;
+        w.classList.add('tb-fit'); t.style.transform='scale('+k+')'; w.style.height=Math.ceil(t.offsetHeight*k)+'px';
+      }
+    });
+  }
+  let raf=0; const sched=()=>{ cancelAnimationFrame(raf); raf=requestAnimationFrame(fitSheets); };
+  new MutationObserver(sched).observe(c,{childList:true,subtree:true});
+  addEventListener('resize',sched); addEventListener('orientationchange',sched);
+  sched();
 })();
 </script>
 </body>
