@@ -2490,7 +2490,8 @@ function renderCompTrou(){
 /* ===== Multiplications par 10, 100 et 1 000 ===== */
 const MUL_R9=x=>Math.round(x*1e9)/1e9;
 function genMul(){
-  const k=1+Math.floor(Math.random()*3), p=Math.pow(10,k);
+  const H=window.SESS_HINT&&window.SESS_HINT.mk;   /* séance en classe : facteur (10, 100 ou 1 000 → 1, 2 ou 3) imposé par le plan de la série */
+  const k=H||1+Math.floor(Math.random()*3), p=Math.pow(10,k);
   let aNum,d;
   const r=Math.random();
   const lastNZ=n=>{ if(n%10===0) n+=1+Math.floor(Math.random()*9); return n; };
@@ -2512,7 +2513,7 @@ function genMul(){
   return {pk:`${aNum}|${d}|${k}|${rev?1:0}`,a,p,k,d,rev,ans};
 }
 function mulLabel(q){ return q.rev?`${fmt(q.p)} × ${fmt(q.a)}`:`${fmt(q.a)} × ${fmt(q.p)}`; }
-const MUL_RANGS={5:'centaines de mille',4:'dizaines de mille',3:'milliers',2:'centaines',1:'dizaines',0:'unités','-1':'dixièmes','-2':'centièmes','-3':'millièmes','-4':'dix-millièmes','-5':'cent-millièmes'};
+const MUL_RANGS={5:'centaines de mille',4:'dizaines de mille',3:'milliers',2:'centaines',1:'dizaines',0:'unités','-1':'dixièmes','-2':'centièmes','-3':'millièmes','-4':'dix-millièmes','-5':'cent-millièmes','-6':'millionièmes'};
 function explainMul(q){
   /* La virgule ne bouge jamais : ce sont les chiffres qui changent de rang (valeur ×10, ×100, ×1 000). */
   const {a,p,k,ans}=q, s=k>1?'s':'';
@@ -2616,7 +2617,8 @@ function renderMulTrou(){
 /* ===== fin multiplications par 10, 100 et 1 000 ===== */
 /* ===== Divisions par 10, 100 et 1 000 ===== */
 function genDiv(){
-  const k0=1+Math.floor(Math.random()*3);
+  const H=window.SESS_HINT&&window.SESS_HINT.mk;   /* séance en classe : facteur (10, 100 ou 1 000 → 1, 2 ou 3) imposé par le plan de la série */
+  const k0=H||1+Math.floor(Math.random()*3);
   let aNum,d,k=k0;
   const r=Math.random();
   const lastNZ=n=>{ if(n%10===0) n+=1+Math.floor(Math.random()*9); return n; };
@@ -2633,7 +2635,8 @@ function genDiv(){
     if(fr[d-1]==='0') fr[d-1]=String(1+Math.floor(Math.random()*9));
     aNum=ip*Math.pow(10,d)+Number(fr.join(''));
   }
-  if(d+k>5) k=Math.max(1,5-d);                                                  /* résultat lisible : au plus 5 décimales */
+  if(H&&d+k>6) return genDiv();   /* facteur imposé : on tire un autre nombre plutôt que de changer le facteur */
+  if(d+k>6) k=Math.max(1,6-d);                                                  /* résultat lisible : au plus 6 décimales */
   const a=MUL_R9(aNum/Math.pow(10,d));
   const ans=MUL_R9(aNum/Math.pow(10,d+k));
   return {pk:`${aNum}|${d}|${k}`,aNum,a,p:Math.pow(10,k),k,d,ans};
@@ -7957,7 +7960,8 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
   }
   /* ---------- diversité dans une série en classe ----------
      solides : tous différents (7 noms d'abord, puis on recommence en variant les dessins) ;
-     écriture scientifique : autant de « scientifique → décimal » que l'inverse, puissances positives et négatives à égalité (sans 0), valeurs variées. */
+     écriture scientifique : autant de « scientifique → décimal » que l'inverse, puissances positives et négatives à égalité (sans 0), valeurs variées ;
+     × et ÷ par 10, 100, 1 000 : le même nombre de questions pour chaque facteur (au moins 3 de chaque pour 10 questions). */
   const shuf=a=>{ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
   function planSol(c){
     const out=[], used={}; let last=null;
@@ -8012,6 +8016,14 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
       return t==='to'?{f:o,t:'m',val}:{f:'m',t:o,val};
     });
   }
+  /* × et ÷ par 10, 100, 1 000 : autant de questions par facteur (3 + 3 + 3 pour 10 questions), le(s) reste(s) tiré(s) au hasard,
+     jamais deux fois le même facteur de suite quand c'est possible */
+  function planPow10(c){
+    const base=Math.floor(c/3), ex=shuf([1,2,3]).slice(0,c%3);
+    let ks=[]; [1,2,3].forEach(k=>{ for(let i=0;i<base;i++) ks.push(k); }); ex.forEach(k=>ks.push(k));
+    for(let tr=0;tr<80;tr++){ ks=shuf(ks); if(!ks.some((x,i)=>i&&x===ks[i-1])) break; }
+    return ks;
+  }
   function startSession(lv,ids,n,t){
     const exo=$('exo'), A=SCREENS[lv+'/auto'].items;
     const name=i=>{ const it=A.find(x=>x[0]===i); return it?it[1].replace(/^[*\d.\s]+/,''):''; };
@@ -8024,7 +8036,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
     const back=$('back'); back.hidden=false; back.onclick=()=>go(lv+'/auto/classe');
     ss={lv,ids,n,t,i:0,items:[],timer:null,t0:0,k:0,prevMode:state.mode};
     ss.plan={};   /* un plan par automatisme « solides » / « écriture scientifique » : c questions pour cet automatisme (ils alternent s'il y en a plusieurs) */
-    ids.forEach((id,j)=>{ const th=TR[id].theme, c=Math.floor(n/ids.length)+(j<n%ids.length?1:0); if(th==='sol') ss.plan[id]=planSol(c); else if(th==='sci') ss.plan[id]=planSci(c); else if(th==='conversions'&&TR[id].cat==='long6') ss.plan[id]=planLong6(c); });
+    ids.forEach((id,j)=>{ const th=TR[id].theme, c=Math.floor(n/ids.length)+(j<n%ids.length?1:0); if(th==='sol') ss.plan[id]=planSol(c); else if(th==='sci') ss.plan[id]=planSci(c); else if(th==='conversions'&&TR[id].cat==='long6') ss.plan[id]=planLong6(c); else if(th==='mult10'||th==='div10') ss.plan[id]=planPow10(c); });
     state.mode='trou'; state.lvl=lv; setTheme(ids[0]);
     renderTabs();
     $('ssBar').hidden=false; $('ssTrack').hidden=false; $('ssNav').hidden=true;
@@ -8036,7 +8048,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
     setLeft(ss.t);
     setTheme(ss.ids[(ss.i-1)%ss.ids.length]);   /* un seul automatisme : toujours le même ; deux : ils alternent */
     { const id=ss.ids[(ss.i-1)%ss.ids.length], pl=ss.plan&&ss.plan[id], it=pl&&pl[Math.floor((ss.i-1)/ss.ids.length)];
-      window.SESS_HINT=it?(state.theme==='sol'?{sol:it}:state.theme==='conversions'?{lg:it}:{sci:it}):null; }
+      window.SESS_HINT=it?(state.theme==='sol'?{sol:it}:state.theme==='conversions'?{lg:it}:(state.theme==='mult10'||state.theme==='div10')?{mk:it}:{sci:it}):null; }
     _newQuestion();
     window.SESS_HINT=null;
     if(state.theme==='mld'){   /* consigne unique, sans « plusieurs réponses possibles » */
