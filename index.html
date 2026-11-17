@@ -548,6 +548,9 @@ h1,.subtitle{padding:0 46px;}
 .ss-pause{width:34px;height:34px;display:flex;align-items:center;justify-content:center;padding:0;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);cursor:pointer;}
 .ss-pause:hover{border-color:var(--accent);color:var(--accent);}
 .ss-pause[hidden]{display:none;}
+.ss-opt{display:flex;align-items:center;justify-content:space-between;gap:14px;cursor:pointer;font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;font-size:.95rem;color:var(--ink);}
+.ss-opt small{display:block;font-weight:400;font-size:.8rem;color:var(--muted);margin-top:2px;}
+#ssBar.notimer .ss-track,#ssBar.notimer .ss-time{display:none;}
 
 /* Séance en classe : plein écran pour le vidéoprojecteur */
 .ss-exit{display:none;}
@@ -6813,6 +6816,73 @@ Object.assign(CQ_GLAB,{'eg6-med':'Définition de la médiatrice','eg6-mil':'Mili
     cqW('Pour tracer la bissectrice d’un angle, on trace la perpendiculaire à l’un des côtés.','la bissectrice partage l’angle en deux angles de même mesure ; elle n’est pas perpendiculaire à un côté en général.')]);
 })();
 
+/* ===== Questions de cours 6e – GM 1 : Conversions =====
+   Thèmes : 1 = I – Préfixes · 2 = II – Longueur, masse et capacité · 3 = III – Aire
+   Toutes les questions portent sur la feuille de cours (p. 36-37) : sens des préfixes, unités et symboles, ordre des unités dans les tableaux de conversion. */
+Object.assign(CQ_GLAB,{'gm1-kilo':'Préfixe « kilo »','gm1-hecto':'Préfixe « hecto »','gm1-deca':'Préfixe « déca »','gm1-deci':'Préfixe « déci »','gm1-centi':'Préfixe « centi »','gm1-milli':'Préfixe « milli »',
+  'gm1-ul':'Unité de longueur','gm1-um':'Unité de masse','gm1-uc':'Unité de volume (capacité)','gm1-ua':'Unité d’aire',
+  'gm1-tl':'Tableau des longueurs','gm1-tm':'Tableau des masses','gm1-tc':'Tableau des capacités','gm1-ta':'Tableau des aires',
+  'gm1-nl':'Noms et symboles des unités de longueur','gm1-nm':'Noms et symboles des unités de masse','gm1-nc':'Noms et symboles des unités de capacité','gm1-na':'Noms et symboles des unités d’aire'});
+(function(){
+  const fx=cqM, K='1\u00a0000', NB='\u00a0';
+  const pq=n=>`«${NB}${n}${NB}»`;
+  const SH=a=>shuffle(a.slice());
+  const Qr=(th,id,mk,short)=>CQ_CASES.push({ch:'6gm1',th,pk:'p|'+id,make:()=>{ const o=mk(); return cqMakeProp({stem:fx(o.stem),ok:fx(o.ok),wrong:o.wrong.map(w=>({t:fx(w.t),why:fx(w.why)})),short}); }});
+
+  /* I – Préfixes */
+  const PRE=[{k:'kilo',n:'kilo',m:`${K} fois plus grand`},{k:'hecto',n:'hecto',m:'100 fois plus grand'},{k:'deca',n:'déca',m:'10 fois plus grand'},
+    {k:'deci',n:'déci',m:'10 fois plus petit'},{k:'centi',n:'centi',m:'100 fois plus petit'},{k:'milli',n:'milli',m:`${K} fois plus petit`}];
+  PRE.forEach(p=>{
+    const others=()=>SH(PRE.filter(o=>o!==p)).slice(0,3);
+    Qr(1,`gm1-${p.k}-a`,()=>({stem:`Le préfixe ${pq(p.n)} signifie…`,ok:p.m,
+      wrong:others().map(o=>({t:o.m,why:`c’est la signification du préfixe ${pq(o.n)}.`}))}),true);
+    Qr(1,`gm1-${p.k}-b`,()=>({stem:`Le préfixe qui signifie ${pq(p.m)} est…`,ok:p.n,
+      wrong:others().map(o=>({t:o.n,why:`le préfixe ${pq(o.n)} signifie ${o.m}.`}))}),true);
+    Qr(1,`gm1-${p.k}-c`,()=>({stem:cqPROP,ok:`Le préfixe ${pq(p.n)} signifie ${p.m}.`,
+      wrong:others().map(o=>({t:`Le préfixe ${pq(p.n)} signifie ${o.m}.`,why:`le préfixe ${pq(p.n)} signifie ${p.m}, pas ${o.m}.`}))}));
+  });
+
+  /* II et III – Unités (longueur, masse, capacité, aire) */
+  const UN={m:{nom:'mètre',pl:'mètres',sym:'m',role:'l’unité de longueur'},g:{nom:'gramme',pl:'grammes',sym:'g',role:'l’unité de masse'},
+    L:{nom:'litre',pl:'litres',sym:'L',role:'l’unité utilisée pour exprimer un volume'},a:{nom:'mètre carré',pl:'mètres carrés',sym:'m²',role:'l’unité d’aire'}};
+  const FAM=[
+    {id:'ul',th:2,u:'m',a:'La longueur a pour unité le…',b:'L’unité de longueur se note…',c:x=>`La longueur a pour unité le ${x.nom}. On le note ${x.sym}.`},
+    {id:'um',th:2,u:'g',a:'La masse a pour unité le…',b:'L’unité de masse se note…',c:x=>`La masse a pour unité le ${x.nom}. On le note ${x.sym}.`},
+    {id:'uc',th:2,u:'L',a:'Pour exprimer un volume, on peut utiliser le…',b:'Le litre se note…',c:x=>`On peut exprimer un volume en ${x.pl}, notés ${x.sym}.`},
+    {id:'ua',th:3,u:'a',a:'L’aire a pour unité le…',b:'L’unité d’aire se note…',c:x=>`L’aire a pour unité le ${x.nom}. On le note ${x.sym}.`}];
+  FAM.forEach(f=>{
+    const me=UN[f.u], oth=()=>SH(Object.keys(UN).filter(k=>k!==f.u)).map(k=>UN[k]);
+    Qr(f.th,`gm1-${f.id}-a`,()=>({stem:f.a,ok:me.nom,wrong:oth().map(o=>({t:o.nom,why:`le ${o.nom} est ${o.role}.`}))}),true);
+    Qr(f.th,`gm1-${f.id}-b`,()=>({stem:f.b,ok:me.sym,wrong:oth().map(o=>({t:o.sym,why:`${o.sym} est le symbole du ${o.nom}.`}))}),true);
+    Qr(f.th,`gm1-${f.id}-c`,()=>({stem:cqPROP,ok:f.c(me),wrong:oth().map(o=>({t:f.c(o),why:`le ${o.nom} est ${o.role}.`}))}));
+  });
+
+  /* Tableaux de conversion : ordre des unités, noms et symboles */
+  const NUM=['','une','deux','trois','quatre','cinq','six'];
+  const TB=[
+    {k:'l',th:2,sing:'de longueur',noun:'longueurs',ref:3,refNom:'mètre',u:[['km','kilomètre'],['hm','hectomètre'],['dam','décamètre'],['m','mètre'],['dm','décimètre'],['cm','centimètre'],['mm','millimètre']]},
+    {k:'m',th:2,sing:'de masse',noun:'masses',ref:3,refNom:'gramme',u:[['kg','kilogramme'],['hg','hectogramme'],['dag','décagramme'],['g','gramme'],['dg','décigramme'],['cg','centigramme'],['mg','milligramme']]},
+    {k:'c',th:2,sing:'de capacité',noun:'capacités',ref:3,refNom:'litre',u:[['kL','kilolitre'],['hL','hectolitre'],['daL','décalitre'],['L','litre'],['dL','décilitre'],['cL','centilitre'],['mL','millilitre']]},
+    {k:'a',th:3,sing:'d’aire',noun:'aires',ref:3,refNom:'mètre carré',u:[['km²','kilomètre carré'],['hm²','hectomètre carré'],['dam²','décamètre carré'],['m²','mètre carré'],['dm²','décimètre carré'],['cm²','centimètre carré'],['mm²','millimètre carré']]}];
+  TB.forEach(t=>{
+    const u=t.u, ref=t.ref, idx=u.map((_,i)=>i);
+    const pos=d=>d===-1?`juste à gauche du ${t.refNom}`:d===1?`juste à droite du ${t.refNom}`:`${NUM[Math.abs(d)]} colonnes ${d<0?'à gauche':'à droite'} du ${t.refNom}`;
+    const side=(id,d,word)=>Qr(t.th,`gm1-t${t.k}-${id}`,()=>({stem:`Dans le tableau des ${t.noun}, l’unité écrite juste à ${word} du ${t.refNom} est…`,ok:u[ref+d][0],
+      wrong:SH(idx.filter(j=>j!==ref&&j!==ref+d)).slice(0,3).map(j=>({t:u[j][0],why:`${u[j][0]} est écrit ${pos(j-ref)}.`}))}),true);
+    if(t.k!=='a'){ side('a',-1,'gauche'); side('b',1,'droite'); }   /* pas pour les aires : chaque unité occupe deux colonnes dans le tableau */
+    Qr(t.th,`gm1-t${t.k}-c`,()=>{
+      const s=u.map(x=>x[0]), sw=i=>{ const r=s.slice(); [r[i],r[i+1]]=[r[i+1],r[i]]; return r; }, ii=SH([0,1,2,3,4,5]).slice(0,2);
+      return {stem:`Rangées de la plus grande à la plus petite, les unités ${t.sing} s’écrivent…`,ok:s.join(', '),
+        wrong:[{t:s.slice().reverse().join(', '),why:`c’est l’ordre inverse : ${s[0]} est plus grand que ${s[6]}, il s’écrit en premier.`},
+          ...ii.map(i=>({t:sw(i).join(', '),why:`${s[i]} est plus grand que ${s[i+1]} : il s’écrit avant lui.`}))]};
+    });
+    Qr(t.th,`gm1-n${t.k}-a`,()=>{ const j=pick(idx.filter(i=>i!==ref)); return {stem:`Le ${u[j][1]} se note…`,ok:u[j][0],
+      wrong:SH(idx.filter(i=>i!==j)).slice(0,3).map(i=>({t:u[i][0],why:`${u[i][0]} est le symbole du ${u[i][1]}.`}))}; },true);
+    Qr(t.th,`gm1-n${t.k}-b`,()=>{ const j=pick(idx.filter(i=>i!==ref)); return {stem:`Le symbole ${u[j][0]} désigne le…`,ok:u[j][1],
+      wrong:SH(idx.filter(i=>i!==j)).slice(0,3).map(i=>({t:u[i][1],why:`le ${u[i][1]} se note ${u[i][0]}.`}))}; },true);
+  });
+})();
+
 /* ===== Questions de cours 6e – OGDP 1 : Lecture de données =====
    Thèmes : 1 = I – Tableau simple · 2 = II – Tableau à double entrée · 3 = III – Diagramme en barres · 4 = IV – Diagramme circulaire · 5 = V – Graphique cartésien
    Définitions du cours + lecture de tableaux et de graphiques tirés au hasard (les figures sont ajoutées après cqFinish pour ne pas réécrire leurs chiffres). */
@@ -7301,6 +7371,8 @@ CQ6_DONE.eg6=[['I – Médiatrice','Définition, propriété des points de la m�
 CQ6_DESC.eg6='Médiatrice d’un segment et bissectrice d’un angle';
 CQ6_DONE.ncrp1=[['I – Tableau de numération','Chiffres, rangs, classes et groupes de trois'],['II – « Chiffre des » et « nombre de »','Chiffre des dizaines et nombre de dizaines'],['III – Nombres décimaux','Partie entière, partie décimale et 0 inutiles'],['IV – Différentes écritures','Fraction décimale, nombre mixte et décomposition'],['V – Pourcentages','Définition, calcul et pourcentages fréquents']];
 CQ6_DESC.ncrp1='Tableau de numération, chiffre des et nombre de, partie décimale, fractions décimales, pourcentages';
+CQ6_DONE.gm1=[['I – Préfixes','Kilo, hecto, déca, déci, centi et milli'],['II – Longueur, masse et capacité','Unités, symboles et tableaux de conversion'],['III – Aire','Mètre carré, symboles et tableau des aires']];
+CQ6_DESC.gm1='Préfixes, unités et tableaux de conversion (longueur, masse, capacité, aire)';
 (function(){
   const DOM=[['eg'],['ncrp'],['ogdp'],['gm'],['p']];
   SCREENS['6e/qcours']={title:'Questions de cours 6e',sub:'Choisis un thème',items:DOM.map(([k])=>['6e/qcours/'+k,THEMES6E[k].title])};
@@ -7385,6 +7457,9 @@ function go(s){
     '6e/qcours/ncrp1/3':{theme:'cq',cat:'6ncrp1-3',title:'III – Nombres décimaux',sub:'NCRP 1 – Questions de cours'},
     '6e/qcours/ncrp1/4':{theme:'cq',cat:'6ncrp1-4',title:'IV – Différentes écritures',sub:'NCRP 1 – Questions de cours'},
     '6e/qcours/ncrp1/5':{theme:'cq',cat:'6ncrp1-5',title:'V – Pourcentages',sub:'NCRP 1 – Questions de cours'},
+    '6e/qcours/gm1/1':{theme:'cq',cat:'6gm1-1',title:'I – Préfixes',sub:'GM 1 – Questions de cours'},
+    '6e/qcours/gm1/2':{theme:'cq',cat:'6gm1-2',title:'II – Longueur, masse et capacité',sub:'GM 1 – Questions de cours'},
+    '6e/qcours/gm1/3':{theme:'cq',cat:'6gm1-3',title:'III – Aire',sub:'GM 1 – Questions de cours'},
     '6e/qcours/ncrp4/1':{theme:'cq',cat:'6ncrp4-1',title:'I \u2013 Additions et soustractions',sub:'NCRP 4 \u2013 Questions de cours'},
     '6e/qcours/ncrp4/2':{theme:'cq',cat:'6ncrp4-2',title:'II \u2013 Multiplications',sub:'NCRP 4 \u2013 Questions de cours'},
     '6e/qcours/ncrp4/3':{theme:'cq',cat:'6ncrp4-3',title:'III \u2013 Multiplications par 0,1 ; 0,01…',sub:'NCRP 4 \u2013 Questions de cours'},
@@ -7719,7 +7794,7 @@ function cqRevisionSetup(lv,CH,SK){
   }
 }
 cqRevisionSetup('3e',[['eg1','EG 1 – Propriétés géométriques'],['eg2','EG 2 – Solides'],['nc1','NC 1 – Fractions'],['nc2','NC 2 – Puissances'],['nc3','NC 3 – Calcul littéral'],['nc4','NC 4 – Arithmétique']],'');
-cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 – Cercle et disque'],['eg6','EG 6 – Droites remarquables'],['ncrp1','NCRP 1 – Nombres décimaux'],['ncrp4','NCRP 4 – Additions, soustractions et multiplications'],['ncrp5','NCRP 5 – Divisions'],['ogdp1','OGDP 1 – Lecture de données']],'-6e');
+cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 – Cercle et disque'],['eg6','EG 6 – Droites remarquables'],['ncrp1','NCRP 1 – Nombres décimaux'],['ncrp4','NCRP 4 – Additions, soustractions et multiplications'],['ncrp5','NCRP 5 – Divisions'],['ogdp1','OGDP 1 – Lecture de données'],['gm1','GM 1 – Conversions']],'-6e');
 </script>
 <script>
 /* Menu latéral : accès direct à chaque page du site. */
@@ -7888,7 +7963,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
     const id0=cfg&&items.some(i=>i[0]===cfg.id)?cfg.id:items[0][0];
     let sel=cfg&&Array.isArray(cfg.ids)?[...new Set(cfg.ids.filter(x=>items.some(i=>i[0]===x)))]:[];
     if(!sel.length){ sel=[id0]; if(cfg&&cfg.id2&&cfg.id2!==id0&&items.some(i=>i[0]===cfg.id2)) sel.push(cfg.id2); }
-    const n0=cfg?clamp(cfg.n,1,50):10, t0=cfg?clamp(cfg.t,1,600):20;
+    const n0=cfg?clamp(cfg.n,1,50):10, t0=cfg?clamp(cfg.t,1,600):20, timed0=!(cfg&&cfg.timed===false);
     $('title').textContent='Séance en classe';
     $('subtitle').textContent='Prépare la séance';
     const back=$('back'); back.hidden=false; back.onclick=()=>go(lv+'/auto');
@@ -7903,6 +7978,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
         <div><label class="ss-lbl" for="ssT">Temps par question (secondes)</label>
           <div class="ss-step" data-min="1" data-max="600" data-step="1"><button type="button" data-d="-1" aria-label="Moins">−</button><input type="number" id="ssT" inputmode="numeric" min="1" max="600" value="${t0}"><button type="button" data-d="1" aria-label="Plus">+</button></div></div>
       </div>
+      <label class="ss-opt"><span>Barre de temps et chrono<small>Désactivés, le temps s'écoule quand même : seul l'affichage est masqué.</small></span><span class="switch"><input type="checkbox" id="ssTimed"${timed0?' checked':''}><i></i></span></label>
       <div class="tr-foot" style="margin-top:0"><button type="button" class="primary" id="ssGo">Lancer la séance</button></div>
       <p class="hint" style="margin:-4px 0 0">Chaque question reste affichée pendant le temps choisi. Avec plusieurs automatismes, les questions alternent entre eux. À la fin, tu reviens sur chaque question avec sa réponse, dans le même ordre.</p>
     </div>`;
@@ -7923,7 +7999,8 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
     draw();
     $('ssGo').onclick=()=>{
       const n=clamp(+$('ssN').value||10,1,50), t=clamp(+$('ssT').value||20,1,600);
-      saveCfg({ids:sel.slice(),id:sel[0],n,t}); startSession(lv,sel.slice(),n,t);
+      const timed=$('ssTimed').checked;
+      saveCfg({ids:sel.slice(),id:sel[0],n,t,timed}); startSession(lv,sel.slice(),n,t,timed);
     };
   }
 
@@ -8024,7 +8101,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
     for(let tr=0;tr<80;tr++){ ks=shuf(ks); if(!ks.some((x,i)=>i&&x===ks[i-1])) break; }
     return ks;
   }
-  function startSession(lv,ids,n,t){
+  function startSession(lv,ids,n,t,timed){
     const exo=$('exo'), A=SCREENS[lv+'/auto'].items;
     const name=i=>{ const it=A.find(x=>x[0]===i); return it?it[1].replace(/^[*\d.\s]+/,''):''; };
     prevGo(lv+'/auto'); cur=lv+'/auto/classe';
@@ -8039,7 +8116,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
     ids.forEach((id,j)=>{ const th=TR[id].theme, c=Math.floor(n/ids.length)+(j<n%ids.length?1:0); if(th==='sol') ss.plan[id]=planSol(c); else if(th==='sci') ss.plan[id]=planSci(c); else if(th==='conversions'&&TR[id].cat==='long6') ss.plan[id]=planLong6(c); else if(th==='mult10'||th==='div10') ss.plan[id]=planPow10(c); });
     state.mode='trou'; state.lvl=lv; setTheme(ids[0]);
     renderTabs();
-    $('ssBar').hidden=false; $('ssTrack').hidden=false; $('ssNav').hidden=true;
+    $('ssBar').hidden=false; $('ssBar').classList.toggle('notimer',timed===false); $('ssTrack').hidden=false; $('ssNav').hidden=true;
     nextQ();
   }
   function nextQ(){
