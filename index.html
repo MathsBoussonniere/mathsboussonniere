@@ -115,6 +115,21 @@ h1{font-family:'Space Grotesk',system-ui,sans-serif;font-weight:700;font-size:1.
 .fill-row{display:flex;align-items:baseline;justify-content:center;gap:8px;font-size:1.25rem;flex-wrap:wrap;margin-bottom:18px;font-family:'Space Grotesk',system-ui,sans-serif;}
 .fill-row input{font-family:'Space Grotesk',monospace;font-variant-numeric:tabular-nums;width:150px;padding:6px 4px;font-size:1.15rem;border:none;border-bottom:2px solid var(--ink);background:transparent;color:var(--ink);text-align:center;}
 .fill-row input:focus{outline:none;border-bottom-color:var(--accent);}
+.prio-expr.rel-expr{font-family:var(--mf);font-weight:600;white-space:normal;overflow-x:visible;line-height:1.5;font-size:clamp(1.15rem,5.2vw,1.7rem);}
+.rel-cell{font-family:var(--mf);font-size:1.05rem;}
+#exo.session #content .prio-expr.rel-expr{white-space:normal;}
+.prop-tbl{border-collapse:collapse;margin:6px auto 20px;table-layout:fixed;width:min(100%,560px);}
+.prop-tbl td{border:1.5px solid var(--ink);text-align:center;padding:6px 3px;height:56px;font-size:clamp(1.05rem,4.4vw,1.4rem);white-space:nowrap;}
+.prop-blank{display:inline-block;min-width:2.3em;height:1.15em;border:2.5px solid var(--accent);border-radius:7px;background:var(--accent-soft);vertical-align:-.22em;box-sizing:border-box;}
+.prop-blank.prop-lbl{min-width:1.7em;height:auto;padding:.08em .3em;font-family:'Space Grotesk',system-ui,sans-serif;font-weight:700;font-size:.85em;color:var(--accent-dark);}
+.prop-lblcell{font-family:'Space Grotesk',system-ui,sans-serif;font-weight:700;}
+.prop-in{width:100%;max-width:5em;box-sizing:border-box;padding:4px 2px;font-family:var(--mf);font-size:1.3rem;font-weight:600;text-align:center;border:none;border-bottom:2px solid var(--ink);background:transparent;color:var(--ink);}
+.prop-in:focus{outline:none;border-bottom-color:var(--accent);}
+.prop-in.prop-ok{color:var(--good-txt);}
+.prop-in.prop-ko{color:var(--bad-txt);}
+#exo.session #content .prop-tbl{table-layout:auto;width:auto;min-width:min(100%,640px);}
+#exo.session #content .prop-tbl td{padding:6px 18px;}
+.sp-key{font-family:inherit;font-size:1.05rem;line-height:1;padding:7px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--muted);cursor:pointer;align-self:center;}
 sup{font-size:.72em;line-height:0;vertical-align:super;}
 .sci-pow{display:inline-block;}
 .fill-row .pow{white-space:nowrap;}
@@ -261,6 +276,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 #content :is(.fill-row,.frac-in) input:not(.lit-in){font-family:var(--mf);}
 #content :is(.fill-row,.frac-in) input:not(.lit-in):not(.exp-input){font-size:1.4rem;font-weight:600;}
 #content.nomath :is(.fill-row,.frac-in) input:not(.lit-in){font-family:'Space Grotesk',monospace;font-size:1.15rem;font-weight:400;}
+/* réponses en mots (multiple, diviseur, « en lettres », nom du solide, nom de la figure) : écriture normale, pas de mode maths */
+#content .fill-row input.txt-in{font:inherit!important;font-size:1.05em!important;font-style:normal!important;}
 
 #content.lit :is(.lq,.opt-btn,.match-item,.fill-row) :is(.mx,.mv){font-size:1em;}
 #content.lit .lq{font-size:1.9rem!important;}
@@ -290,7 +307,17 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   --accent:#00855A; --accent-dark:#00663F; --good:#16A34A; --bad:#FF1F1F;
   --grid:rgba(0,133,90,.11); --accent-soft:rgba(0,133,90,.15);
 }
-:root[data-theme="pink"] .match-item.selected,:root[data-theme="jade"] .match-item.selected{
+:root[data-theme="yellow"]{
+  --bg:#FFF0A3; --card:#FFFFFF; --ink:#3B2F00; --muted:#7A6510; --line:#E8CB4A;
+  --accent:#A07400; --accent-dark:#7A5800; --good:#16A34A; --bad:#FF1F1F;
+  --grid:rgba(160,116,0,.10); --accent-soft:rgba(245,196,0,.28);
+}
+:root[data-theme="sky"]{
+  --bg:#CDEBFF; --card:#FFFFFF; --ink:#0B2F4A; --muted:#3D6C8C; --line:#8CC8EE;
+  --accent:#0A7CC4; --accent-dark:#075E96; --good:#16A34A; --bad:#FF1F1F;
+  --grid:rgba(10,124,196,.10); --accent-soft:rgba(10,124,196,.14);
+}
+:root[data-theme="pink"] .match-item.selected,:root[data-theme="jade"] .match-item.selected,:root[data-theme="yellow"] .match-item.selected,:root[data-theme="sky"] .match-item.selected{
   border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent);
   background:color-mix(in srgb,var(--accent) 38%,var(--card));
 }
@@ -470,6 +497,8 @@ h1,.subtitle{padding:0 46px;}
 .sw-dark{background:#17212C;}
 .sw-pink{background:#EE4B97;}
 .sw-jade{background:#00A86B;}
+.sw-yellow{background:#F5C400;}
+.sw-sky{background:#4FB3F0;}
 /* Affichage de la série / du temps */
 :root[data-hide-score] #score{display:none;}
 :root[data-hide-chrono] #chrono{display:none;}
@@ -578,7 +607,7 @@ body.ss-full .wrap{max-width:none;padding:0;}
 #exo.session .ss-exit{display:flex;align-items:center;justify-content:center;position:absolute;top:12px;left:12px;z-index:70;width:42px;height:42px;padding:0;font-size:1.2rem;line-height:1;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);cursor:pointer;opacity:.4;transition:opacity .15s;}
 #exo.session .ss-exit:hover,#exo.session .ss-exit:focus-visible{opacity:1;}
 </style>
-<script>try{var __t=localStorage.getItem('mb-theme');if(['light','dark','pink','jade','rainbow'].indexOf(__t)>-1)document.documentElement.setAttribute('data-theme',__t);}catch(e){}</script>
+<script>try{var __t=localStorage.getItem('mb-theme');if(['light','dark','pink','jade','yellow','sky','rainbow'].indexOf(__t)>-1)document.documentElement.setAttribute('data-theme',__t);}catch(e){}</script>
 <script>try{var __r=document.documentElement;if(localStorage.getItem('mb-show-score')==='0')__r.setAttribute('data-hide-score','');if(localStorage.getItem('mb-show-chrono')==='0')__r.setAttribute('data-hide-chrono','');}catch(e){}</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
@@ -595,6 +624,8 @@ body.ss-full .wrap{max-width:none;padding:0;}
     <button type="button" class="swatch" role="radio" aria-checked="false" data-theme-pick="dark"><i class="sw sw-dark"></i>Sombre</button>
     <button type="button" class="swatch" role="radio" aria-checked="false" data-theme-pick="pink"><i class="sw sw-pink"></i>Rose</button>
     <button type="button" class="swatch" role="radio" aria-checked="false" data-theme-pick="jade"><i class="sw sw-jade"></i>Jade</button>
+    <button type="button" class="swatch" role="radio" aria-checked="false" data-theme-pick="yellow"><i class="sw sw-yellow"></i>Jaune</button>
+    <button type="button" class="swatch" role="radio" aria-checked="false" data-theme-pick="sky"><i class="sw sw-sky"></i>Bleu ciel</button>
     <button type="button" class="swatch" role="radio" aria-checked="false" data-theme-pick="rainbow"><i class="sw sw-rainbow"></i>Arc-en-ciel</button>
   </div>
   <div class="set-label sp">Affichage</div>
@@ -705,6 +736,31 @@ function fmtChrono(ms){ const s=Math.max(0,Math.floor(ms/1000)); return `${Math.
 function updateChrono(){ const el=document.getElementById('chrono'); if(el) el.textContent='⏱ '+fmtChrono(Date.now()-(state.chronoStart||Date.now())); }
 function resetChrono(){ state.chronoStart=Date.now(); updateChrono(); }
 setInterval(updateChrono,1000);
+/* Portable : le pavé numérique n'a pas de touche espace, or les nombres s'écrivent par groupes de 3 chiffres (1 000).
+   Sur écran tactile, un bouton « espace » apparaît à côté des cases où l'on tape un nombre. */
+(function(){
+  const touch=('ontouchstart' in window)||(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
+  if(!touch) return;
+  function addKeys(host){
+    host.querySelectorAll('input[inputmode="numeric"],input[inputmode="decimal"]').forEach(inp=>{
+      if(inp.classList.contains('rel-in')){   /* nombres relatifs : le pavé numérique de l'iPhone n'a pas de signe moins */
+        if(inp.dataset.sp||inp.disabled) return; inp.dataset.sp='1';
+        const m=document.createElement('button'); m.type='button'; m.className='sp-key'; m.textContent='−'; m.title='Signe moins'; m.setAttribute('aria-label','Signe moins');
+        m.addEventListener('pointerdown',e=>e.preventDefault());
+        m.addEventListener('click',()=>{ if(inp.disabled) return; inp.focus(); const v=inp.value.trim(); inp.value=/^[-−]/.test(v)?v.replace(/^[-−]\s*/,''):'−'+v; inp.dispatchEvent(new Event('input',{bubbles:true})); });
+        inp.insertAdjacentElement('afterend',m); return;
+      }
+      if(inp.dataset.sp||inp.disabled||(inp.maxLength>0&&inp.maxLength<10)||inp.classList.contains('exp-input')||inp.closest('.frac-in,.hm-row,.prop-tbl')) return;
+      inp.dataset.sp='1';
+      const b=document.createElement('button'); b.type='button'; b.className='sp-key'; b.textContent='␣'; b.title='Espace'; b.setAttribute('aria-label','Espace');
+      b.addEventListener('pointerdown',e=>e.preventDefault());   /* garde le clavier ouvert */
+      b.addEventListener('click',()=>{ if(inp.disabled) return; inp.focus(); const a=inp.selectionStart==null?inp.value.length:inp.selectionStart, z=inp.selectionEnd==null?a:inp.selectionEnd; inp.setRangeText(' ',a,z,'end'); inp.dispatchEvent(new Event('input',{bubbles:true})); });
+      inp.insertAdjacentElement('afterend',b);
+    });
+  }
+  function init(){ const host=document.getElementById('content'); if(!host) return; new MutationObserver(()=>addKeys(host)).observe(host,{childList:true,subtree:true}); addKeys(host); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
 function loseStreak(){ const s=getStreak(); s.current=0; updateStreakDisplay(); resetChrono(); return s; }
 function failStreak(){ loseStreak(); resolve(); }
 function abandon(){ if(!state.resolved) loseStreak(); }
@@ -742,6 +798,21 @@ function revealCurrent(){
     if(state.mode==='qcm') content.querySelectorAll('.opt-btn').forEach(b=>{ b.onclick=null; if(b.dataset.k===String(q.val)) b.classList.add('correct'); });
     else{ const el=document.getElementById('ans'); if(el){ el.value=q.val; el.disabled=true; } const c=document.getElementById('check'); if(c){ c.disabled=true; c.style.display='none'; } }
     fb.innerHTML=`Question passée.<br>Réponse : ${q.val}.<span class="expl">${explainPrio(q)}</span>`;
+    return;
+  }
+  if(state.theme==='relat'){
+    if(state.mode==='qcm') content.querySelectorAll('.opt-btn').forEach(b=>{ b.onclick=null; if(Number(b.dataset.k)===q.val) b.classList.add('correct'); });
+    else{ const el=document.getElementById('ans'); if(el){ el.value=relMin(q.val); el.disabled=true; } const c=document.getElementById('check'); if(c){ c.disabled=true; c.style.display='none'; } }
+    fb.innerHTML=`Question passée.<br>Réponse : ${gm(relMin(q.val))}.<span class="expl">${explainRel(q)}</span>`;
+    return;
+  }
+  if(state.theme==='prop'){
+    if(state.mode==='qcm'){ const v=q.blanks[0].val; content.querySelectorAll('.opt-btn').forEach(b=>{ b.onclick=null; if(Math.abs(Number(b.dataset.k)-v)<1e-9) b.classList.add('correct'); }); }
+    else{
+      content.querySelectorAll('.prop-in').forEach(i=>{ i.value=fmt(q.blanks[Number(i.dataset.n)].val); i.disabled=true; });
+      const c=document.getElementById('check'); if(c){ c.disabled=true; c.style.display='none'; }
+    }
+    fb.innerHTML=`Question passée.<br>Réponse : ${q.blanks.map(b=>gm(fmt(b.val))).join(' ; ')}.<span class="expl">${explainProp(q)}</span>`;
     return;
   }
   if(state.theme==='sol'){
@@ -1169,6 +1240,14 @@ function _newQuestion(){
     if(state.mode==='qcm') renderPrioQCM();
     else if(state.mode==='jeu') renderPrioJeu();
     else renderPrioTrou();
+  }else if(state.theme==='relat'){
+    if(state.mode==='qcm') renderRelQCM();
+    else if(state.mode==='jeu') renderRelJeu();
+    else renderRelTrou();
+  }else if(state.theme==='prop'){
+    if(state.mode==='qcm') renderPropQCM();
+    else if(state.mode==='jeu') renderPropJeu();
+    else renderPropTrou();
   }else if(state.theme==='sol'){
     if(state.mode==='qcm') renderSolQCM();
     else if(state.mode==='jeu') renderSolJeu();
@@ -1703,7 +1782,7 @@ function renderFhTrou(){
     ?`<input type="text" id="ans" inputmode="numeric" placeholder="?" autocomplete="off" style="width:110px;"> min`
     :q.to==='frac'
     ?`<span class="frac frac-in"><input type="text" id="ansN" inputmode="numeric" placeholder="?" autocomplete="off"><span class="bar"></span><input type="text" id="ansD" inputmode="numeric" placeholder="?" autocomplete="off"></span><span style="margin-left:.22em;">h</span>`
-    :`<input type="text" id="ans" autocapitalize="off" spellcheck="false" placeholder="en lettres" autocomplete="off" style="width:230px;">`;
+    :`<input type="text" id="ans" autocapitalize="off" spellcheck="false" placeholder="en lettres" autocomplete="off" class="txt-in" style="width:230px;">`;
   content.innerHTML=`
     <div class="fill-row" style="align-items:center;">${q.left} = ${field}</div>
     <div class="actions"><button class="primary" id="check">Valider</button></div>
@@ -1849,7 +1928,7 @@ function renderSolTrou(){
   content.innerHTML=`
     <div class="question">Nomme ce solide.</div>
     <div class="sol-fig">${solImg(q.s,'sol-big')}</div>
-    <div class="fill-row" style="align-items:center;justify-content:center;"><input type="text" id="ans" autocapitalize="off" spellcheck="false" placeholder="nom du solide" autocomplete="off" style="width:230px;"></div>
+    <div class="fill-row" style="align-items:center;justify-content:center;"><input type="text" id="ans" autocapitalize="off" spellcheck="false" placeholder="nom du solide" autocomplete="off" class="txt-in" style="width:230px;"></div>
     <div class="actions"><button class="primary" id="check">Valider</button></div>
     <div class="feedback" id="fb"></div>`;
   const rowEl=content.querySelector('.fill-row'), name=q.s.name, acc=SOL_ACC[name]||[name];
@@ -2083,6 +2162,248 @@ function renderPrioTrou(){
     }
   };
 }
+/* ===== Additions et soustractions de relatifs (5e) – Automatisme n°2 =====
+   Calculs à 2, 3, 4 ou 5 termes, écrits avec parenthèses : (−4) + (+7) − (−3) …  Résultat : un entier relatif (jamais 0). */
+const relMin=x=>x<0?'−'+(-x):String(x);        /* −5, 7 */
+const relSg=x=>(x<0?'−':'+')+Math.abs(x);       /* −5, +7 */
+const relPar=x=>x<0?'('+relSg(x)+')':String(x);   /* (−5), 7 : les positifs sont écrits sans signe ni parenthèses */
+function relStr(terms){ return terms.map((t,i)=>(i===0?'':' '+(t.op==='-'?'−':'+')+'\u00a0')+relPar(t.v)).join(''); }
+function genRel(n){
+  const mx=n<=3?15:12;
+  for(let tries=0;tries<3000;tries++){
+    const terms=[];
+    for(let i=0;i<n;i++) terms.push({v:(Math.random()<.5?-1:1)*(1+Math.floor(Math.random()*mx)),op:i===0?null:(Math.random()<.5?'-':'+')});
+    const cs=terms.map(t=>(t.op==='-'?-1:1)*t.v), val=cs.reduce((a,b)=>a+b,0);
+    if(val===0||Math.abs(val)>40) continue;
+    if(n>=3&&!(terms.some(t=>t.op==='-')&&terms.some(t=>t.v<0))) continue;   /* au moins une soustraction et un nombre négatif */
+    if(n===2&&terms[0].v>0&&terms[1].v>0&&terms[1].op!=='-') continue;       /* pas de « (+a) + (+b) » */
+    const str=relStr(terms);
+    return {terms,n,cs,val,str,pk:'relat|'+str};
+  }
+  const terms=[{v:-4,op:null},{v:7,op:'+'}]; return {terms,n:2,cs:[-4,7],val:3,str:relStr(terms),pk:'relat|'+relStr(terms)};
+}
+function explainRel(q){
+  const hasSub=q.terms.some(t=>t.op==='-');
+  const addForm=q.cs.map((c,i)=>(i?' + ':'')+relPar(c)).join('');
+  let acc=q.cs[0]; const steps=[];
+  for(let i=1;i<q.n;i++){ const nx=acc+q.cs[i]; steps.push(gm(`${relMin(acc)} + ${q.cs[i]<0?'('+relMin(q.cs[i])+')':q.cs[i]} = ${relMin(nx)}`)); acc=nx; }
+  return (hasSub?`Soustraire un nombre, c’est ajouter son opposé : ${gm(addForm)}.<br>`:'')+`On calcule de gauche à droite : ${steps.join(' ; ')}.`;
+}
+function relAlts(q){
+  return {ignoreOps:q.terms.reduce((a,t)=>a+t.v,0), absOnly:q.terms.reduce((a,t)=>a+(t.op==='-'?-1:1)*Math.abs(t.v),0), opp:-q.val};
+}
+function relHint(q,n){
+  const a=relAlts(q);
+  if(n===a.ignoreOps&&n!==q.val) return 'Attention : soustraire un nombre, c’est ajouter son opposé. ';
+  if(n===a.absOnly&&n!==q.val) return 'N’oublie pas les signes des nombres entre parenthèses. ';
+  if(n===a.opp&&n!==q.val) return 'Attention au signe du résultat. ';
+  return '';
+}
+function relDistractors(q){
+  const a=relAlts(q), ok=v=>Number.isInteger(v)&&v!==q.val&&Math.abs(v)<=99, set=new Set();
+  [a.ignoreOps,a.absOnly,a.opp].forEach(v=>{ if(ok(v)) set.add(v); });
+  shuffle(q.cs.map(c=>q.val-2*c)).forEach(v=>{ if(set.size<3&&ok(v)) set.add(v); });
+  shuffle([1,-1,2,-2,10,-10,3,-3]).forEach(d=>{ if(set.size<3&&ok(q.val+d)) set.add(q.val+d); });
+  return shuffle([...set]).slice(0,3);
+}
+function renderRelQCM(){
+  const q=withHistory(()=>genRel(pick([2,3,4,5]))); state.current=q;
+  const content=document.getElementById('content'), opts=shuffle([q.val,...relDistractors(q)]);
+  content.innerHTML=`
+    <div class="question">Calcule.</div>
+    <div class="prio-expr rel-expr">${q.str}</div>
+    <div class="options">${opts.map(o=>`<button class="opt-btn" style="font-size:1.2rem;" data-k="${o}">${gm(relMin(o))}</button>`).join('')}</div>
+    <div class="feedback" id="fb"></div>`;
+  content.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      content.querySelectorAll('.opt-btn').forEach(b=>b.onclick=null);
+      const fb=document.getElementById('fb'), n=Number(btn.dataset.k);
+      if(n===q.val){
+        btn.classList.add('correct','anim-good');
+        bumpStreak(getStreak());
+        fb.textContent="Bravo, c'est correct !"; fb.className='feedback ok';
+        autoNext(450);
+      }else{
+        btn.classList.add('wrong','anim-bad');
+        failStreak();
+        fb.innerHTML=`Ce n'est pas ça. ${relHint(q,n)}<span class="expl">${explainRel(q)}</span>`;
+        fb.className='feedback ko';
+        content.querySelectorAll('.opt-btn').forEach(b=>{ if(Number(b.dataset.k)===q.val) b.classList.add('correct'); });
+      }
+    };
+  });
+}
+function genRelRound(){
+  for(let tries=0;tries<300;tries++){
+    const qs=shuffle([2,3,4,5]).map(n=>genRel(n));   /* un calcul de chaque longueur : 2, 3, 4 et 5 termes */
+    if(new Set(qs.map(q=>q.val)).size===4) return qs;
+  }
+  return shuffle([2,3,4,5]).map(n=>genRel(n));
+}
+function renderRelJeu(){
+  renderMatch(genRelRound(), q=>q.str, q=>relMin(q.val), explainRel, q=>`<span class="prio-cell rel-cell">${q.str}</span>`, q=>gm(relMin(q.val)));
+}
+function renderRelTrou(){
+  const q=withHistory(()=>genRel(pick([2,3,4,5]))); state.current=q;
+  const content=document.getElementById('content');
+  content.innerHTML=`
+    <div class="question">Calcule.</div>
+    <div class="prio-expr rel-expr">${q.str} =</div>
+    <div class="fill-row" style="align-items:center;justify-content:center;"><input type="text" id="ans" class="rel-in" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="résultat" style="width:150px;text-align:center;"></div>
+    <div class="actions"><button class="primary" id="check">Valider</button></div>
+    <div class="feedback" id="fb"></div>`;
+  const rowEl=content.querySelector('.fill-row');
+  document.getElementById('check').onclick=()=>{
+    const fb=document.getElementById('fb'), raw=document.getElementById('ans').value.replace(/[\s\u202f\u00a0]/g,'').replace(/[−–—]/g,'-');
+    if(!/^[+-]?\d+$/.test(raw)){ fb.textContent='Écris le résultat sous la forme d’un nombre entier, avec son signe.'; fb.className='feedback ko'; return; }
+    const n=Number(raw);
+    document.getElementById('check').disabled=true;
+    if(n===q.val){
+      rowEl.classList.add('anim-good');
+      bumpStreak(getStreak());
+      fb.textContent='Exact, bravo !'; fb.className='feedback ok';
+      autoNext(450);
+    }else{
+      rowEl.classList.add('anim-bad');
+      failStreak();
+      document.getElementById('check').style.display='none';
+      fb.innerHTML=`Ce n'est pas ça. ${relHint(q,n)}Réponse : ${gm(relMin(q.val))}.<span class="expl">${explainRel(q)}</span>`;
+      fb.className='feedback ko';
+    }
+  };
+}
+
+/* ===== Quatrième proportionnelle (4e) – Automatisme n°1 =====
+   Tableau de proportionnalité à deux lignes : une colonne est complète, chaque autre colonne a une case vide.
+   QCM : 2 colonnes (1 case vide) · Jeu d'association : 5 colonnes (4 cases vides) · À compléter : 2 à 5 colonnes (1 à 4 cases vides).
+   Calculatrice avec × et ÷. */
+const PR_RAT=[[2,1],[3,1],[4,1],[5,1],[6,1],[7,1],[8,1],[1,2],[3,2],[5,2],[7,2],[9,2],[1,3],[2,3],[4,3],[5,3],[7,3],[8,3],[3,4],[5,4],[7,4],[9,4],[2,5],[3,5],[4,5],[6,5],[7,5],[8,5],[9,5],[5,6],[7,6]];
+function genProp(nc){
+  for(let tries=0;tries<800;tries++){
+    const [p,q]=pick(PR_RAT), s=pick([1,1,1,1,1,.5,.1]);
+    const ms=shuffle([2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,18,20]).slice(0,nc);
+    const cols=ms.map(m=>({t:Math.round(q*m*s*10)/10,b:Math.round(p*m*s*10)/10}));
+    if(cols.some(c=>c.t<=0||c.b<=0||c.t>500||c.b>500)) continue;
+    const c0=Math.floor(Math.random()*nc), u=cols[c0].t, v=cols[c0].b;
+    if(u===v) continue;
+    const blanks=[];
+    const one=window.SESS_HINT&&window.SESS_HINT.prop;   /* séance en classe : un seul trou par tableau */
+    const only=one?pick(cols.map((c,i)=>i).filter(i=>i!==c0)):-1;
+    cols.forEach((c,i)=>{ if(i===c0||(one&&i!==only)) return; const r=Math.random()<.5?'t':'b'; blanks.push({i,r,val:c[r],k:c[r==='t'?'b':'t']}); });
+    if(new Set(blanks.map(b=>b.val)).size!==blanks.length) continue;
+    if(blanks.some(b=>Math.abs((b.r==='b'?b.k*v/u:b.k*u/v)-b.val)>1e-6)) continue;
+    blanks.forEach((b,n)=>{ b.n=n; b.label=String.fromCharCode(65+n); });
+    return {nc,cols,c0,u,v,blanks,pk:cols.map(c=>c.t+'/'+c.b).join(',')+'|'+blanks.map(b=>b.i+b.r).join('')};
+  }
+  return genProp(nc);
+}
+function propTable(q,blankFn){
+  const row=r=>q.cols.map((c,i)=>{ const b=q.blanks.find(x=>x.i===i&&x.r===r); return `<td>${b?blankFn(b):gm(fmt(c[r]))}</td>`; }).join('');
+  return `<table class="prop-tbl"><tr>${row('t')}</tr><tr>${row('b')}</tr></table>`;
+}
+function explainPropBlank(q,b){
+  const num=b.r==='b'?q.v:q.u, den=b.r==='b'?q.u:q.v;
+  return gm(`${fmt(b.k)} × ${fmt(num)} ÷ ${fmt(den)} = ${fmt(b.val)}`);
+}
+function explainProp(q){
+  return `C’est un tableau de proportionnalité : avec la colonne complète (${gm(fmt(q.u))} et ${gm(fmt(q.v))}), on calcule une quatrième proportionnelle. `
+    +q.blanks.map(b=>(q.blanks.length>1?`Colonne ${b.i+1} : `:'')+explainPropBlank(q,b)+'.').join(' ');
+}
+/* mauvaises réponses du QCM : écart conservé (erreur classique), calcul dans le mauvais sens, puis valeurs proches */
+function propDistractors(q){
+  const bl=q.blanks[0], k=bl.k, x=bl.val, u=q.u, v=q.v, d=v-u, R=n=>Math.round(n*10)/10;
+  const nice=n=>isFinite(n)&&n>0&&n<1000&&Math.abs(n*10-Math.round(n*10))<1e-7&&Math.abs(n-x)>1e-9;
+  const add=bl.r==='b'?k+d:k-d, inv=bl.r==='b'?k*u/v:k*v/u;
+  q.add=nice(add)?R(add):null; q.inv=nice(inv)?R(inv):null;
+  const out=[], push=n=>{ n=R(n); if(nice(n)&&!out.some(o=>Math.abs(o-n)<1e-9)) out.push(n); };
+  if(q.add!==null) push(q.add);
+  if(q.inv!==null) push(q.inv);
+  shuffle([x+1,x-1,x+2,x-2,x+10,x-10,x*2,x/2,x+u,Math.abs(x-u),x+v,k+v,k*2]).forEach(push);
+  return out.slice(0,3);
+}
+function propHint(q,n){
+  if(q.add!=null&&Math.abs(n-q.add)<1e-9) return 'Attention : en proportionnalité, on ne garde pas le même écart entre les nombres, on multiplie. ';
+  if(q.inv!=null&&Math.abs(n-q.inv)<1e-9) return 'Attention au sens du calcul : vérifie par quoi on multiplie et par quoi on divise. ';
+  return '';
+}
+function renderPropQCM(){
+  const q=withHistory(()=>genProp(2)); state.current=q;
+  const content=document.getElementById('content'), bl=q.blanks[0];
+  const opts=shuffle([bl.val,...propDistractors(q)]);
+  content.innerHTML=`
+    <div class="question" style="font-size:1.15rem;">Dans ce tableau de proportionnalité, quelle valeur faut-il écrire dans la case vide ?</div>
+    ${propTable(q,()=>'<span class="prop-blank"></span>')}
+    <div class="options">${opts.map(o=>`<button class="opt-btn" style="font-size:1.2rem;" data-k="${o}">${gm(fmt(o))}</button>`).join('')}</div>
+    <div class="feedback" id="fb"></div>`;
+  pvCalcMount(content,'prop');
+  content.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      content.querySelectorAll('.opt-btn').forEach(b=>b.onclick=null);
+      const fb=document.getElementById('fb'), n=Number(btn.dataset.k);
+      if(Math.abs(n-bl.val)<1e-9){
+        btn.classList.add('correct','anim-good');
+        bumpStreak(getStreak());
+        fb.textContent="Bravo, c'est correct !"; fb.className='feedback ok';
+        autoNext(450);
+      }else{
+        btn.classList.add('wrong','anim-bad');
+        failStreak();
+        fb.innerHTML=`Ce n'est pas ça. ${propHint(q,n)}<span class="expl">${explainProp(q)}</span>`;
+        fb.className='feedback ko';
+        content.querySelectorAll('.opt-btn').forEach(b=>{ if(Math.abs(Number(b.dataset.k)-bl.val)<1e-9) b.classList.add('correct'); });
+      }
+    };
+  });
+}
+function renderPropJeu(){
+  const q=withHistory(()=>genProp(5)); 
+  renderMatch(q.blanks, b=>b.label, b=>fmt(b.val), b=>explainPropBlank(q,b), b=>`<span class="prop-lblcell">${b.label}</span>`, b=>gm(fmt(b.val)));
+  const content=document.getElementById('content');
+  const qe=content.querySelector('.question'); if(qe) qe.textContent='Associe chaque case vide à sa valeur dans ce tableau de proportionnalité.';
+  content.querySelector('.match-grid').insertAdjacentHTML('beforebegin',propTable(q,b=>`<span class="prop-blank prop-lbl">${b.label}</span>`));
+  pvCalcMount(content,'prop');
+}
+function renderPropTrou(){
+  const q=withHistory(()=>genProp(pick([2,3,4,5]))); state.current=q;
+  const content=document.getElementById('content');
+  content.innerHTML=`
+    <div class="question" style="font-size:1.15rem;">Complète ce tableau de proportionnalité.</div>
+    ${propTable(q,b=>`<input type="text" class="prop-in" data-n="${b.n}" inputmode="decimal" placeholder="?" autocomplete="off" spellcheck="false" aria-label="Colonne ${b.i+1}">`)}
+    <div class="actions"><button class="primary" id="check">Valider</button></div>
+    <div class="feedback" id="fb"></div>`;
+  pvCalcMount(content,'prop');
+  const ins=[...content.querySelectorAll('.prop-in')], tbl=content.querySelector('.prop-tbl');
+  ins.forEach((inp,i)=>inp.addEventListener('keydown',e=>{
+    if(e.key!=='Enter') return;
+    const nx=ins.slice(i+1).find(x=>!x.value.trim())||ins.find(x=>!x.value.trim());
+    if(nx) nx.focus(); else document.getElementById('check').click();
+  }));
+  document.getElementById('check').onclick=()=>{
+    const fb=document.getElementById('fb');
+    const empty=ins.find(i=>!i.value.trim());
+    if(empty){ fb.textContent='Complète toutes les cases vides.'; fb.className='feedback ko'; empty.focus(); return; }
+    if(ins.some(i=>isNaN(parseNum(i.value)))){ fb.textContent='Écris des nombres dans les cases.'; fb.className='feedback ko'; return; }
+    document.getElementById('check').disabled=true;
+    let all=true;
+    ins.forEach(inp=>{
+      const b=q.blanks[Number(inp.dataset.n)], v=parseNum(inp.value), ok=Math.abs(v-b.val)<1e-6;
+      inp.classList.add(ok?'prop-ok':'prop-ko'); inp.disabled=true; if(!ok) all=false;
+    });
+    if(all){
+      tbl.classList.add('anim-good');
+      bumpStreak(getStreak());
+      fb.textContent='Exact, bravo !'; fb.className='feedback ok';
+      autoNext(450);
+    }else{
+      tbl.classList.add('anim-bad');
+      failStreak();
+      document.getElementById('check').style.display='none';
+      fb.innerHTML=`Pas tout à fait. <span class="expl">${explainProp(q)}</span>`;
+      fb.className='feedback ko';
+    }
+  };
+}
+
 /* ===== Scratch : reconnaître une figure (3e) – Automatisme **** ===== */
 /* figures : seulement le triangle équilatéral et le carré ; frises : carrés / triangles espacés ou collés, alternance */
 const SCR_FIG={
@@ -2369,7 +2690,7 @@ function renderScrTrou(){
   content.innerHTML=`
     <div class="question">${scrQuestion(q)}</div>
     ${scrBody(q)}
-    <div class="fill-row" style="align-items:center;justify-content:center;"><input type="text" id="ans" ${isA?'':'inputmode="numeric"'} autocapitalize="off" spellcheck="false" autocomplete="off" placeholder="${isA?'nom de la figure':'nombre'}" style="width:${isA?230:130}px;text-align:center;"></div>
+    <div class="fill-row" style="align-items:center;justify-content:center;"><input type="text" id="ans" ${isA?'':'inputmode="numeric"'} autocapitalize="off" spellcheck="false" autocomplete="off" placeholder="${isA?'nom de la figure':'nombre'}" class="${isA?'txt-in':''}" style="width:${isA?230:130}px;text-align:center;"></div>
     <div class="actions"><button class="primary" id="check">Valider</button></div>
     <div class="feedback" id="fb"></div>`;
   const rowEl=content.querySelector('.fill-row'), f=q.f;
@@ -4067,17 +4388,50 @@ function renderPvJeu(){
   document.getElementById('content').insertAdjacentHTML('afterbegin',`<div class="question" style="font-size:1.05rem;margin-bottom:8px;">Triangles de sommets ${gm([...L].sort().join(', '))}</div>`);
   pvCalcMount(document.getElementById('content'));
 }
+/* Calculatrice × ÷ (4e, quatrième proportionnelle) : les calculs se font de gauche à droite, ex. 18 × 30 ÷ 12 */
+function propCalcLogic(box,eExp,eCur){
+  let expr='', result=null;
+  const out=x=>String(Math.round(x*1e6)/1e6).replace('.',',');
+  const show=()=>{ eExp.textContent=result===null?'\u00a0':expr+' ='; eCur.textContent=result===null?(expr||'0'):result; };
+  const evalExpr=t=>{
+    const parts=t.split(/([×÷])/); let v=NaN;
+    for(let i=0;i<parts.length;i+=2){
+      if(!/^\d+(?:,\d+)?$/.test(parts[i])) return NaN;
+      const n=parseFloat(parts[i].replace(',','.'));
+      if(i===0) v=n; else if(parts[i-1]==='÷'){ if(n===0) return NaN; v=v/n; } else v=v*n;
+    }
+    return v;
+  };
+  function press(k){
+    if(k==='C'){ expr=''; result=null; show(); return; }
+    if(result!==null){ if(k==='=') return; expr=(k==='×'||k==='÷')?result:''; result=null; }
+    const last=expr.slice(-1), seg=expr.split(/[×÷]/).pop();
+    if(/^\d$/.test(k)) expr+=k;
+    else if(k===','){ if(!seg.includes(',')) expr+=(seg===''?'0':'')+','; }
+    else if(k==='×'||k==='÷'){ if(/\d/.test(last)) expr+=k; else if(last==='×'||last==='÷') expr=expr.slice(0,-1)+k; }
+    else if(k==='='){
+      if(expr==='') return;
+      const t=expr.replace(/[×÷,]$/,''), v=evalExpr(t); if(isNaN(v)||!isFinite(v)) return;
+      expr=t; result=out(v);
+    }
+    show();
+  }
+  box.querySelectorAll('.pvk').forEach(b=>{ b.addEventListener('mousedown',e=>e.preventDefault()); b.onclick=()=>press(b.dataset.k); });
+}
 /* Calculatrice (icône en bas à droite) pour l'automatisme n°6, mode « À compléter » */
 let pvCalcOpen=false;
-function pvCalcMount(host){
+function pvCalcMount(host,kind){
   const K=(l,c)=>`<button type="button" class="pvk${c?' '+c:''}" data-k="${l}">${l}</button>`;
   host.insertAdjacentHTML('beforeend',
     `<button type="button" class="burger pvcalc-btn" id="pvCalcBtn" aria-label="Calculatrice" aria-expanded="${pvCalcOpen}" aria-controls="pvCalc"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><rect x="8" y="5.5" width="8" height="3.5" rx=".8"/><path d="M8.5 13h.01M12 13h.01M15.5 13h.01M8.5 16.5h.01M12 16.5h.01M15.5 16.5h.01"/></svg></button>`+
     `<div class="pvcalc" id="pvCalc" role="dialog" aria-label="Calculatrice"${pvCalcOpen?'':' hidden'}><div class="pvscr"><div class="pvexp" id="pvExp">&nbsp;</div><div class="pvcur" id="pvCur">0</div></div><div class="pvpad">`+
-    ['7','8','9'].map(k=>K(k)).join('')+K('C','op')+['4','5','6'].map(k=>K(k)).join('')+K('+','op')+['1','2','3'].map(k=>K(k)).join('')+K('−','op')+K('0')+K(',')+K('²','op')+K('=','eq')+
+    (kind==='prop'
+      ?['7','8','9'].map(k=>K(k)).join('')+K('C','op')+['4','5','6'].map(k=>K(k)).join('')+K('×','op')+['1','2','3'].map(k=>K(k)).join('')+K('÷','op')+K('0','span2')+K(',')+K('=','eq')
+      :['7','8','9'].map(k=>K(k)).join('')+K('C','op')+['4','5','6'].map(k=>K(k)).join('')+K('+','op')+['1','2','3'].map(k=>K(k)).join('')+K('−','op')+K('0')+K(',')+K('²','op')+K('=','eq'))+
     `</div></div>`);
   const btn=host.querySelector('#pvCalcBtn'), box=host.querySelector('#pvCalc'), eExp=host.querySelector('#pvExp'), eCur=host.querySelector('#pvCur');
   btn.onclick=e=>{ e.stopPropagation(); pvCalcOpen=box.hidden; box.hidden=!pvCalcOpen; btn.setAttribute('aria-expanded',pvCalcOpen); };
+  if(kind==='prop'){ propCalcLogic(box,eExp,eCur); return; }
   let expr='', result=null;   /* expression tapée ; résultat affiché seulement après « = » */
   const out=x=>String(Math.round(x*1e6)/1e6).replace('.',',').replace('-','−');
   const show=()=>{ eExp.textContent=result===null?'\u00a0':expr+' ='; eCur.textContent=result===null?(expr||'0'):result; };
@@ -4622,10 +4976,9 @@ function renderMldTrou(){
   const q=withHistory(genMld); state.current=q;
   const content=document.getElementById('content');
   const word=q.kind==='word';
-  const inp=`<input type="text" id="ans" placeholder="?" autocomplete="off" autocapitalize="none" spellcheck="false" inputmode="${word?'text':'numeric'}" style="width:${word?150:90}px;">`;
+  const inp=`<input type="text" id="ans" placeholder="?" autocomplete="off" autocapitalize="none" spellcheck="false" inputmode="${word?'text':'numeric'}" class="${word?'txt-in':''}" style="width:${word?150:90}px;">`;
   const row=word?mldText(q,'\u0000').replace('\u0000',inp):`${mldText(q)} ${inp}`;
-  content.innerHTML=`<div class="question" style="font-size:1rem;">Pour certaines questions, il y a plusieurs réponses possibles.</div>
-    <div class="fill-row">${row}</div>
+  content.innerHTML=`<div class="fill-row">${row}</div>
     <div class="actions"><button class="primary" id="check">Valider</button></div>
     <div class="feedback" id="fb"></div>`;
   document.getElementById('check').onclick=()=>{
@@ -4633,14 +4986,17 @@ function renderMldTrou(){
     const fb=document.getElementById('fb');
     const rowEl=content.querySelector('.fill-row');
     document.getElementById('check').disabled=true;
-    let good;
-    if(word) good=v.replace(/^un\s+/,'')===q.word;
-    else { const t=v.replace(/\s/g,''); const n=/^\d+$/.test(t)?parseInt(t,10):NaN; good=!isNaN(n)&&mldValid(q,n); }
+    let good, note='';
+    if(word){
+      const nv=normW(v.replace(/^un\s+/,'')), nw=normW(q.word);
+      good=nv===nw||(nv.length>0&&levDist(nv,nw)<=1);   /* une lettre de différence (ou un s) : compté juste, avec la bonne orthographe */
+      if(good&&nv!==nw) note=`Bravo, c'est juste ! Attention à l'orthographe : on écrit « ${q.word} ».`;
+    }else { const t=v.replace(/\s/g,''); const n=/^\d+$/.test(t)?parseInt(t,10):NaN; good=!isNaN(n)&&mldValid(q,n); }
     if(good){
       rowEl.classList.add('anim-good');
       bumpStreak(getStreak());
-      fb.textContent='Exact, bravo !'; fb.className='feedback ok';
-      autoNext(450);
+      if(note){ fb.innerHTML=note; fb.className='feedback ok'; resolve(); }
+      else{ fb.textContent='Exact, bravo !'; fb.className='feedback ok'; autoNext(450); }
     }else{
       rowEl.classList.add('anim-bad');
       failStreak();
@@ -6534,6 +6890,130 @@ Object.assign(CQ_GLAB,{'ncrp5-mult':'Multiple et diviseur','ncrp5-dvis':'Divisib
     cqW('Si un même chiffre se répète indéfiniment, on peut s’arrêter et le résultat est exact.','quand on s’arrête, on arrondit le résultat : il n’est pas exact.')]);
 })();
 
+/* ===== Questions de cours 6e – NCRP 6 : Opérations =====
+   Thèmes : 1 = I – Vocabulaire · 2 = II – Priorités opératoires · 3 = III – Priorités des parenthèses · 4 = IV – Ordre de grandeur · 5 = V – Programme de calcul
+   Les nombres et les signes passent automatiquement en « mode maths » (voir mathRuns). Uniquement les définitions, propriétés, méthodes et remarques du cours (pas d'exemples de calcul). */
+Object.assign(CQ_GLAB,{'ncrp6-ter':'Termes','ncrp6-som':'Somme','ncrp6-dif':'Différence','ncrp6-fac':'Facteurs','ncrp6-pro':'Produit',
+  'ncrp6-ps':'Additions et soustractions seulement','ncrp6-pmd':'Multiplications et divisions prioritaires','ncrp6-pmc':'Additions et multiplications dans un même calcul',
+  'ncrp6-par':'Calculs entre parenthèses','ncrp6-dbl':'Parenthèses doubles',
+  'ncrp6-odg':'Définition d’un ordre de grandeur','ncrp6-ctl':'Contrôler un résultat',
+  'ncrp6-pc':'Définition d’un programme de calcul','ncrp6-arr':'Nombre d’arrivée','ncrp6-et':'Enchaîner les étapes'});
+(function(){
+  const fx=cqM;
+  const N=(th,id,stem,ok,wrong,short)=>CQ_CASES.push({ch:'6ncrp6',th,pk:'p|'+id,make:()=>cqMakeProp({stem:fx(stem),ok:fx(ok),wrong:wrong.map(w=>({t:fx(w.t),why:fx(w.why)})),short})});
+  const sens='quand il n’y a que des additions et des soustractions, on effectue les calculs dans le sens de lecture.';
+  const prio='les multiplications et les divisions sont prioritaires sur les additions et les soustractions.';
+  const parenth='s’il y a des parenthèses, on commence par effectuer les calculs entre parenthèses.';
+
+  /* I – Vocabulaire */
+  N(1,'ncrp6-ter-a','Dans une addition ou une soustraction, les éléments additionnés ou soustraits s’appellent les…','termes',[
+    cqW('facteurs','les facteurs sont les éléments multipliés ; les éléments additionnés ou soustraits sont les termes.'),
+    cqW('sommes','une somme est le résultat d’une addition ; les éléments additionnés ou soustraits sont les termes.'),
+    cqW('différences','une différence est le résultat d’une soustraction ; les éléments additionnés ou soustraits sont les termes.')],true);
+  N(1,'ncrp6-ter-b',cqPROP,'On appelle termes les éléments additionnés ou soustraits.',[
+    cqW('On appelle termes les éléments multipliés.','les éléments multipliés s’appellent les facteurs.'),
+    cqW('On appelle termes les résultats des additions et des soustractions.','le résultat d’une addition est une somme et le résultat d’une soustraction est une différence.'),
+    cqW('On appelle termes seulement les éléments additionnés.','les éléments soustraits sont aussi des termes.')]);
+  N(1,'ncrp6-som-a','Le résultat d’une addition s’appelle…','la somme',[
+    cqW('la différence','la différence est le résultat d’une soustraction ; le résultat d’une addition est la somme.'),
+    cqW('le produit','le produit est le résultat d’une multiplication ; le résultat d’une addition est la somme.'),
+    cqW('un facteur','un facteur est un élément multiplié ; le résultat d’une addition est la somme.')],true);
+  N(1,'ncrp6-som-b',cqPROP,'On appelle somme le résultat d’une addition.',[
+    cqW('On appelle somme le résultat d’une soustraction.','le résultat d’une soustraction s’appelle la différence.'),
+    cqW('On appelle somme le résultat d’une multiplication.','le résultat d’une multiplication s’appelle le produit.'),
+    cqW('On appelle somme les éléments additionnés.','les éléments additionnés s’appellent les termes.')]);
+  N(1,'ncrp6-dif-a','Le résultat d’une soustraction s’appelle…','la différence',[
+    cqW('la somme','la somme est le résultat d’une addition ; le résultat d’une soustraction est la différence.'),
+    cqW('le produit','le produit est le résultat d’une multiplication ; le résultat d’une soustraction est la différence.'),
+    cqW('un terme','un terme est un élément additionné ou soustrait ; le résultat d’une soustraction est la différence.')],true);
+  N(1,'ncrp6-dif-b',cqPROP,'On appelle différence le résultat d’une soustraction.',[
+    cqW('On appelle différence le résultat d’une addition.','le résultat d’une addition s’appelle la somme.'),
+    cqW('On appelle différence le résultat d’une multiplication.','le résultat d’une multiplication s’appelle le produit.'),
+    cqW('On appelle différence les éléments soustraits.','les éléments soustraits s’appellent les termes.')]);
+  N(1,'ncrp6-fac-a','Dans une multiplication, les éléments multipliés s’appellent les…','facteurs',[
+    cqW('termes','les termes sont les éléments additionnés ou soustraits ; les éléments multipliés sont les facteurs.'),
+    cqW('produits','le produit est le résultat d’une multiplication ; les éléments multipliés sont les facteurs.'),
+    cqW('sommes','une somme est le résultat d’une addition ; les éléments multipliés sont les facteurs.')],true);
+  N(1,'ncrp6-fac-b',cqPROP,'On appelle facteurs les éléments multipliés.',[
+    cqW('On appelle facteurs les éléments additionnés.','les éléments additionnés s’appellent les termes.'),
+    cqW('On appelle facteurs les éléments soustraits.','les éléments soustraits s’appellent les termes.'),
+    cqW('On appelle facteurs le résultat d’une multiplication.','le résultat d’une multiplication s’appelle le produit.')]);
+  N(1,'ncrp6-pro-a','Le résultat d’une multiplication s’appelle…','le produit',[
+    cqW('la somme','la somme est le résultat d’une addition ; le résultat d’une multiplication est le produit.'),
+    cqW('la différence','la différence est le résultat d’une soustraction ; le résultat d’une multiplication est le produit.'),
+    cqW('un facteur','un facteur est un élément multiplié ; le résultat d’une multiplication est le produit.')],true);
+  N(1,'ncrp6-pro-b',cqPROP,'On appelle produit le résultat d’une multiplication.',[
+    cqW('On appelle produit le résultat d’une addition.','le résultat d’une addition s’appelle la somme.'),
+    cqW('On appelle produit le résultat d’une soustraction.','le résultat d’une soustraction s’appelle la différence.'),
+    cqW('On appelle produit les éléments multipliés.','les éléments multipliés s’appellent les facteurs.')]);
+
+  /* II – Priorités opératoires */
+  N(2,'ncrp6-ps-a','S’il n’y a que des additions et des soustractions, on effectue les calculs…','dans le sens de lecture',[
+    cqW('de droite à gauche','on effectue les calculs dans le sens de lecture, de gauche à droite.'),
+    cqW('en commençant par les additions','on ne choisit pas : '+sens),
+    cqW('en commençant par les soustractions','on ne choisit pas : '+sens)]);
+  N(2,'ncrp6-ps-b',cqPROP,'S’il n’y a que des additions et des soustractions, on effectue les calculs dans le sens de lecture.',[
+    cqW('S’il n’y a que des additions et des soustractions, on effectue les calculs de droite à gauche.','on effectue les calculs dans le sens de lecture, de gauche à droite.'),
+    cqW('S’il n’y a que des additions et des soustractions, on effectue d’abord les additions, puis les soustractions.','on ne choisit pas : '+sens),
+    cqW('S’il n’y a que des additions et des soustractions, on effectue d’abord les soustractions, puis les additions.','on ne choisit pas : '+sens)]);
+  N(2,'ncrp6-pmd-a','Qui est prioritaire\u00a0?','les multiplications et les divisions',[
+    cqW('les additions et les soustractions','ce sont les multiplications et les divisions qui sont prioritaires sur les additions et les soustractions.'),
+    cqW('aucune des opérations','les multiplications et les divisions sont prioritaires sur les additions et les soustractions.')],true);
+  N(2,'ncrp6-pmd-b',cqPROP,'Les multiplications et les divisions sont prioritaires sur les additions et les soustractions.',[
+    cqW('Les additions et les soustractions sont prioritaires sur les multiplications et les divisions.','c’est l’inverse : '+prio),
+    cqW('Les multiplications sont prioritaires sur les additions, mais pas sur les soustractions.','les multiplications sont prioritaires sur les additions et sur les soustractions.'),
+    cqW('Les divisions sont prioritaires sur les soustractions, mais pas sur les additions.','les divisions sont prioritaires sur les additions et sur les soustractions.')]);
+  N(2,'ncrp6-pmc-a','Dans un calcul sans parenthèses qui contient à la fois des additions et des multiplications, on commence par effectuer…','les multiplications',[
+    cqW('les additions','c’est l’inverse : '+prio),
+    cqW('l’opération la plus à gauche','même si une multiplication est plus à droite, elle est prioritaire sur les additions.'),
+    cqW('l’opération la plus à droite','on ne commence pas forcément par la droite : '+prio)]);
+
+  /* III – Priorités des parenthèses */
+  N(3,'ncrp6-par-a','S’il y a des parenthèses, on commence par effectuer les calculs…','entre parenthèses',[
+    cqW('en dehors des parenthèses','les parenthèses sont prioritaires : '+parenth),
+    cqW('avec les additions','quelle que soit l’opération, '+parenth),
+    cqW('avec les multiplications','quelle que soit l’opération, '+parenth)],true);
+  N(3,'ncrp6-par-b',cqPROP,'S’il y a des parenthèses, on commence par effectuer les calculs entre parenthèses dans le sens de lecture.',[
+    cqW('S’il y a des parenthèses, on commence par effectuer les calculs en dehors des parenthèses.','les parenthèses sont prioritaires : '+parenth),
+    cqW('S’il y a des parenthèses, on les ignore et on effectue les calculs dans le sens de lecture.','les parenthèses sont prioritaires : '+parenth),
+    cqW('S’il y a des parenthèses, on commence toujours par les multiplications.','quelle que soit l’opération, '+parenth)]);
+  N(3,'ncrp6-dbl-a','S’il y a des parenthèses doubles, on commence par les parenthèses…','intérieures',[
+    cqW('extérieures','on commence par les parenthèses intérieures, celles qui sont à l’intérieur des autres.'),
+    cqW('de gauche','ce n’est pas la gauche ou la droite qui compte : on commence par les parenthèses intérieures.'),
+    cqW('de droite','ce n’est pas la gauche ou la droite qui compte : on commence par les parenthèses intérieures.')],true);
+  N(3,'ncrp6-dbl-b',cqPROP,'S’il y a des parenthèses doubles, on commence par les parenthèses intérieures.',[
+    cqW('S’il y a des parenthèses doubles, on commence par les parenthèses extérieures.','on commence par les parenthèses intérieures, celles qui sont à l’intérieur des autres.'),
+    cqW('S’il y a des parenthèses doubles, on commence par les parenthèses de gauche.','ce n’est pas la gauche ou la droite qui compte : on commence par les parenthèses intérieures.'),
+    cqW('S’il y a des parenthèses doubles, on commence par les parenthèses de droite.','ce n’est pas la gauche ou la droite qui compte : on commence par les parenthèses intérieures.')]);
+
+  /* IV – Ordre de grandeur */
+  N(4,'ncrp6-odg-a','Un ordre de grandeur est une valeur… d’un calcul, obtenue par un calcul plus simple.','approchée',[
+    cqW('exacte','un ordre de grandeur est une valeur approchée : ce n’est pas le résultat exact.'),
+    cqW('toujours supérieure','un ordre de grandeur est une valeur approchée : elle peut être supérieure ou inférieure au résultat exact.'),
+    cqW('toujours inférieure','un ordre de grandeur est une valeur approchée : elle peut être supérieure ou inférieure au résultat exact.')],true);
+  N(4,'ncrp6-odg-b',cqPROP,'Un ordre de grandeur est une valeur approchée d’un calcul obtenue par un calcul plus simple.',[
+    cqW('Un ordre de grandeur est une valeur approchée d’un calcul obtenue par un calcul plus compliqué.','on obtient un ordre de grandeur par un calcul plus simple.'),
+    cqW('Un ordre de grandeur est la valeur exacte d’un calcul.','un ordre de grandeur est une valeur approchée, obtenue par un calcul plus simple.')]);
+  N(4,'ncrp6-ctl-a','L’ordre de grandeur permet de… un résultat.','contrôler',[
+    cqW('démontrer','l’ordre de grandeur est une valeur approchée : il permet de contrôler un résultat, pas de le démontrer.'),
+    cqW('arrondir','l’ordre de grandeur permet de contrôler un résultat.'),
+    cqW('compliquer','l’ordre de grandeur est obtenu par un calcul plus simple et permet de contrôler un résultat.')],true);
+  N(4,'ncrp6-ctl-b',cqPROP,'L’ordre de grandeur permet de contrôler un résultat.',[
+    cqW('L’ordre de grandeur ne permet pas de contrôler un résultat.','l’ordre de grandeur permet de contrôler un résultat.'),
+    cqW('L’ordre de grandeur donne le résultat exact d’un calcul.','l’ordre de grandeur est une valeur approchée : il permet de contrôler un résultat.'),
+    cqW('L’ordre de grandeur permet de calculer la valeur exacte d’un résultat.','l’ordre de grandeur est une valeur approchée : il permet de contrôler un résultat.')]);
+
+  /* V – Programme de calcul */
+  N(5,'ncrp6-pc-a','Un programme de calcul est une liste d’étapes qui s’appliquent à un nombre de…','départ',[
+    cqW('arrivée','le nombre d’arrivée est celui que l’on obtient à la fin ; les étapes s’appliquent à un nombre de départ.')],true);
+  N(5,'ncrp6-arr-a','Dans un programme de calcul, le nombre obtenu après toutes les étapes est le…','nombre d’arrivée',[
+    cqW('nombre de départ','le nombre de départ est celui auquel on applique les étapes.')],true);
+  N(5,'ncrp6-et-a','Dans un programme de calcul, chaque étape s’applique…','au résultat de l’étape précédente',[
+    cqW('toujours au nombre de départ','on enchaîne les étapes : chacune s’applique au résultat de l’étape précédente.'),
+    cqW('au nombre d’arrivée','le nombre d’arrivée est le résultat final ; chaque étape s’applique au résultat de l’étape précédente.'),
+    cqW('seulement à la fin du programme','on enchaîne les étapes : chacune s’applique au résultat de l’étape précédente.')]);
+})();
+
 /* ===== Questions de cours 6e – EG 2 : Cercle et disque =====
    Un seul thème : 1 = I – Vocabulaire (définitions et propriété du cours ; pas d'exemples). */
 Object.assign(CQ_GLAB,{'eg2-cer':'Cercle','eg2-dis':'Disque','eg2-ray':'Rayon','eg2-cord':'Corde','eg2-diam':'Diamètre','eg2-ctr':'Centre du cercle',
@@ -7310,11 +7790,15 @@ function renderCqQCM(){
 
 const LEVEL_ITEMS=lv=>[[lv+'/auto','Automatismes','S\u2019entra\u00eener'],[lv+'/cours','Cours','R\u00e9viser les le\u00e7ons']];
 const SCREENS={
-  home:{title:'Math\u00e9matiques',sub:'Choisis ton niveau',items:[['6e','Niveau 6e',''],['5e','Niveau 5e',''],['3e','Niveau 3e','']]},
+  home:{title:'Math\u00e9matiques',sub:'Choisis ton niveau',items:[['6e','Niveau 6e',''],['5e','Niveau 5e',''],['4e','Niveau 4e',''],['3e','Niveau 3e','']]},
   '6e':{title:'Niveau 6e',sub:'Que veux-tu faire ?',items:[...LEVEL_ITEMS('6e'),['6e/qcours','Questions de cours','Tester ses connaissances du cours']]},
   '5e':{title:'Niveau 5e',sub:'Que veux-tu faire ?',items:[['5e/auto','Automatismes','S’entraîner']]},
+  '4e':{title:'Niveau 4e',sub:'Que veux-tu faire ?',items:[['4e/auto','Automatismes','S’entraîner']]},
+  '4e/auto':{title:'Automatismes 4e',sub:'Choisis un thème',items:[
+    ['4e/auto/prop','1. Quatrième proportionnelle','Compléter un tableau de proportionnalité']]},
   '5e/auto':{title:'Automatismes 5e',sub:'Choisis un thème',items:[
-    ['5e/auto/prio','1. Priorités opératoires','Calculer en respectant les priorités : parenthèses, × et ÷, puis + et −']]},
+    ['5e/auto/prio','1. Priorités opératoires','Calculer en respectant les priorités : parenthèses, × et ÷, puis + et −'],
+    ['5e/auto/relatifs','2. Additions et soustractions de relatifs','Calculer avec 2, 3, 4 ou 5 termes']]},
   '3e':{title:'Niveau 3e',sub:'Que veux-tu faire ?',items:[...LEVEL_ITEMS('3e'),['3e/qcours','Questions de cours','Tester ses connaissances du cours'],['3e/info','Informatique','Tableur et Scratch']]},
   '3e/qcours':{title:'Questions de cours 3e',sub:'Choisis un thème',items:[['3e/qcours/eg','Espace et Géométrie'],['3e/qcours/nc','Nombres et Calcul']]},
   '3e/qcours/eg':{title:'Espace et Géométrie',sub:'Questions de cours 3e',items:[['3e/qcours/eg1','EG 1 \u2013 Propriétés géométriques','Droites, angles du triangle, angles et parallèles'],['3e/qcours/eg2','EG 2 \u2013 Solides','Définitions, représentations et volumes']]},
@@ -7373,6 +7857,8 @@ CQ6_DONE.ncrp1=[['I – Tableau de numération','Chiffres, rangs, classes et gro
 CQ6_DESC.ncrp1='Tableau de numération, chiffre des et nombre de, partie décimale, fractions décimales, pourcentages';
 CQ6_DONE.gm1=[['I – Préfixes','Kilo, hecto, déca, déci, centi et milli'],['II – Longueur, masse et capacité','Unités, symboles et tableaux de conversion'],['III – Aire','Mètre carré, symboles et tableau des aires']];
 CQ6_DESC.gm1='Préfixes, unités et tableaux de conversion (longueur, masse, capacité, aire)';
+CQ6_DONE.ncrp6=[['I – Vocabulaire','Termes, somme, différence, facteurs et produit'],['II – Priorités opératoires','Additions, soustractions, multiplications et divisions'],['III – Priorités des parenthèses','Parenthèses simples et parenthèses doubles'],['IV – Ordre de grandeur','Valeur approchée d’un calcul et contrôle d’un résultat'],['V – Programme de calcul','Nombre de départ, étapes et nombre d’arrivée']];
+CQ6_DESC.ncrp6='Vocabulaire, priorités opératoires et des parenthèses, ordre de grandeur, programme de calcul';
 (function(){
   const DOM=[['eg'],['ncrp'],['ogdp'],['gm'],['p']];
   SCREENS['6e/qcours']={title:'Questions de cours 6e',sub:'Choisis un thème',items:DOM.map(([k])=>['6e/qcours/'+k,THEMES6E[k].title])};
@@ -7406,6 +7892,8 @@ function go(s){
     '3e/auto/sci':{theme:'sci',title:'\u00c9criture scientifique',sub:'Automatismes 3e'},
     '3e/auto/solides':{theme:'sol',title:'Reconnaître un solide',sub:'Automatismes 3e'},
     '5e/auto/prio':{theme:'prio',title:'Priorités opératoires',sub:'Automatismes 5e'},
+    '5e/auto/relatifs':{theme:'relat',title:'Additions et soustractions de relatifs',sub:'Automatismes 5e'},
+    '4e/auto/prop':{theme:'prop',title:'Quatrième proportionnelle',sub:'Automatismes 4e'},
     '3e/info/scratch':{theme:'scr',title:'Scratch (Géométrie)',sub:'Informatique 3e'},
     '3e/auto/tables':{theme:'tables',title:'Tables de multiplication',sub:'Automatismes 3e'},
     '3e/auto/frac':{theme:'frac',title:'Fractions irr\u00e9ductibles',sub:'Automatismes 3e'},
@@ -7467,6 +7955,11 @@ function go(s){
     '6e/qcours/ncrp5/2':{theme:'cq',cat:'6ncrp5-2',title:'II – Division euclidienne',sub:'NCRP 5 – Questions de cours'},
     '6e/qcours/ncrp5/3':{theme:'cq',cat:'6ncrp5-3',title:'III – Critères de divisibilité',sub:'NCRP 5 – Questions de cours'},
     '6e/qcours/ncrp5/4':{theme:'cq',cat:'6ncrp5-4',title:'IV – Division décimale',sub:'NCRP 5 – Questions de cours'},
+    '6e/qcours/ncrp6/1':{theme:'cq',cat:'6ncrp6-1',title:'I – Vocabulaire',sub:'NCRP 6 – Questions de cours'},
+    '6e/qcours/ncrp6/2':{theme:'cq',cat:'6ncrp6-2',title:'II – Priorités opératoires',sub:'NCRP 6 – Questions de cours'},
+    '6e/qcours/ncrp6/3':{theme:'cq',cat:'6ncrp6-3',title:'III – Priorités des parenthèses',sub:'NCRP 6 – Questions de cours'},
+    '6e/qcours/ncrp6/4':{theme:'cq',cat:'6ncrp6-4',title:'IV – Ordre de grandeur',sub:'NCRP 6 – Questions de cours'},
+    '6e/qcours/ncrp6/5':{theme:'cq',cat:'6ncrp6-5',title:'V – Programme de calcul',sub:'NCRP 6 – Questions de cours'},
     '6e/qcours/ogdp1/1':{theme:'cq',cat:'6ogdp1-1',title:'I – Tableau simple',sub:'OGDP 1 – Questions de cours'},
     '6e/qcours/ogdp1/2':{theme:'cq',cat:'6ogdp1-2',title:'II – Tableau à double entrée',sub:'OGDP 1 – Questions de cours'},
     '6e/qcours/ogdp1/3':{theme:'cq',cat:'6ogdp1-3',title:'III – Diagramme en barres',sub:'OGDP 1 – Questions de cours'},
@@ -7648,10 +8141,10 @@ go('home');
     '3e/auto/conv-volume':{theme:'conversions',cat:'volume'},'3e/auto/conv-duree':{theme:'conversions',cat:'duree'},
     '3e/auto/lit-fact':{theme:'lit',cat:'fact'},
     '6e/auto/tables':{theme:'tables'},'6e/auto/durees':{theme:'durees'},'6e/auto/comp':{theme:'comp'},'6e/auto/clock':{theme:'clock'},
-    '6e/auto/multiples':{theme:'mld'},'6e/auto/hands':{theme:'hands'},'6e/auto/mult10':{theme:'mult10'},'6e/auto/div10':{theme:'div10'},'6e/auto/fracheure':{theme:'fh'},'6e/auto/conv-long':{theme:'conversions',cat:'long6'},'5e/auto/prio':{theme:'prio'}
+    '6e/auto/multiples':{theme:'mld'},'6e/auto/hands':{theme:'hands'},'6e/auto/mult10':{theme:'mult10'},'6e/auto/div10':{theme:'div10'},'6e/auto/fracheure':{theme:'fh'},'6e/auto/conv-long':{theme:'conversions',cat:'long6'},'5e/auto/prio':{theme:'prio'},'4e/auto/prop':{theme:'prop'},'5e/auto/relatifs':{theme:'relat'}
   };
   window.MB_TR=TR;
-  ['3e','5e','6e'].forEach(lv=>SCREENS[lv+'/auto'].items.unshift([lv+'/auto/entrainement','Entraînement personnalisé','Choisis les automatismes sur lesquels travailler']));
+  ['3e','4e','5e','6e'].forEach(lv=>SCREENS[lv+'/auto'].items.unshift([lv+'/auto/entrainement','Entraînement personnalisé','Choisis les automatismes sur lesquels travailler']));
   let training=null;
   const $=id=>document.getElementById(id);
   const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
@@ -7662,7 +8155,7 @@ go('home');
   const origGo=go, origKey=keyFor, origSwitch=switchView, origNew=newQuestion;
   go=function(sc){
     training=null;
-    const m=/^(6e|5e|3e)\/auto\/entrainement$/.exec(sc);
+    const m=/^(6e|5e|4e|3e)\/auto\/entrainement$/.exec(sc);
     if(!m){ origGo(sc); return; }
     origGo(m[1]+'/auto'); showSelect(m[1]);
   };
@@ -7794,7 +8287,7 @@ function cqRevisionSetup(lv,CH,SK){
   }
 }
 cqRevisionSetup('3e',[['eg1','EG 1 – Propriétés géométriques'],['eg2','EG 2 – Solides'],['nc1','NC 1 – Fractions'],['nc2','NC 2 – Puissances'],['nc3','NC 3 – Calcul littéral'],['nc4','NC 4 – Arithmétique']],'');
-cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 – Cercle et disque'],['eg6','EG 6 – Droites remarquables'],['ncrp1','NCRP 1 – Nombres décimaux'],['ncrp4','NCRP 4 – Additions, soustractions et multiplications'],['ncrp5','NCRP 5 – Divisions'],['ogdp1','OGDP 1 – Lecture de données'],['gm1','GM 1 – Conversions']],'-6e');
+cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 – Cercle et disque'],['eg6','EG 6 – Droites remarquables'],['ncrp1','NCRP 1 – Nombres décimaux'],['ncrp4','NCRP 4 – Additions, soustractions et multiplications'],['ncrp5','NCRP 5 – Divisions'],['ncrp6','NCRP 6 – Opérations'],['ogdp1','OGDP 1 – Lecture de données'],['gm1','GM 1 – Conversions']],'-6e');
 </script>
 <script>
 /* Menu latéral : accès direct à chaque page du site. */
@@ -7807,7 +8300,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
   const det=(label,inner,cls)=>`<details class="${cls||''}"><summary>${esc(label)}</summary><div>${inner}</div></details>`;
   function build(){
     let h=item('home','Accueil');
-    ['6e','5e','3e'].forEach(lv=>{
+    ['6e','5e','4e','3e'].forEach(lv=>{
       const auto=(SCREENS[lv+'/auto']&&SCREENS[lv+'/auto'].items||[]).map(i=>item(i[0],i[1])).join('');
       const themes=COURS[lv]||{};
       const cours=item(lv+'/cours','Tous les thèmes')+Object.keys(themes).map(k=>{
@@ -7853,7 +8346,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
 (function(){
   const $=id=>document.getElementById(id);
   const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
-  const LEVELS=['3e','5e','6e'];
+  const LEVELS=['3e','4e','5e','6e'];
   const TR=window.MB_TR;
   /* Le mot de passe n'est pas écrit en clair dans la page : seule son empreinte SHA-256 y figure. */
   const PROF_HASH='961d75c79e083995f25435b5a60c783c50f10336c97f29cb4e35d55ed40bcea1';
@@ -8125,7 +8618,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
     setLeft(ss.t);
     setTheme(ss.ids[(ss.i-1)%ss.ids.length]);   /* un seul automatisme : toujours le même ; deux : ils alternent */
     { const id=ss.ids[(ss.i-1)%ss.ids.length], pl=ss.plan&&ss.plan[id], it=pl&&pl[Math.floor((ss.i-1)/ss.ids.length)];
-      window.SESS_HINT=it?(state.theme==='sol'?{sol:it}:state.theme==='conversions'?{lg:it}:(state.theme==='mult10'||state.theme==='div10')?{mk:it}:{sci:it}):null; }
+      window.SESS_HINT=it?(state.theme==='sol'?{sol:it}:state.theme==='conversions'?{lg:it}:(state.theme==='mult10'||state.theme==='div10')?{mk:it}:{sci:it}):(state.theme==='prop'?{prop:true}:null); }
     _newQuestion();
     window.SESS_HINT=null;
     if(state.theme==='mld'){   /* consigne unique, sans « plusieurs réponses possibles » */
@@ -8224,7 +8717,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
         }
       }
     }
-    if(state.theme==='prio'){   /* le résultat vient à la suite du calcul, sur la même ligne et avec la même police */
+    if(state.theme==='prio'||state.theme==='relat'){   /* le résultat vient à la suite du calcul, sur la même ligne et avec la même police */
       const ex=content.querySelector('.prio-expr'), r=content.querySelector('.fill-row');
       const an=r&&r.querySelector('.ss-ans');
       if(ex&&an){ ex.appendChild(document.createTextNode('\u00a0')); ex.appendChild(an); r.remove(); }
@@ -8271,7 +8764,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
   go=function(sc){
     endSession();
     cur=sc;
-    const m=/^(3e|5e|6e)\/auto\/classe$/.exec(sc);
+    const m=/^(3e|4e|5e|6e)\/auto\/classe$/.exec(sc);
     if(m){ if(profOn) showSetup(m[1]); else prevGo(m[1]+'/auto'); return; }
     prevGo(sc);
   };
@@ -8285,9 +8778,9 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
     });
     paintPanel();
     if(window.mbNavBuild) window.mbNavBuild();
-    const m=/^(3e|5e|6e)\/auto\/classe$/.exec(cur);
+    const m=/^(3e|4e|5e|6e)\/auto\/classe$/.exec(cur);
     if(!profOn&&m) go(m[1]+'/auto');
-    else if(/^(3e|5e|6e)\/auto$/.test(cur)) go(cur);
+    else if(/^(3e|4e|5e|6e)\/auto$/.test(cur)) go(cur);
   }
   const btn=$('profBtn'), login=$('profLogin'), pwd=$('profPwd'), err=$('profErr');
   function paintPanel(){
