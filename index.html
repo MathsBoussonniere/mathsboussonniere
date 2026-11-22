@@ -13,6 +13,11 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192-v2.png">
 <link rel="apple-touch-icon" href="icon-512-v2.png">
 <script>
+/* Aucune mémoire : rien n'est enregistré dans le navigateur. MBMEM vit seulement le temps de la page ; les anciennes données de ce site sont effacées. */
+var MBMEM=(function(){var d={};return{getItem:function(k){return Object.prototype.hasOwnProperty.call(d,k)?d[k]:null;},setItem:function(k,v){d[k]=String(v);},removeItem:function(k){delete d[k];},clear:function(){d={};}};})();
+try{['localStorage','sessionStorage'].forEach(function(n){var st=window[n],ks=[],i;for(i=0;i<st.length;i++)ks.push(st.key(i));ks.forEach(function(k){if(/^mb-/.test(k))st.removeItem(k);});});}catch(e){}
+</script>
+<script>
 // Barres du haut/bas du téléphone : prennent la couleur du thème choisi sur le site
 (function () {
   var TOP = { rainbow: '#FFB09A' }; // thème dégradé : couleur du haut du dégradé
@@ -572,10 +577,22 @@ h1,.subtitle{padding:0 46px;}
 @keyframes du-jit{50%{transform:translateY(-3px)}}
 .du-p.landed{animation:du-land .6s cubic-bezier(.3,1.7,.5,1);}
 @keyframes du-land{0%{transform:scale(.6) rotate(-4deg)}100%{transform:scale(1)}}
-#duelBox.done .du-p{opacity:.4;transform:scale(.94);}
-#duelBox.done .du-p.win{opacity:1;transform:scale(1.07);background:var(--good-bg);box-shadow:0 0 0 4px var(--good),0 0 34px var(--good);animation:du-win .8s;}
+#duelBox.done .du-p,#duelBox.done .du-p:hover,#duelBox.done .du-nul,#duelBox.done .du-nul:hover{transform:none;}   /* aucune boîte ne grossit ni ne rétrécit : le gagnant ne recouvre pas « VS » ni « Nul » */
+#duelBox.done .du-p{opacity:.4;}
+#duelBox.done .du-p.win{opacity:1;background:var(--good-bg);box-shadow:0 0 0 4px var(--good),0 0 34px var(--good);animation:du-win .8s;}
 #duelBox.done .du-nul.win{background:var(--accent-soft);border-color:var(--accent);animation:du-win .8s;}
-@keyframes du-win{30%{transform:scale(1.25) rotate(-3deg)}60%{transform:scale(1.02) rotate(2deg)}}
+@keyframes du-win{30%{box-shadow:0 0 0 9px var(--good),0 0 60px var(--good)}}
+#duelTeams{position:absolute;inset:0;z-index:36;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:22px 20px 18px;animation:du-up .3s;}
+#duelTeams .dt-row{display:grid;grid-template-columns:1fr auto 1fr;gap:clamp(12px,3vw,40px);width:100%;max-width:1400px;align-items:start;flex:1 1 auto;min-height:0;overflow:hidden;}
+#duelTeams .dt-team{display:flex;flex-direction:column;align-items:center;min-width:0;}
+#duelTeams h3{margin:0 0 10px;font:800 clamp(1.4rem,4vw,3rem) 'Space Grotesk',system-ui,sans-serif;text-align:center;word-break:break-word;line-height:1.1;}
+#duelTeams h3 small{display:block;font-size:.4em;font-weight:600;color:var(--muted);margin-top:2px;}
+#duelTeams .dt-team:nth-child(1) h3{color:var(--accent);}#duelTeams .dt-team:nth-child(3) h3{color:#E8710A;}
+#duelTeams ul{list-style:none;margin:0;padding:0;column-gap:28px;text-align:center;font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;color:var(--ink);}
+#duelTeams li{break-inside:avoid;padding:.08em 0;}
+#duelTeams .du-vs{align-self:center;}
+#duelTeams .dt-foot{display:flex;align-items:center;gap:18px;flex:none;color:var(--muted);font:600 1rem 'Space Grotesk',system-ui,sans-serif;}
+#duelTeams .dt-foot b{color:var(--ink);}
 .du-next{display:flex;justify-content:center;margin-top:10px;visibility:hidden;}
 #duelBox.ready .du-next{visibility:visible;}
 #duShow,#duNext{display:none;}
@@ -718,8 +735,8 @@ body.pdf-fs #pdfPages .pdf-page{flex:none;max-width:none;}
 body.pdf-fs #pdfPages.pdf-whole{scroll-snap-type:y mandatory;}
 body.pdf-fs #pdfPages.pdf-whole .pdf-page{scroll-snap-align:center;}
 </style>
-<script>try{var __t=localStorage.getItem('mb-theme');if(['light','dark','pink','jade','yellow','sky','rainbow'].indexOf(__t)>-1)document.documentElement.setAttribute('data-theme',__t);}catch(e){}</script>
-<script>try{var __r=document.documentElement;if(localStorage.getItem('mb-show-score')==='0')__r.setAttribute('data-hide-score','');if(localStorage.getItem('mb-show-chrono')==='0')__r.setAttribute('data-hide-chrono','');}catch(e){}</script>
+<script>try{var __t=MBMEM.getItem('mb-theme');if(['light','dark','pink','jade','yellow','sky','rainbow'].indexOf(__t)>-1)document.documentElement.setAttribute('data-theme',__t);}catch(e){}</script>
+<script>try{var __r=document.documentElement;if(MBMEM.getItem('mb-show-score')==='0')__r.setAttribute('data-hide-score','');if(MBMEM.getItem('mb-show-chrono')==='0')__r.setAttribute('data-hide-chrono','');}catch(e){}</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
@@ -5322,7 +5339,7 @@ function genLitSign(v,vp,kind,wf){
 function genLitNum(v){
   const inn=()=>[litNZ(-9,9),litNZ(-6,6)], kk=()=>pick([2,3,4,5,6,7,8,-2,-3,-4,-5,-6,-7,-8]), pl=()=>pick([0,1])?[litNZ(-9,9)]:[0,litNZ(-6,6)];
   for(let n=0;n<80;n++){
-    const t=pick([0,0,0,1,1,2,3,3,4,4,5,5,6]);
+    const t=pick([0,0,0,1,1,2,3,3,4,4,5,5,6,7,7,7]);
     let expr,ans,expl,wr=[];
     if(t<=1){
       const k=kk(), inner=inn(), asc=t===0&&Math.random()<.3, mm=t===1?litK(k)+v:litNum(k);
@@ -5331,6 +5348,15 @@ function genLitNum(v){
         wr=[litPoly([inner[0],k*inner[1]],v),litPoly([-k*inner[0],k*inner[1]],v)]; }
       const steps=(asc?[0,1]:[1,0]).map(d=>`${litW(mm)} \u00d7 ${litW(litT(inner[d],d,v))}`);
       expl=`On distribue : ${M(expr+' = '+steps.join(' + ')+' = '+litPoly(ans,v))}.`;
+    }else if(t===7){
+      /* terme en x² qui n'est pas à distribuer : 2x(3x − 4) − x², ou − x² + 2x(3x − 4) */
+      const k=kk(), inner=inn(), m=litNZ(-6,6), first=Math.random()<.65, a=inner[1], b=inner[0];
+      const prod=`${litK(k)}${v}(${litPoly(inner,v)})`, sq=litT(m,2,v);
+      ans=litAdd(litSc(litMul([0,1],inner),k),[0,0,m]); if(!ans[2]||!ans[1]) continue;
+      expr=first?litJoin([prod,sq]):litJoin([sq,prod]);
+      wr=[litPoly([0,k*b,k*a],v),litPoly([0,k*b,k*a-m],v),litPoly([0,k*b+m,k*a],v),litPoly([0,-k*b,k*a+m],v)];
+      const ts=first?[litT(k*a,2,v),litT(k*b,1,v),sq]:[sq,litT(k*a,2,v),litT(k*b,1,v)];
+      expl=`On distribue ${litK(k)}${v} sur la parenth\u00e8se (le terme en ${v}\u00b2 seul ne se distribue pas), puis on regroupe les termes en ${v}\u00b2 : ${M(expr+' = '+litJoin(ts)+' = '+litPoly(ans,v))}.`;
     }else if(t===6){
       const k=kk(), inner=inn(), m=litNZ(-8,8);
       expr=`${litK(k)}${v}(${litPoly(inner,v)}) ${m<0?(Math.abs(m)===1?MN:LM):'+'} ${litPoly([0,Math.abs(m)],v)}`;
@@ -7995,12 +8021,12 @@ const SCREENS={
     ['3e/auto/solides','8. Reconna\u00eetre un solide','Nommer un solide : prisme droit, pyramide, cylindre, c\u00f4ne, boule\u2026'],
     ['3e/auto/sci','9. \u00c9criture scientifique','Passer de l\u2019\u00e9criture d\u00e9cimale \u00e0 l\u2019\u00e9criture scientifique'],
     ['3e/auto/lit-nombre','10. Simple distributivit\u00e9','D\u00e9velopper <i>k</i>(<i>ax</i> + <i>b</i>), puis r\u00e9duire'],
-    ['3e/auto/lit-double','11. Double distributivit\u00e9','D\u00e9velopper et r\u00e9duire : (<i>ax</i> + <i>b</i>)(<i>cx</i> + <i>d</i>)'],
     ['3e/auto/conv-longueur','31. Conversions de longueurs, capacités et masses','m, mm… ; L, mL… ; g, mg…'],
     ['3e/auto/conv-aire','32. Conversions d\u2019aires','km\u00b2, hm\u00b2, dam\u00b2, m\u00b2, dm\u00b2, cm\u00b2, mm\u00b2'],
     ['3e/auto/conv-volume','33. Conversions de volumes','km\u00b3, hm\u00b3, dam\u00b3, m\u00b3, dm\u00b3, cm\u00b3, mm\u00b3 et litres'],
     ['3e/auto/conv-duree','* Dur\u00e9es','Heures, minutes, secondes'],
-    ['3e/auto/lit-fact','** Factorisation','Mettre le facteur commun en \u00e9vidence']]},
+    ['3e/auto/lit-fact','** Factorisation','Mettre le facteur commun en \u00e9vidence'],
+    ['3e/auto/lit-double','*** Double distributivit\u00e9','D\u00e9velopper et r\u00e9duire : (<i>ax</i> + <i>b</i>)(<i>cx</i> + <i>d</i>)']]},
   '3e/info':{title:'Informatique 3e',sub:'Choisis un thème',items:[
     ['3e/info/tableur','1. Tableur','Écrire une formule avec les quatre opérations'],
     ['3e/info/scratch','2. Scratch (Géométrie)','Reconnaître la figure tracée par un programme']]},
@@ -8219,7 +8245,7 @@ const startLit=()=>{ document.getElementById('litNote').hidden=true; document.ge
   const picks=[...panel.querySelectorAll('[data-theme-pick]')];
   const current=()=>root.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
   function paint(){ const c=current(); picks.forEach(b=>{ const on=b.dataset.themePick===c; b.setAttribute('aria-checked',on); b.classList.toggle('on',on); }); }
-  function setTheme(t){ root.setAttribute('data-theme',t); try{ localStorage.setItem('mb-theme',t); }catch(e){} paint(); }
+  function setTheme(t){ root.setAttribute('data-theme',t); try{ MBMEM.setItem('mb-theme',t); }catch(e){} paint(); }
   function toggle(open){ panel.hidden=!open; burger.setAttribute('aria-expanded',open); }
   picks.forEach(b=>b.onclick=()=>setTheme(b.dataset.themePick));
   burger.onclick=e=>{ e.stopPropagation(); toggle(panel.hidden); };
@@ -8230,7 +8256,7 @@ const startLit=()=>{ document.getElementById('litNote').hidden=true; document.ge
     cb.checked=!root.hasAttribute(attr);
     cb.onchange=()=>{
       if(cb.checked) root.removeAttribute(attr); else root.setAttribute(attr,'');
-      try{ localStorage.setItem(key,cb.checked?'1':'0'); }catch(e){}
+      try{ MBMEM.setItem(key,cb.checked?'1':'0'); }catch(e){}
     };
   });
   paint();
@@ -8346,8 +8372,8 @@ go('home');
   const $=id=>document.getElementById(id);
   const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const itemsOf=lv=>SCREENS[lv+'/auto'].items.filter(i=>TR[i[0]]);
-  const load=lv=>{ try{ const a=JSON.parse(localStorage.getItem('mb-train-'+lv)); if(Array.isArray(a)) return a; }catch(e){} return null; };
-  const save=(lv,a)=>{ try{ localStorage.setItem('mb-train-'+lv,JSON.stringify(a)); }catch(e){} };
+  const load=lv=>{ try{ const a=JSON.parse(MBMEM.getItem('mb-train-'+lv)); if(Array.isArray(a)) return a; }catch(e){} return null; };
+  const save=(lv,a)=>{ try{ MBMEM.setItem('mb-train-'+lv,JSON.stringify(a)); }catch(e){} };
 
   const origGo=go, origKey=keyFor, origSwitch=switchView, origNew=newQuestion;
   go=function(sc){
@@ -8415,8 +8441,8 @@ function cqRevisionSetup(lv,CH,SK){
   const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const themesOf=c=>SCREENS[lv+'/qcours/'+c].items.map(i=>({key:(lv==='6e'?'6':'')+c+'-'+i[0].split('/').pop(),label:i[1]}));
   const allKeys=()=>[].concat(...CH.map(([c])=>themesOf(c).map(t=>t.key)));
-  const load=()=>{ try{ const a=JSON.parse(localStorage.getItem('mb-cq-rev'+SK)); if(Array.isArray(a)) return a; }catch(e){} return null; };
-  const save=a=>{ try{ localStorage.setItem('mb-cq-rev'+SK,JSON.stringify(a)); }catch(e){} };
+  const load=()=>{ try{ const a=JSON.parse(MBMEM.getItem('mb-cq-rev'+SK)); if(Array.isArray(a)) return a; }catch(e){} return null; };
+  const save=a=>{ try{ MBMEM.setItem('mb-cq-rev'+SK,JSON.stringify(a)); }catch(e){} };
 
   const origGo=go;
   go=function(sc){
@@ -8433,10 +8459,10 @@ function cqRevisionSetup(lv,CH,SK){
   function showSelect(){
     const keys=allKeys(), saved=load();
     /* un thème jamais proposé jusqu'ici (nouveau chapitre) est coché par défaut, même si une sélection est déjà mémorisée */
-    let known; try{ known=JSON.parse(localStorage.getItem('mb-cq-rev-known'+SK)); }catch(e){}
+    let known; try{ known=JSON.parse(MBMEM.getItem('mb-cq-rev-known'+SK)); }catch(e){}
     if(!Array.isArray(known)) known=lv==='3e'?['eg1-1','eg1-2','eg1-3','eg1-4','eg1-5','eg2-1','eg2-2','eg2-3']:[];
     let sel=new Set(saved?[...saved.filter(k=>keys.includes(k)),...keys.filter(k=>!known.includes(k))]:keys);
-    try{ localStorage.setItem('mb-cq-rev-known'+SK,JSON.stringify(keys)); }catch(e){}
+    try{ MBMEM.setItem('mb-cq-rev-known'+SK,JSON.stringify(keys)); }catch(e){}
     $('title').textContent='Révisions personnalisées';
     $('subtitle').textContent='Choisis un chapitre entier, ou déroule-le pour choisir des thèmes';
     $('back').hidden=false; $('back').onclick=()=>go(lv+'/qcours');
@@ -8584,8 +8610,8 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
   /* ---------- état du mode professeur (gardé le temps de la session du navigateur) ---------- */
   const PKEY='mb-prof';
   let profOn=false;
-  try{ profOn=sessionStorage.getItem(PKEY)==='1'; }catch(e){}
-  const saveProf=()=>{ try{ sessionStorage.setItem(PKEY,profOn?'1':'0'); }catch(e){} };
+  try{ profOn=MBMEM.getItem(PKEY)==='1'; }catch(e){}
+  const saveProf=()=>{ try{ MBMEM.setItem(PKEY,profOn?'1':'0'); }catch(e){} };
   let cur='home', ss=null;
   window.mbProf=()=>profOn;   /* utilisé par go() et le menu latéral pour le choix « Cours prof / Cours élève » */
 
@@ -8647,8 +8673,8 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
   /* ---------- « Séance en classe » : écran de réglage ---------- */
   const CLASSE=lv=>[lv+'/auto/classe','Séance en classe','Projeter des questions à la classe, puis les corriger ensemble'];
   const clamp=(v,a,b)=>Math.min(b,Math.max(a,Math.round(v)));
-  const loadCfg=()=>{ try{ return JSON.parse(localStorage.getItem('mb-seance'))||null; }catch(e){ return null; } };
-  const saveCfg=c=>{ try{ localStorage.setItem('mb-seance',JSON.stringify(c)); }catch(e){} };
+  const loadCfg=()=>{ try{ return JSON.parse(MBMEM.getItem('mb-seance'))||null; }catch(e){ return null; } };
+  const saveCfg=c=>{ try{ MBMEM.setItem('mb-seance',JSON.stringify(c)); }catch(e){} };
 
   function showSetup(lv){
     prevGo(lv+'/auto');
@@ -8886,6 +8912,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
     content.querySelectorAll('input').forEach(i=>i.dispatchEvent(new Event('input',{bubbles:true})));   /* recopie la réponse dans les champs « calcul littéral » */
     content.querySelectorAll('.ss-dots').forEach(x=>x.remove());
     content.querySelectorAll('.ss-hide').forEach(x=>x.classList.remove('ss-hide'));   /* les cadres de réponse (fractions…) redeviennent visibles */
+    if(ss.duel) content.querySelectorAll('.ss-noans').forEach(r=>r.classList.remove('ss-noans'));   /* duel : la ligne de réponse (ex. nom du solide) doit rester visible, la séance ne la montre qu'à la correction */
     const filled=[...content.querySelectorAll('input')].some(i=>i.value!=='');
     /* les champs deviennent du texte : la ligne se lit « 90 = 9 × 10¹ », sans trou ni trait */
     const mk=(tag,html,txt)=>{ const e=document.createElement(tag); e.className='ss-ans'; if(html!==null) e.innerHTML=html; else e.textContent=txt; return e; };
@@ -8967,40 +8994,78 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
 
   /* ---------- Duel : un élève tiré au sort par équipe à chaque question, le professeur clique le gagnant ---------- */
   const DUEL=lv=>[lv+'/auto/duel','Duel','Deux équipes s’affrontent : un élève tiré au sort dans chaque équipe à chaque question'];
-  const loadDuel=()=>{ try{ return JSON.parse(localStorage.getItem('mb-duel'))||{}; }catch(e){ return {}; } };
   const duShuf=a=>{ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
   const duNames=t=>[...new Set(String(t).split(/\n|;/).map(x=>x.trim()).filter(Boolean))];
   /* tirage sans remise : on parcourt tous les noms ; l'équipe la plus petite est re-mélangée quand elle est épuisée (sans répéter le dernier nom) */
   function drawOrder(L,n){ const out=[]; while(out.length<n){ const q=duShuf(L); if(out.length&&q.length>1&&q[0]===out[out.length-1]) q.push(q.shift()); out.push(...q); } return out.slice(0,n); }
   function showDuelSetup(lv){
     prevGo(lv+'/auto');
-    const items=SCREENS[lv+'/auto'].items.filter(i=>TR[i[0]]), c=loadDuel();
-    const id0=items.some(i=>i[0]===c.id)?c.id:items[0][0];
+    const items=SCREENS[lv+'/auto'].items.filter(i=>TR[i[0]]);
+    let sel=[items[0][0]];
     $('title').textContent='Duel'; $('subtitle').textContent='Prépare le duel';
     const back=$('back'); back.hidden=false; back.onclick=()=>go(lv+'/auto');
     const menu=$('menu'); menu.hidden=false; $('exo').hidden=true;
     menu.innerHTML=`<div class="ss-form">
-      <div><label class="ss-lbl" for="duTh">Thème</label><select class="ss-sel" id="duTh">${items.map(i=>`<option value="${i[0]}"${i[0]===id0?' selected':''}>${esc(i[1])}</option>`).join('')}</select></div>
-      <div class="du-teams">${[1,2].map(k=>`<div><label class="ss-lbl" for="duN${k}">Nom de l’équipe ${k}</label><input class="du-name" id="duN${k}" maxlength="24" value="${esc(c['t'+k]||'Équipe '+k)}"><textarea class="du-ta" id="duT${k}" placeholder="Un prénom par ligne">${esc(c['m'+k]||'')}</textarea><small class="du-cnt" id="duC${k}"></small></div>`).join('')}</div>
+      <div><span class="ss-lbl">Automatismes</span>
+        <div id="ssAutos"></div>
+        <button type="button" class="ss-add" id="ssAdd">+ Ajouter un automatisme</button></div>
+      <div class="ss-row">
+        <div><label class="ss-lbl" for="ssN">Nombre de questions</label>
+          <div class="ss-step" data-min="1" data-max="100" data-step="1"><button type="button" data-d="-1" aria-label="Moins">−</button><input type="number" id="ssN" inputmode="numeric" min="1" max="100" value="10"><button type="button" data-d="1" aria-label="Plus">+</button></div></div>
+      </div>
+      <label class="ss-opt"><span>Équipes aléatoires<small>Tu saisis une seule liste de prénoms : ils sont répartis au hasard en deux équipes égales.</small></span><span class="switch"><input type="checkbox" id="duRand"><i></i></span></label>
+      <div class="du-teams">${[1,2].map(k=>`<div><label class="ss-lbl" for="duN${k}">Nom de l’équipe ${k}</label><input class="du-name" id="duN${k}" maxlength="24" value="${'Équipe '+k}"><textarea class="du-ta" id="duT${k}" placeholder="Un prénom par ligne"></textarea><small class="du-cnt" id="duC${k}"></small></div>`).join('')}</div>
+      <div id="duAllBox" style="display:none"><label class="ss-lbl" for="duAll">Liste de tous les élèves</label><textarea class="du-ta" id="duAll" placeholder="Un prénom par ligne"></textarea><small class="du-cnt" id="duAllC"></small></div>
       <div class="prof-err" id="duErr" role="alert" hidden>Il faut au moins un élève dans chaque équipe.</div>
-      <div class="tr-foot" style="margin-top:0"><button type="button" class="primary" id="duGo">Lancer le duel</button></div>
-      <p class="hint" style="margin:-4px 0 0">À chaque question, un élève de chaque équipe est tiré au sort (sans remise). Tu cliques sur le nom de celui qui a la bonne réponse, ou sur « Nul » en cas d’égalité. Si une équipe est plus petite, ses noms sont re-tirés pour que tous les élèves de l’autre équipe passent.</p></div>`;
-    const cnt=()=>[1,2].forEach(k=>{ const n=duNames($('duT'+k).value).length; $('duC'+k).textContent=n+(n>1?' élèves':' élève'); });
-    [1,2].forEach(k=>$('duT'+k).oninput=cnt); cnt();
+      <div class="tr-foot" style="margin-top:0"><button type="button" class="primary" id="duGo">Lancer le duel</button></div></div>`;
+    menu.querySelectorAll('.ss-step').forEach(st=>{
+      const inp=st.querySelector('input'), a=+st.dataset.min, b=+st.dataset.max, step=+st.dataset.step;
+      st.querySelectorAll('button').forEach(btn=>btn.onclick=()=>{ inp.value=clamp((+inp.value||a)+(+btn.dataset.d)*step,a,b); });
+      inp.onchange=()=>{ inp.value=clamp(+inp.value||a,a,b); };
+    });
+    const box=$('ssAutos'), add=$('ssAdd');
+    const draw=()=>{
+      box.innerHTML=sel.map((cur,k)=>`<div class="ss-arow"><select class="ss-sel" data-k="${k}" aria-label="Automatisme ${k+1}">${items.filter(i=>i[0]===cur||!sel.includes(i[0])).map(i=>`<option value="${i[0]}"${i[0]===cur?' selected':''}>${esc(i[1])}</option>`).join('')}</select>${sel.length>1?`<button type="button" class="ss-del" data-k="${k}" aria-label="Retirer cet automatisme">✕</button>`:''}</div>`).join('');
+      box.querySelectorAll('select').forEach(se=>se.onchange=()=>{ sel[+se.dataset.k]=se.value; draw(); });
+      box.querySelectorAll('.ss-del').forEach(b=>b.onclick=()=>{ sel.splice(+b.dataset.k,1); draw(); });
+      add.hidden=sel.length>=items.length;
+    };
+    add.onclick=()=>{ const nx=items.find(i=>!sel.includes(i[0])); if(nx){ sel.push(nx[0]); draw(); } };
+    draw();
+    const cnt=()=>{
+      [1,2].forEach(k=>{ const n=duNames($('duT'+k).value).length; $('duC'+k).textContent=n+(n>1?' élèves':' élève'); });
+      const N=duNames($('duAll').value).length, h=Math.floor(N/2);
+      $('duAllC').textContent=N+(N>1?' élèves':' élève')+(N>=2?' → équipes de '+(N-h)+(h===N-h?' et '+h:' et '+h)+' élèves':'');
+    };
+    [1,2].forEach(k=>$('duT'+k).oninput=cnt); $('duAll').oninput=cnt; cnt();
+    const shake=e=>{ if(e){ e.classList.remove('du-shake'); void e.offsetWidth; e.classList.add('du-shake'); } };
+    $('duRand').onchange=()=>{
+      const r=$('duRand').checked;
+      [1,2].forEach(k=>{ $('duT'+k).style.display=r?'none':''; $('duC'+k).style.display=r?'none':''; });
+      $('duAllBox').style.display=r?'':'none'; $('duErr').hidden=true;
+      $('duErr').textContent=r?'Il faut au moins 2 élèves dans la liste.':'Il faut au moins un élève dans chaque équipe.';
+    };
     $('duGo').onclick=()=>{
-      const A=duNames($('duT1').value), B=duNames($('duT2').value);
-      if(!A.length||!B.length){ $('duErr').hidden=false; [A.length?null:$('duT1'),B.length?null:$('duT2')].forEach(e=>{ if(e){ e.classList.remove('du-shake'); void e.offsetWidth; e.classList.add('du-shake'); } }); return; }
-      const cfg={lv,id:$('duTh').value,t1:$('duN1').value.trim()||'Équipe 1',t2:$('duN2').value.trim()||'Équipe 2',m1:$('duT1').value,m2:$('duT2').value};
-      try{ localStorage.setItem('mb-duel',JSON.stringify(cfg)); }catch(e){}
+      let A,B;
+      if($('duRand').checked){
+        const L=duShuf(duNames($('duAll').value));
+        if(L.length<2){ $('duErr').hidden=false; shake($('duAll')); return; }
+        const h=Math.random()<.5?Math.ceil(L.length/2):Math.floor(L.length/2);   /* n et n, ou n et n+1 (l'équipe la plus grande est tirée au sort) */
+        A=L.slice(0,h); B=L.slice(h);
+      }else{
+        A=duNames($('duT1').value); B=duNames($('duT2').value);
+        if(!A.length||!B.length){ $('duErr').hidden=false; shake(A.length?null:$('duT1')); shake(B.length?null:$('duT2')); return; }
+      }
+      const cfg={lv,ids:sel.slice(),n:clamp(+$('ssN').value||10,1,100),t1:$('duN1').value.trim()||'Équipe 1',t2:$('duN2').value.trim()||'Équipe 2',m1:A.join('\n'),m2:B.join('\n')};
       launchDuel(cfg);
     };
   }
   function launchDuel(cfg){
-    const A=duNames(cfg.m1), B=duNames(cfg.m2), n=Math.max(A.length,B.length);
+    const A=duNames(cfg.m1), B=duNames(cfg.m2), n=cfg.n;
     const pA=drawOrder(A,n), pB=drawOrder(B,n);
-    startSession(cfg.lv,[cfg.id],n,3600,false,{cfg,teams:[cfg.t1,cfg.t2],all:[A,B],pairs:pA.map((a,i)=>[a,pB[i]]),sc:[0,0],ties:0,ready:false,locked:false});
+    startSession(cfg.lv,cfg.ids,n,3600,false,{cfg,teams:[cfg.t1,cfg.t2],all:[A,B],pairs:pA.map((a,i)=>[a,pB[i]]),sc:[0,0],ties:0,ready:false,locked:false});
   }
-  function duelClean(){ ['duelBox','duelScore','duelEnd','duelIntro','duelPick'].forEach(id=>{ const e=$(id); if(e) e.remove(); }); document.querySelectorAll('.du-fx,.du-rain').forEach(e=>e.remove()); content.style.opacity=''; content.style.transition=''; }
+  function duelClean(){ ['duelBox','duelScore','duelEnd','duelIntro','duelPick','duelTeams'].forEach(id=>{ const e=$(id); if(e) e.remove(); }); document.querySelectorAll('.du-fx,.du-rain').forEach(e=>e.remove()); content.style.opacity=''; content.style.transition=''; }
   function duelScore(bump){
     let el=$('duelScore'); const d=ss.duel;
     if(!el){ el=document.createElement('div'); el.id='duelScore'; $('ssBar').appendChild(el); }
@@ -9038,6 +9103,23 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
     let fin=false; const end=()=>{ if(fin) return; fin=true; ov.remove(); card.classList.remove('du-quake'); done(); };
     setTimeout(end,2700); ov.onclick=end;
   }
+  /* composition des équipes : affichée 10 secondes au début du duel (un clic sur « Commencer » passe) */
+  function duelTeams(done){
+    const d=ss.duel, srt=a=>[...a].sort((x,y)=>x.localeCompare(y,'fr')), L=[srt(d.all[0]),srt(d.all[1])];
+    const ov=document.createElement('div'); ov.id='duelTeams';
+    const team=j=>`<div class="dt-team"><h3>${esc(d.teams[j])}<small>${L[j].length} élève${L[j].length>1?'s':''}</small></h3><ul>${L[j].map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
+    ov.innerHTML=`<div class="dt-row">${team(0)}<span class="du-vs">VS</span>${team(1)}</div><div class="dt-foot"><span>Début du duel dans <b id="dtSec">10</b> s</span><button type="button" class="primary" id="dtGo">Commencer</button></div>`;
+    card.appendChild(ov);
+    /* taille des prénoms : la plus grande équipe doit tenir en hauteur (1, 2 ou 3 colonnes) */
+    const nmax=Math.max(L[0].length,L[1].length), availH=Math.max(120,card.clientHeight-ov.querySelector('h3').offsetHeight-130);
+    let cols=1, fs=0; for(cols=1;cols<=3;cols++){ fs=Math.min(40,availH/Math.ceil(nmax/cols)/1.3); if(fs>=26) break; } if(cols>3) cols=3;
+    fs=Math.max(12,Math.min(40,availH/Math.ceil(nmax/cols)/1.3));
+    ov.querySelectorAll('ul').forEach(u=>{ u.style.columns=cols; u.style.fontSize=fs+'px'; });
+    let left=10, fin=false;
+    const end=()=>{ if(fin) return; fin=true; clearInterval(iv); ov.remove(); done(); };
+    const iv=setInterval(()=>{ if(!ss||!ov.isConnected){ clearInterval(iv); return; } left--; const e=$('dtSec'); if(e) e.textContent=left; if(left<=0) end(); },1000);
+    $('dtGo').onclick=end;
+  }
   function duelRound(){
     const d=ss.duel, k=ss.i-1, pr=d.pairs[k], round=ss.i; d.ready=false; d.locked=false; ss.revealed=false; ss.duelH=175; $('exo').classList.remove('ss-reveal');
     $('ssPause').hidden=true; duelScore();
@@ -9064,7 +9146,7 @@ cqRevisionSetup('6e',[['eg1','EG 1 – Vocabulaire et notations'],['eg2','EG 2 �
       const both=()=>{ if(++n<2) return; setTimeout(reveal,1300); };
       rollName(sd[0],d.all[0],pr[0],1000,both); rollName(sd[1],d.all[1],pr[1],1500,both);
     };
-    if(k===0){ box.style.visibility='hidden'; duelIntro(start); } else start();
+    if(k===0){ box.style.visibility='hidden'; duelIntro(()=>duelTeams(start)); } else start();
     box.onclick=e=>{
       const b=e.target.closest('[data-w]'); if(!b||!d.ready||d.locked) return; d.locked=true;
       const w=b.dataset.w; if(w==='n') d.ties++; else d.sc[+w]++;
